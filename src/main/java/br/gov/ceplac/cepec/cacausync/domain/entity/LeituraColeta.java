@@ -48,7 +48,56 @@ public class LeituraColeta {
     @Column(name = "importado_em", nullable = false)
     private LocalDateTime importadoEm = LocalDateTime.now();
 
+    @Column(name = "foto_chave", length = 80)
+    private String fotoChave;
+
+    @Column(name = "foto_content_type", length = 40)
+    private String fotoContentType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status_validacao", nullable = false, length = 20)
+    private StatusValidacao statusValidacao = StatusValidacao.PENDENTE;
+
+    @Column(name = "qtd_frutos_validada")
+    private Integer qtdFrutosValidada;
+
+    @Column(name = "observacao_validacao", length = 500)
+    private String observacaoValidacao;
+
+    @Column(name = "validado_por", length = 150)
+    private String validadoPor;
+
+    @Column(name = "validado_em")
+    private LocalDateTime validadoEm;
+
+    /** Caixas do YOLO em JSON (lista de DeteccaoDto). Texto simples: funciona igual no PostgreSQL e no H2. */
+    @Column(name = "deteccoes_json", columnDefinition = "TEXT")
+    private String deteccoesJson;
+
     public LeituraColeta() {
+    }
+
+    /**
+     * Quantidade que vale para o relatorio oficial:
+     * rejeitada = 0; ajustada = o numero do pesquisador; senao = o que a IA contou.
+     */
+    public int qtdEfetiva() {
+        if (statusValidacao == StatusValidacao.REJEITADA) {
+            return 0;
+        }
+        if (statusValidacao == StatusValidacao.AJUSTADA && qtdFrutosValidada != null) {
+            return qtdFrutosValidada;
+        }
+        return qtdFrutos != null ? qtdFrutos : 0;
+    }
+
+    /** Leitura entra nas somas/medias? So se for coletavel e nao tiver sido rejeitada. */
+    public boolean contaNoRelatorio() {
+        return Boolean.TRUE.equals(coletavel) && statusValidacao != StatusValidacao.REJEITADA;
+    }
+
+    public boolean temFoto() {
+        return fotoChave != null && !fotoChave.isBlank();
     }
 
     public Long getId() {
@@ -149,5 +198,69 @@ public class LeituraColeta {
 
     public LocalDateTime getImportadoEm() {
         return importadoEm;
+    }
+
+    public String getFotoChave() {
+        return fotoChave;
+    }
+
+    public void setFotoChave(String fotoChave) {
+        this.fotoChave = fotoChave;
+    }
+
+    public String getFotoContentType() {
+        return fotoContentType;
+    }
+
+    public void setFotoContentType(String fotoContentType) {
+        this.fotoContentType = fotoContentType;
+    }
+
+    public StatusValidacao getStatusValidacao() {
+        return statusValidacao;
+    }
+
+    public void setStatusValidacao(StatusValidacao statusValidacao) {
+        this.statusValidacao = statusValidacao;
+    }
+
+    public Integer getQtdFrutosValidada() {
+        return qtdFrutosValidada;
+    }
+
+    public void setQtdFrutosValidada(Integer qtdFrutosValidada) {
+        this.qtdFrutosValidada = qtdFrutosValidada;
+    }
+
+    public String getObservacaoValidacao() {
+        return observacaoValidacao;
+    }
+
+    public void setObservacaoValidacao(String observacaoValidacao) {
+        this.observacaoValidacao = observacaoValidacao;
+    }
+
+    public String getValidadoPor() {
+        return validadoPor;
+    }
+
+    public void setValidadoPor(String validadoPor) {
+        this.validadoPor = validadoPor;
+    }
+
+    public LocalDateTime getValidadoEm() {
+        return validadoEm;
+    }
+
+    public void setValidadoEm(LocalDateTime validadoEm) {
+        this.validadoEm = validadoEm;
+    }
+
+    public String getDeteccoesJson() {
+        return deteccoesJson;
+    }
+
+    public void setDeteccoesJson(String deteccoesJson) {
+        this.deteccoesJson = deteccoesJson;
     }
 }

@@ -110,6 +110,38 @@ class EnsaioServiceTest {
         assertThat(csv).contains("SCP-16005_TC-1801_par1_pla1_c0226,TC-1801,1,1,1,SCP-16005,1,N11_P0_E0_M0_V0,nnnnnnnnnnn");
     }
 
+    @Test
+    @DisplayName("Validação do pesquisador manda no relatório: ajustada vale o número corrigido e rejeitada fica de fora")
+    void relatorioRespeitaValidacaoDoPesquisador() {
+        Ensaio ensaio = new Ensaio("TC-1801", "Ensaio TC-1801", "CEPEC");
+        Clone clone = new Clone("CCN-51", "Clone CCN-51", "CEPEC");
+        Parcela parcela = new Parcela(ensaio, clone, 1, "20");
+        Planta p1 = criarPlantaComId(1L, parcela, "CCN-51_par20_pla1", 1, SituacaoPlanta.NORMAL);
+        Planta p2 = criarPlantaComId(2L, parcela, "CCN-51_par20_pla2", 2, SituacaoPlanta.NORMAL);
+
+        LeituraColeta ajustada = criarLeitura(p1, 10, true, false);   // a IA contou 10, o pesquisador corrigiu para 14
+        ajustada.setStatusValidacao(StatusValidacao.AJUSTADA);
+        ajustada.setQtdFrutosValidada(14);
+        LeituraColeta rejeitada = criarLeitura(p2, 9, true, false);   // foto ruim: fora do relatório
+        rejeitada.setStatusValidacao(StatusValidacao.REJEITADA);
+
+        when(ensaioRepository.findByCodigoIgnoreCase("TC-1801")).thenReturn(Optional.of(ensaio));
+        when(plantaRepository.findByParcelaEnsaioCodigoIgnoreCaseOrderByOrdemRotaAsc("TC-1801")).thenReturn(List.of(p1, p2));
+        when(leituraColetaRepository.findByPlantaParcelaEnsaioCodigoIgnoreCaseOrderByImportadoEmDesc("TC-1801"))
+                .thenReturn(List.of(ajustada, rejeitada));
+
+        RelatorioProdutividadeEnsaioResponse relatorio = ensaioService.gerarRelatorioProdutividade("TC-1801");
+
+        assertThat(relatorio.totalFrutosAcumulados()).isEqualTo(14);
+        assertThat(relatorio.leiturasRejeitadas()).isEqualTo(1);
+        assertThat(relatorio.leiturasValidadas()).isEqualTo(1);
+        assertThat(relatorio.leiturasPendentesValidacao()).isZero();
+        ProdutividadeCloneDto clonePrimeiro = relatorio.rankingClones().get(0);
+        assertThat(clonePrimeiro.totalFrutosContados()).isEqualTo(14);
+        assertThat(clonePrimeiro.totalLeiturasRealizadas()).isEqualTo(1);
+        assertThat(clonePrimeiro.mediaFrutosPorPlantaViva()).isEqualTo(7.0);
+    }
+
     private Planta criarPlantaComId(Long id, Parcela parcela, String code, int num, SituacaoPlanta situacao) {
         Planta p = new Planta(parcela, code, num, num, situacao);
         p.setId(id);

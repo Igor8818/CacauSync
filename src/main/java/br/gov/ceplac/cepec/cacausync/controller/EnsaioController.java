@@ -1,5 +1,6 @@
 package br.gov.ceplac.cepec.cacausync.controller;
 
+import br.gov.ceplac.cepec.cacausync.domain.entity.StatusValidacao;
 import br.gov.ceplac.cepec.cacausync.dto.CriarEnsaioRequest;
 import br.gov.ceplac.cepec.cacausync.dto.EnsaioResumoResponse;
 import br.gov.ceplac.cepec.cacausync.dto.LeituraColetaResponse;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -25,6 +27,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/ensaios")
 @Tag(name = "3. Ensaios Genéticos, Rotas e Relatórios", description = "Planejamento de rotas para o FieldBook Android e relatórios de produtividade por clone")
+@SecurityRequirement(name = "bearerAuth")
 public class EnsaioController {
 
     private final EnsaioService ensaioService;
@@ -60,12 +63,16 @@ public class EnsaioController {
     }
 
     @GetMapping("/{codigo}/leituras")
-    @Operation(summary = "Listar leituras de coleta do ensaio de forma paginada com auditoria de GPS")
+    @Operation(
+            summary = "Listar leituras de coleta do ensaio (paginado) para auditoria",
+            description = "Use ?status=PENDENTE para ver só o que ainda falta o pesquisador conferir."
+    )
     public ResponseEntity<Page<LeituraColetaResponse>> listarLeituras(
             @PathVariable String codigo,
-            @PageableDefault(size = 20) Pageable pageable
+            @RequestParam(value = "status", required = false) StatusValidacao status,
+            @PageableDefault(size = 20, sort = "importadoEm", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        return ResponseEntity.ok(coletaSyncService.listarLeiturasPorEnsaio(codigo, pageable));
+        return ResponseEntity.ok(coletaSyncService.listarLeiturasPorEnsaio(codigo, status, pageable));
     }
 
     @GetMapping(value = "/{codigo}/rota-csv", produces = "text/csv")

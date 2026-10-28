@@ -119,10 +119,13 @@ public class EnsaioService {
 
             for (Planta p : plantasDoClone) {
                 List<LeituraColeta> leiturasPlanta = leiturasPorPlantaId.getOrDefault(p.getId(), List.of());
-                totalLeiturasClone += leiturasPlanta.size();
                 for (LeituraColeta l : leiturasPlanta) {
-                    if (Boolean.TRUE.equals(l.getColetavel()) && l.getQtdFrutos() != null) {
-                        totalFrutosClone += l.getQtdFrutos();
+                    // Leitura rejeitada pelo pesquisador fica fora; ajustada vale o numero corrigido.
+                    if (l.getStatusValidacao() != StatusValidacao.REJEITADA) {
+                        totalLeiturasClone++;
+                    }
+                    if (l.contaNoRelatorio()) {
+                        totalFrutosClone += l.qtdEfetiva();
                     }
                 }
             }
@@ -149,10 +152,13 @@ public class EnsaioService {
 
         int totalVivasEnsaio = (int) plantas.stream().filter(p -> p.getSituacao() == SituacaoPlanta.NORMAL).count();
         int totalFrutosEnsaio = leituras.stream()
-                .filter(l -> Boolean.TRUE.equals(l.getColetavel()) && l.getQtdFrutos() != null)
-                .mapToInt(LeituraColeta::getQtdFrutos)
+                .filter(LeituraColeta::contaNoRelatorio)
+                .mapToInt(LeituraColeta::qtdEfetiva)
                 .sum();
         int alertasGps = (int) leituras.stream().filter(l -> Boolean.TRUE.equals(l.getAlertaGps())).count();
+        int pendentes = (int) leituras.stream().filter(l -> l.getStatusValidacao() == StatusValidacao.PENDENTE).count();
+        int rejeitadas = (int) leituras.stream().filter(l -> l.getStatusValidacao() == StatusValidacao.REJEITADA).count();
+        int validadas = leituras.size() - pendentes - rejeitadas;
 
         return new RelatorioProdutividadeEnsaioResponse(
                 ensaio.getCodigo(),
@@ -164,6 +170,9 @@ public class EnsaioService {
                 leituras.size(),
                 totalFrutosEnsaio,
                 alertasGps,
+                pendentes,
+                validadas,
+                rejeitadas,
                 LocalDateTime.now(),
                 ranking
         );

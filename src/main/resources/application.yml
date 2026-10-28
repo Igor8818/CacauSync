@@ -23,8 +23,14 @@ spring:
 
   servlet:
     multipart:
+      # Cada foto vai reduzida pelo painel (~0,5 MB), mas aceitamos ate 15 MB por arquivo e 150 MB por envio.
       max-file-size: 15MB
-      max-request-size: 15MB
+      max-request-size: 150MB
+
+app:
+  storage:
+    # Onde as fotos ficam no disco do servidor. Em Docker, monte um volume nesta pasta.
+    fotos-dir: ${FOTOS_DIR:./storage/fotos}
 
 security:
   jwt:

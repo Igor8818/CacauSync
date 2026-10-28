@@ -117,7 +117,7 @@ public class CsvColetaParser {
         );
     }
 
-    public boolean isPlantaColetavel(String diagnostico) {
+    public static boolean isPlantaColetavel(String diagnostico) {
         if (diagnostico == null || diagnostico.isBlank()) {
             return false;
         }
@@ -198,7 +198,12 @@ public class CsvColetaParser {
         return 1;
     }
 
-    private int extrairInteiroSeguro(String valor, int padrao) {
+    /** Converte o texto do campo "Resultado" (ex: "18") em numero de frutos; textos como "Não Coletável" viram 0. */
+    public static int extrairQuantidade(String valor) {
+        return extrairInteiroSeguro(valor, 0);
+    }
+
+    private static int extrairInteiroSeguro(String valor, int padrao) {
         if (valor == null || valor.isBlank()) return padrao;
         String apenasDigitos = valor.replaceAll("[^0-9-]", "");
         if (apenasDigitos.isEmpty()) return padrao;

@@ -10,3 +10,4 @@ public class CacauSyncApplication {
         SpringApplication.run(CacauSyncApplication.class, args);
     }
 }
+

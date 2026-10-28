@@ -1,6 +1,9 @@
 package br.gov.ceplac.cepec.cacausync.dto;
 
+import br.gov.ceplac.cepec.cacausync.domain.entity.StatusValidacao;
+
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record LeituraColetaResponse(
     Long id,
@@ -18,5 +21,13 @@ public record LeituraColetaResponse(
     double longitude,
     boolean alertaGps,
     String pesquisadorEmail,
-    LocalDateTime importadoEm
+    LocalDateTime importadoEm,
+    boolean temFoto,
+    StatusValidacao statusValidacao,
+    Integer qtdFrutosValidada,
+    int qtdEfetiva,
+    String observacaoValidacao,
+    String validadoPor,
+    LocalDateTime validadoEm,
+    List<DeteccaoDto> deteccoes
 ) {}

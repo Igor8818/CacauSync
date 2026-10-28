@@ -9,6 +9,7 @@ import br.gov.ceplac.cepec.cacausync.exception.RegraNegocioException;
 import br.gov.ceplac.cepec.cacausync.repository.UsuarioRepository;
 import br.gov.ceplac.cepec.cacausync.security.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -62,7 +63,8 @@ public class AuthController {
     }
 
     @PostMapping("/registrar")
-    @Operation(summary = "Registrar novo pesquisador ou coordenador no laboratório")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Cadastrar novo pesquisador ou coordenador (exige ROLE_COORDENADOR)")
     public ResponseEntity<TokenResponse> registrar(@Valid @RequestBody RegistrarUsuarioRequest request) {
         if (usuarioRepository.existsByEmail(request.email())) {
             throw new RegraNegocioException("Já existe um pesquisador cadastrado com o e-mail: " + request.email());
