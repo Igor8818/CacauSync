@@ -13,6 +13,9 @@ public record RelatorioProdutividadeEnsaioResponse(
     int totalLeiturasRegistradas,
     int totalFrutosAcumulados,
     int leiturasComAlertaGps,
+    int leiturasPendentesValidacao,
+    int leiturasValidadas,
+    int leiturasRejeitadas,
     LocalDateTime geradoEm,
     List<ProdutividadeCloneDto> rankingClones
 ) {}

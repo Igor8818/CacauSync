@@ -12,6 +12,8 @@ public record ResultadoImportacaoCsvResponse(
     int plantasMarcadasNaoColetaveis,
     int alertasGpsZerado,
     int totalFrutosImportadosLote,
+    int fotosAnexadas,
+    int fotosIgnoradas,
     LocalDateTime processadoEm,
     List<String> avisos
 ) {}

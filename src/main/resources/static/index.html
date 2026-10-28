@@ -6,729 +6,666 @@
     <title>CacauSync — CEPLAC / CEPEC (Ministério da Agricultura e Pecuária)</title>
     <style>
         :root {
-            --green-deep: #0f3d17;
-            --green-primary: #1e6b2c;
-            --green-hover: #165322;
-            --green-light: #e8f5e9;
-            --green-border: #c8e6c9;
-            --gold-accent: #e5a93b;
-            --gold-bg: #fffbf0;
-            --amber: #e65100;
-            --amber-bg: #fff3e0;
-            --red: #c62828;
-            --red-bg: #ffebee;
-            --bg-page: #f0f4f1;
-            --card-bg: #ffffff;
-            --text-dark: #1a221b;
-            --text-muted: #5a6b5c;
+            --green-deep: #0f3d17; --green-primary: #1e6b2c; --green-hover: #165322;
+            --green-light: #e8f5e9; --green-border: #c8e6c9; --gold-accent: #e5a93b;
+            --amber: #b45309; --amber-bg: #fff3e0; --red: #c62828; --red-bg: #ffebee;
+            --blue: #1565c0; --blue-bg: #e3f2fd;
+            --bg-page: #f0f4f1; --card-bg: #ffffff; --text-dark: #1a221b; --text-muted: #5a6b5c;
             --border: #d7e0d8;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06); --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
             --shadow-lg: 0 12px 28px rgba(0,0,0,0.12);
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
         body { background: var(--bg-page); color: var(--text-dark); line-height: 1.5; min-height: 100vh; }
+        [hidden] { display: none !important; }
 
-        /* HEADER GOVERNAMENTAL BRASIL / MAPA */
-        .gov-bar {
-            background: #002b11;
-            color: #d1e7dd;
-            font-size: 0.72rem;
-            padding: 4px 28px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            letter-spacing: 0.5px;
-            border-bottom: 2px solid var(--gold-accent);
-        }
+        .gov-bar { background: #002b11; color: #d1e7dd; font-size: 0.72rem; padding: 4px 20px; display: flex;
+            justify-content: space-between; gap: 12px; flex-wrap: wrap; letter-spacing: 0.5px; border-bottom: 2px solid var(--gold-accent); }
         .gov-bar span { font-weight: 700; color: #fff; }
 
-        /* ================= TELA DE LOGIN ================= */
-        #loginScreen {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 16px;
-            min-height: calc(100vh - 28px);
-        }
-        .login-card {
-            background: var(--card-bg);
-            border-radius: 16px;
-            width: 100%;
-            max-width: 460px;
-            padding: 36px 32px;
-            box-shadow: var(--shadow-lg);
-            border: 1px solid var(--border);
-            text-align: center;
-        }
-        .logo-emblem {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #1b5e20, #2e7d32);
-            box-shadow: 0 4px 12px rgba(46,125,50,0.3);
-            margin-bottom: 16px;
-        }
-        .login-card h1 {
-            font-size: 1.45rem;
-            font-weight: 800;
-            color: var(--green-deep);
-            letter-spacing: -0.3px;
-        }
-        .login-card .inst-sub {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            margin-top: 2px;
-        }
-        .login-card .app-desc {
-            font-size: 0.86rem;
-            color: var(--text-muted);
-            margin: 12px 0 24px 0;
-            padding-bottom: 16px;
-            border-bottom: 1px solid var(--border);
-        }
-        .form-group {
-            text-align: left;
-            margin-bottom: 16px;
-        }
-        .form-group label {
-            display: block;
-            font-size: 0.82rem;
-            font-weight: 700;
-            color: var(--text-dark);
-            margin-bottom: 6px;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 11px 14px;
-            border: 1.5px solid var(--border);
-            border-radius: 8px;
-            font-size: 0.92rem;
-            transition: all 0.2s;
-        }
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--green-primary);
-            box-shadow: 0 0 0 3px rgba(46,125,50,0.15);
-        }
-        .btn-submit {
-            width: 100%;
-            background: linear-gradient(135deg, var(--green-primary), var(--green-hover));
-            color: #fff;
-            padding: 13px;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(30,107,44,0.25);
-            transition: all 0.2s;
-            margin-top: 8px;
-        }
-        .btn-submit:hover {
-            filter: brightness(1.08);
-            transform: translateY(-1px);
-        }
-        .quick-access-box {
-            margin-top: 24px;
-            padding: 14px;
-            background: #f8faf8;
-            border-radius: 10px;
-            border: 1px dashed var(--green-border);
-            text-align: left;
-        }
-        .quick-access-box span {
-            display: block;
-            font-size: 0.74rem;
-            color: var(--text-muted);
-            font-weight: 700;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
+        /* ---------- LOGIN ---------- */
+        #loginScreen { display: flex; align-items: center; justify-content: center; padding: 40px 16px; min-height: calc(100vh - 28px); }
+        .login-card { background: var(--card-bg); border-radius: 16px; width: 100%; max-width: 460px; padding: 36px 32px;
+            box-shadow: var(--shadow-lg); border: 1px solid var(--border); text-align: center; }
+        .logo-emblem { display: inline-flex; align-items: center; justify-content: center; width: 80px; height: 80px; border-radius: 50%;
+            background: linear-gradient(135deg, #1b5e20, #2e7d32); box-shadow: 0 4px 12px rgba(46,125,50,0.3); margin-bottom: 16px; }
+        .login-card h1 { font-size: 1.45rem; font-weight: 800; color: var(--green-deep); }
+        .inst-sub { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
+        .app-desc { font-size: 0.86rem; color: var(--text-muted); margin: 12px 0 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .form-group { text-align: left; margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 6px; }
+        .form-group input { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.92rem; }
+        .form-group input:focus, textarea:focus, select:focus, input[type=number]:focus { outline: none; border-color: var(--green-primary); box-shadow: 0 0 0 3px rgba(46,125,50,0.15); }
+        .btn-submit { width: 100%; background: linear-gradient(135deg, var(--green-primary), var(--green-hover)); color: #fff; padding: 13px;
+            border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 700; cursor: pointer; margin-top: 8px; }
+        .btn-submit:disabled { opacity: .6; cursor: wait; }
+        .quick-access-box { margin-top: 24px; padding: 14px; background: #f8faf8; border-radius: 10px; border: 1px dashed var(--green-border); text-align: left; }
+        .quick-access-box span { display: block; font-size: 0.74rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
         .pills { display: flex; gap: 8px; flex-wrap: wrap; }
-        .pill-btn {
-            background: #fff;
-            border: 1px solid var(--green-border);
-            color: var(--green-primary);
-            padding: 6px 12px;
-            border-radius: 99px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
+        .pill-btn { background: #fff; border: 1px solid var(--green-border); color: var(--green-primary); padding: 6px 12px; border-radius: 99px;
+            font-size: 0.78rem; font-weight: 600; cursor: pointer; }
         .pill-btn:hover { background: var(--green-light); }
-        .login-error {
-            margin-top: 14px;
-            padding: 10px;
-            background: var(--red-bg);
-            color: var(--red);
-            font-size: 0.84rem;
-            border-radius: 8px;
-            border: 1px solid #ffcdd2;
-            display: none;
-        }
+        .login-error { margin-top: 14px; padding: 10px; background: var(--red-bg); color: var(--red); font-size: 0.84rem; border-radius: 8px; border: 1px solid #ffcdd2; }
 
-        /* ================= PAINEL PRINCIPAL (DASHBOARD) ================= */
-        #dashboardScreen { display: none; }
-        header.dash-header {
-            background: linear-gradient(135deg, var(--green-deep), var(--green-primary));
-            color: #fff;
-            padding: 16px 28px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-            box-shadow: var(--shadow-md);
-        }
-        .brand-cluster {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-        .header-logo-icon {
-            width: 44px;
-            height: 44px;
-            background: #fff;
-            border-radius: 10px;
-            padding: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-        }
-        .dash-title h1 { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.3px; }
-        .dash-title p { font-size: 0.78rem; opacity: 0.9; }
+        /* ---------- DASHBOARD ---------- */
+        header.dash-header { background: linear-gradient(135deg, var(--green-deep), var(--green-primary)); color: #fff; padding: 14px 20px;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; box-shadow: var(--shadow-md); }
+        .brand-cluster { display: flex; align-items: center; gap: 12px; }
+        .header-logo-icon { width: 42px; height: 42px; background: #fff; border-radius: 10px; padding: 5px; display: flex; align-items: center; justify-content: center; }
+        .dash-title h1 { font-size: 1.15rem; font-weight: 800; }
+        .dash-title p { font-size: 0.76rem; opacity: 0.9; }
+        .header-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .user-tag { background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; }
+        .btn-hdr { border: none; border-radius: 8px; padding: 8px 12px; font-size: 0.8rem; font-weight: 700; cursor: pointer; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 6px; background: #fff; color: var(--green-deep); }
+        .btn-hdr:hover { background: var(--green-light); }
+        .btn-hdr.logout { background: rgba(255,255,255,0.15); color: #fff; }
+        .btn-hdr.logout:hover { background: rgba(198,40,40,0.8); }
+        select.ensaio-select { padding: 7px 10px; border-radius: 8px; border: none; font-weight: 700; color: var(--green-deep); font-size: 0.82rem; }
 
-        .header-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .user-tag {
-            background: rgba(255,255,255,0.15);
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            backdrop-filter: blur(4px);
-        }
-        .btn-hdr {
-            border: none;
-            border-radius: 8px;
-            padding: 8px 14px;
-            font-size: 0.82rem;
-            font-weight: 700;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.15s;
-        }
-        .btn-hdr-white { background: #fff; color: var(--green-deep); }
-        .btn-hdr-white:hover { background: var(--green-light); }
-        .btn-hdr-logout { background: rgba(255,255,255,0.15); color: #fff; }
-        .btn-hdr-logout:hover { background: rgba(198,40,40,0.8); }
+        .container { max-width: 1240px; margin: 20px auto; padding: 0 16px 40px; display: grid; gap: 18px; }
+        .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+        .kpi-card { background: var(--card-bg); border-radius: 12px; padding: 14px 16px; border: 1px solid var(--border); border-left: 4px solid var(--green-primary); box-shadow: var(--shadow-sm); }
+        .kpi-card.warn { border-left-color: var(--gold-accent); }
+        .kpi-card span { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.4px; }
+        .kpi-card strong { display: block; font-size: 1.7rem; font-weight: 800; margin-top: 2px; }
 
-        .container {
-            max-width: 1240px;
-            margin: 24px auto;
-            padding: 0 20px 40px 20px;
-            display: grid;
-            gap: 20px;
-        }
+        .panel { background: var(--card-bg); border-radius: 14px; padding: 20px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+        .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+        .panel-head h2 { font-size: 1.05rem; color: var(--green-deep); }
+        .hint { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; }
+        .badge-endpoint { font-size: 0.72rem; background: var(--green-light); color: var(--green-deep); padding: 4px 10px; border-radius: 99px; font-weight: 700; font-family: monospace; }
 
-        /* CARDS KPI */
-        .kpis {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 14px;
-        }
-        .kpi-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 18px;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm);
-            border-left: 4px solid var(--green-primary);
-        }
-        .kpi-card span {
-            font-size: 0.74rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            font-weight: 700;
-            letter-spacing: 0.4px;
-        }
-        .kpi-card strong {
-            display: block;
-            font-size: 1.85rem;
-            font-weight: 800;
-            color: var(--text-dark);
-            margin-top: 4px;
-        }
+        .sync-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (max-width: 720px) { .sync-grid { grid-template-columns: 1fr; } }
+        .field-label { display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 4px; color: var(--text-dark); }
+        input[type="file"] { width: 100%; padding: 9px 12px; border: 1.5px dashed var(--border); border-radius: 8px; font-size: 0.85rem; background: #fafcfa; }
+        .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+        .btn { border: none; border-radius: 8px; padding: 10px 16px; font-weight: 700; font-size: 0.86rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+        .btn:disabled { opacity: .55; cursor: not-allowed; }
+        .btn-primary { background: var(--green-primary); color: #fff; } .btn-primary:hover:not(:disabled) { background: var(--green-hover); }
+        .btn-outline { background: #fff; border: 1.5px solid var(--green-primary); color: var(--green-primary); } .btn-outline:hover:not(:disabled) { background: var(--green-light); }
+        .btn-danger { background: var(--red); color: #fff; }
+        .btn-blue { background: var(--blue); color: #fff; }
+        .status-box { margin-top: 12px; padding: 10px 14px; border-radius: 8px; font-size: 0.84rem; background: #f8faf8; border: 1px dashed var(--border); }
+        .status-box ul { margin: 6px 0 0 18px; font-size: 0.8rem; color: var(--text-muted); }
 
-        /* ÁREA DE IMPORTAÇÃO E STATUS */
-        .sync-panel {
-            background: var(--card-bg);
-            border-radius: 14px;
-            padding: 22px;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm);
-        }
-        .sync-panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 14px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .sync-panel-header h2 {
-            font-size: 1.1rem;
-            color: var(--green-deep);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .badge-endpoint {
-            font-size: 0.75rem;
-            background: var(--green-light);
-            color: var(--green-deep);
-            padding: 4px 10px;
-            border-radius: 99px;
-            font-weight: 700;
-            font-family: monospace;
-        }
-        .sync-action-row {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .file-box {
-            flex: 1;
-            min-width: 260px;
-            position: relative;
-        }
-        input[type="file"] {
-            width: 100%;
-            padding: 10px 14px;
-            border: 1.5px dashed var(--border);
-            border-radius: 8px;
-            font-size: 0.88rem;
-            background: #fafcfa;
-        }
-        .btn-act {
-            border: none;
-            border-radius: 8px;
-            padding: 11px 18px;
-            font-weight: 700;
-            font-size: 0.88rem;
-            cursor: pointer;
-            transition: all 0.15s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .btn-upload { background: var(--green-primary); color: #fff; }
-        .btn-upload:hover { background: var(--green-hover); }
-        .btn-simular { background: #fff; border: 1.5px solid var(--green-primary); color: var(--green-primary); }
-        .btn-simular:hover { background: var(--green-light); }
-
-        .sync-status-box {
-            margin-top: 14px;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 0.86rem;
-            background: #f8faf8;
-            border: 1px dashed var(--border);
-            color: var(--text-dark);
-        }
-
-        /* TABELA DE RANKING GENÉTICO */
-        .table-card {
-            background: var(--card-bg);
-            border-radius: 14px;
-            padding: 22px;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm);
-        }
-        .table-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 14px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .table-card-header h2 {
-            font-size: 1.1rem;
-            color: var(--green-deep);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.88rem;
-        }
-        th, td {
-            text-align: left;
-            padding: 12px 14px;
-            border-bottom: 1px solid var(--border);
-        }
-        th {
-            background: #f8faf8;
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-        }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+        th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        th { background: #f8faf8; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
         tr:hover td { background: #fafcfa; }
-        .progress-track {
-            width: 100%;
-            background: #e0e6e0;
-            height: 7px;
-            border-radius: 99px;
-            overflow: hidden;
-            min-width: 60px;
-        }
-        .progress-fill { background: var(--green-primary); height: 100%; border-radius: 99px; }
-        .badge-prod {
-            display: inline-block;
-            background: var(--green-light);
-            color: var(--green-deep);
-            padding: 3px 10px;
-            border-radius: 99px;
-            font-weight: 700;
-            font-size: 0.8rem;
-        }
+        .progress-track { width: 100%; background: #e0e6e0; height: 7px; border-radius: 99px; overflow: hidden; min-width: 60px; }
+        .progress-fill { background: var(--green-primary); height: 100%; }
+        .badge-prod { display: inline-block; background: var(--green-light); color: var(--green-deep); padding: 3px 10px; border-radius: 99px; font-weight: 700; font-size: 0.78rem; }
+        .chip { display: inline-block; padding: 3px 10px; border-radius: 99px; font-weight: 700; font-size: 0.74rem; }
+        .chip.PENDENTE { background: var(--amber-bg); color: var(--amber); }
+        .chip.VALIDADA { background: var(--green-light); color: var(--green-deep); }
+        .chip.AJUSTADA { background: var(--blue-bg); color: var(--blue); }
+        .chip.REJEITADA { background: var(--red-bg); color: var(--red); }
+        .thumb { width: 52px; height: 40px; object-fit: cover; border-radius: 6px; background: #e8ede8; display: block; }
+        .thumb-empty { width: 52px; height: 40px; border-radius: 6px; background: #f1f3f1; color: #9aa79b; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .filters { display: flex; gap: 6px; flex-wrap: wrap; }
+        .filter-btn { background: #fff; border: 1px solid var(--border); border-radius: 99px; padding: 5px 12px; font-size: 0.78rem; font-weight: 700; cursor: pointer; color: var(--text-muted); }
+        .filter-btn.active { background: var(--green-primary); color: #fff; border-color: var(--green-primary); }
+        .pager { display: flex; gap: 10px; align-items: center; justify-content: flex-end; margin-top: 12px; font-size: 0.82rem; color: var(--text-muted); }
+
+        /* ---------- MODAL DE REVISAO ---------- */
+        .modal { position: fixed; inset: 0; background: rgba(10,25,12,0.65); z-index: 50; display: flex; align-items: flex-start; justify-content: center; padding: 20px 12px; overflow-y: auto; }
+        .modal-box { background: #fff; border-radius: 14px; width: 100%; max-width: 1020px; box-shadow: var(--shadow-lg); }
+        .modal-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--border); }
+        .modal-head h3 { font-size: 1rem; color: var(--green-deep); }
+        .modal-close { background: none; border: none; font-size: 1.6rem; cursor: pointer; color: var(--text-muted); line-height: 1; }
+        .modal-body { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; padding: 20px; }
+        @media (max-width: 800px) { .modal-body { grid-template-columns: 1fr; } }
+        .foto-wrap { position: relative; background: #0d1a0f; border-radius: 10px; overflow: hidden; min-height: 180px; display: flex; align-items: center; justify-content: center; }
+        .foto-wrap img { display: block; width: 100%; height: auto; }
+        .foto-wrap canvas { position: absolute; left: 0; top: 0; pointer-events: none; }
+        .foto-vazia { color: #9db39f; font-size: 0.85rem; padding: 40px 20px; text-align: center; }
+        .legenda { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .legenda span { font-size: 0.76rem; font-weight: 700; padding: 3px 9px; border-radius: 99px; color: #fff; }
+        .info-grid { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 0.84rem; margin-bottom: 14px; }
+        .info-grid dt { color: var(--text-muted); font-weight: 600; } .info-grid dd { font-weight: 600; word-break: break-all; }
+        .val-box { border-top: 1px solid var(--border); padding-top: 14px; display: grid; gap: 10px; }
+        .val-box input[type=number], .val-box textarea, .val-box select { width: 100%; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.9rem; }
+        .val-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .note { font-size: 0.78rem; color: var(--text-muted); background: #f8faf8; border: 1px dashed var(--border); border-radius: 8px; padding: 8px 10px; }
+        .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #123b19; color: #fff; padding: 10px 18px; border-radius: 99px; font-size: 0.85rem; z-index: 99; box-shadow: var(--shadow-lg); }
+        .toast.err { background: var(--red); }
     </style>
 </head>
 <body>
 
-<!-- BARRA DE IDENTIDADE INSTITUCIONAL -->
 <div class="gov-bar">
     <div>MINISTÉRIO DA AGRICULTURA E PECUÁRIA — <span>CEPLAC / CEPEC</span></div>
     <div>SISTEMA CENTRAL DE ENSAIOS GENÉTICOS (CACAUSYNC)</div>
 </div>
 
-<!-- ================= 1. TELA DE LOGIN INSTITUCIONAL ================= -->
+<!-- ================= LOGIN ================= -->
 <div id="loginScreen">
     <div class="login-card">
-        <!-- EMBLEMA DO FRUTO DO CACAU CEPEC (SVG VETORIAL) -->
         <div class="logo-emblem">
-            <svg width="46" height="46" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- Folha superior -->
+            <svg width="46" height="46" viewBox="0 0 48 48" fill="none" aria-hidden="true">
                 <path d="M24 6C20 10 18 16 22 20C26 24 32 22 36 18C36 12 30 6 24 6Z" fill="#81C784"/>
                 <path d="M24 6C23 12 25 18 36 18" stroke="#388E3C" stroke-width="1.8" stroke-linecap="round"/>
-                <!-- Fruto de Cacau Ouro/Bronze com estrias -->
                 <path d="M24 16C15 16 10 23 11 32C12 39 19 44 24 44C29 44 36 39 37 32C38 23 33 16 24 16Z" fill="#F59E0B"/>
                 <path d="M24 16C21 24 21 36 24 44" stroke="#B45309" stroke-width="2" stroke-linecap="round"/>
                 <path d="M18 20C15 26 16 35 20 42" stroke="#B45309" stroke-width="1.6" stroke-linecap="round"/>
                 <path d="M30 20C33 26 32 35 28 42" stroke="#B45309" stroke-width="1.6" stroke-linecap="round"/>
             </svg>
         </div>
-
         <h1>CEPLAC • CEPEC</h1>
         <div class="inst-sub">Centro de Pesquisas do Cacau</div>
-        <p class="app-desc">CacauSync API — Acesso institucional para sincronização e análise de ensaios genéticos</p>
+        <p class="app-desc">CacauSync — acesso institucional para sincronização, auditoria e análise de ensaios genéticos</p>
 
         <form onsubmit="realizarLogin(event)">
-            <div class="form-group">
-                <label>E-mail Institucional</label>
-                <input type="email" id="loginEmail" value="pesquisador@cepec.gov.br" required />
-            </div>
-            <div class="form-group">
-                <label>Senha de Acesso</label>
-                <input type="password" id="loginSenha" value="cepec123" required />
-            </div>
-
-            <button type="submit" class="btn-submit" id="btnLoginSubmit">Acessar Painel Central</button>
+            <div class="form-group"><label for="loginEmail">E-mail institucional</label>
+                <input type="email" id="loginEmail" value="pesquisador@cepec.gov.br" required autocomplete="username" /></div>
+            <div class="form-group"><label for="loginSenha">Senha de acesso</label>
+                <input type="password" id="loginSenha" value="cepec123" required autocomplete="current-password" /></div>
+            <button type="submit" class="btn-submit" id="btnLoginSubmit">Acessar painel central</button>
         </form>
-
-        <div id="loginErrorMsg" class="login-error"></div>
+        <div id="loginErrorMsg" class="login-error" hidden></div>
 
         <div class="quick-access-box">
-            <span>Perfis de Demonstração (1 Clique):</span>
+            <span>Perfis de demonstração (1 clique):</span>
             <div class="pills">
-                <button type="button" class="pill-btn" onclick="preencherLogin('pesquisador@cepec.gov.br', 'cepec123')">🌱 Pesquisador de Campo</button>
-                <button type="button" class="pill-btn" onclick="preencherLogin('coordenador@cepec.gov.br', 'cepec123')">🔬 Coordenador de Genética</button>
+                <button type="button" class="pill-btn" onclick="preencherLogin('pesquisador@cepec.gov.br')">🌱 Pesquisador de campo</button>
+                <button type="button" class="pill-btn" onclick="preencherLogin('coordenador@cepec.gov.br')">🔬 Coordenador de genética</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ================= 2. PAINEL PRINCIPAL (DASHBOARD) ================= -->
-<div id="dashboardScreen">
+<!-- ================= DASHBOARD ================= -->
+<div id="dashboardScreen" hidden>
     <header class="dash-header">
         <div class="brand-cluster">
             <div class="header-logo-icon">
-                <svg width="30" height="30" viewBox="0 0 48 48" fill="none">
+                <svg width="30" height="30" viewBox="0 0 48 48" fill="none" aria-hidden="true">
                     <path d="M24 6C20 10 18 16 22 20C26 24 32 22 36 18C36 12 30 6 24 6Z" fill="#2E7D32"/>
                     <path d="M24 16C15 16 10 23 11 32C12 39 19 44 24 44C29 44 36 39 37 32C38 23 33 16 24 16Z" fill="#F59E0B"/>
                     <path d="M24 16C21 24 21 36 24 44" stroke="#B45309" stroke-width="2"/>
                 </svg>
             </div>
             <div class="dash-title">
-                <h1>CEPEC / CEPLAC — CacauSync Central</h1>
-                <p>Orquestração de Rotas e Ingestão Offline-First do CacauApp Android</p>
+                <h1>CacauSync — CEPEC / CEPLAC</h1>
+                <p>Sincronização offline-first, auditoria de fotos e ranking de clones</p>
             </div>
         </div>
-
         <div class="header-controls">
-            <div class="user-tag">
-                <span>👤</span>
-                <span id="dashUserDisplay">Carregando...</span>
-            </div>
-            <a href="/api/v1/ensaios/TC-1801/rota-csv" class="btn-hdr btn-hdr-white">⬇ Baixar Rota (FieldBook CSV)</a>
-            <a href="/swagger-ui.html" target="_blank" class="btn-hdr btn-hdr-white">⚡ Swagger UI</a>
-            <button class="btn-hdr btn-hdr-logout" onclick="fazerLogout()">Sair</button>
+            <select id="ensaioSelect" class="ensaio-select" title="Ensaio" onchange="trocarEnsaio()"></select>
+            <div class="user-tag">👤 <span id="dashUserDisplay"></span></div>
+            <button class="btn-hdr" onclick="baixarRota()">⬇ Rota (FieldBook CSV)</button>
+            <a class="btn-hdr" href="/swagger-ui.html" target="_blank" rel="noopener">⚡ Swagger</a>
+            <button class="btn-hdr logout" onclick="fazerLogout()">Sair</button>
         </div>
     </header>
 
     <div class="container">
-        <!-- KPIS DO ENSAIO -->
         <div class="kpis">
-            <div class="kpi-card"><span>Ensaio Ativo</span><strong id="kpiEnsaio">TC-1801</strong></div>
-            <div class="kpi-card"><span>Plantas Catalogadas</span><strong id="kpiTotalPlantas">-</strong></div>
-            <div class="kpi-card"><span>Plantas Vivas (Stand)</span><strong id="kpiPlantasVivas">-</strong></div>
-            <div class="kpi-card"><span>Plantas Não Coletáveis</span><strong id="kpiPlantasMortas">-</strong></div>
-            <div class="kpi-card"><span>Total Frutos (IA)</span><strong id="kpiTotalFrutos">-</strong></div>
-            <div class="kpi-card"><span>Alertas GPS (0.0)</span><strong id="kpiAlertasGps">-</strong></div>
+            <div class="kpi-card"><span>Plantas catalogadas</span><strong id="kpiTotalPlantas">-</strong></div>
+            <div class="kpi-card"><span>Plantas vivas</span><strong id="kpiPlantasVivas">-</strong></div>
+            <div class="kpi-card"><span>Não coletáveis</span><strong id="kpiPlantasMortas">-</strong></div>
+            <div class="kpi-card"><span>Frutos (validados)</span><strong id="kpiTotalFrutos">-</strong></div>
+            <div class="kpi-card warn"><span>Aguardando validação</span><strong id="kpiPendentes">-</strong></div>
+            <div class="kpi-card"><span>Alertas de GPS</span><strong id="kpiAlertasGps">-</strong></div>
         </div>
 
-        <!-- ÁREA DE SINCRONIZAÇÃO CSV DO CELULAR -->
-        <div class="sync-panel">
-            <div class="sync-panel-header">
-                <h2>📲 Sincronizar Coletas de Campo (CacauApp Android)</h2>
+        <!-- ENVIO -->
+        <div class="panel">
+            <div class="panel-head">
+                <h2>📲 Enviar coleta do celular (CSV + fotos)</h2>
                 <span class="badge-endpoint">POST /api/v1/coletas/importar-csv</span>
             </div>
-            <div class="sync-action-row">
-                <div class="file-box">
-                    <input type="file" id="csvFileInput" accept=".csv" />
-                </div>
-                <button class="btn-act btn-upload" onclick="enviarArquivoCsv()">📤 Enviar CSV do Celular</button>
-                <button class="btn-act btn-simular" onclick="simularColetaAndroid()">⚡ Simular Coleta CacauApp</button>
+            <p class="hint">No celular, abra este mesmo endereço no Chrome (o IP do computador na rede Wi-Fi, porta 8080). Escolha o CSV exportado pelo app e as fotos da pasta <b>Pictures/CEPEC_Analise</b>. As fotos são reduzidas no próprio aparelho antes de subir.</p>
+            <div class="sync-grid">
+                <div><label class="field-label" for="csvFileInput">1. Planilha CSV do app</label>
+                    <input type="file" id="csvFileInput" accept=".csv,text/csv" /></div>
+                <div><label class="field-label" for="fotosInput">2. Fotos da coleta (opcional, várias)</label>
+                    <input type="file" id="fotosInput" accept="image/*" multiple /></div>
             </div>
-            <div id="syncStatusBox" class="sync-status-box">
-                Pronto para receber arquivos CSV exportados pelo aplicativo Android. Suporta identificação automática de plantas mortas/secas, bloqueio de duplicatas e auditoria de GPS.
+            <div class="actions">
+                <button class="btn btn-primary" id="btnEnviar" onclick="enviarColeta()">📤 Enviar para o laboratório</button>
+                <button class="btn btn-outline" onclick="simularColetaCsv()">⚡ Demonstração: CSV + fotos</button>
+                <button class="btn btn-outline" onclick="simularEnvioApp()">⚡ Demonstração: envio do app com caixas do YOLO</button>
+            </div>
+            <div id="syncStatusBox" class="status-box">Pronto. Reenviar o mesmo CSV é seguro: nada é duplicado, só as fotos que faltavam são anexadas.</div>
+        </div>
+
+        <!-- AUDITORIA -->
+        <div class="panel">
+            <div class="panel-head">
+                <h2>🔎 Auditoria de coletas — confira a foto e valide</h2>
+                <div class="filters" id="filtros">
+                    <button class="filter-btn active" data-status="">Todas</button>
+                    <button class="filter-btn" data-status="PENDENTE">Pendentes</button>
+                    <button class="filter-btn" data-status="VALIDADA">Validadas</button>
+                    <button class="filter-btn" data-status="AJUSTADA">Ajustadas</button>
+                    <button class="filter-btn" data-status="REJEITADA">Rejeitadas</button>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Foto</th><th>Planta</th><th>Clone</th><th>Parcela</th><th>Frutos (IA → valor final)</th><th>GPS</th><th>Status</th><th></th></tr></thead>
+                    <tbody id="auditoriaBody"><tr><td colspan="8">Carregando…</td></tr></tbody>
+                </table>
+            </div>
+            <div class="pager">
+                <button class="btn btn-outline" id="btnAnt" onclick="mudarPagina(-1)">‹ Anterior</button>
+                <span id="pagInfo"></span>
+                <button class="btn btn-outline" id="btnProx" onclick="mudarPagina(1)">Próxima ›</button>
             </div>
         </div>
 
-        <!-- TABELA DE RANKING GENÉTICO -->
-        <div class="table-card">
-            <div class="table-card-header">
-                <h2>🏆 Ranking de Produtividade e Sobrevivência por Clone (Ensaio TC-1801)</h2>
-                <button class="btn-act btn-simular" onclick="carregarRelatorio()">🔄 Atualizar Indicadores</button>
+        <!-- RANKING -->
+        <div class="panel">
+            <div class="panel-head">
+                <h2>🏆 Ranking de produtividade e sobrevivência por clone</h2>
+                <button class="btn btn-outline" onclick="carregarRelatorio()">🔄 Atualizar</button>
             </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 60px;">Posição</th>
-                        <th>Clone Genético</th>
-                        <th>Descrição / Origem</th>
-                        <th>Plantas (Vivas / Total)</th>
-                        <th>Taxa Sobrevivência</th>
-                        <th>Leituras</th>
-                        <th>Total Frutos</th>
-                        <th>Média Frutos / Planta Viva</th>
-                    </tr>
-                </thead>
-                <tbody id="tabelaClonesBody">
-                    <tr><td colspan="8">Carregando dados agronômicos...</td></tr>
-                </tbody>
-            </table>
+            <p class="hint">Conta só o que está validado ou aguardando; leituras rejeitadas ficam de fora e leituras ajustadas valem o número do pesquisador.</p>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>#</th><th>Clone</th><th>Descrição</th><th>Plantas (vivas/total)</th><th>Sobrevivência</th><th>Leituras</th><th>Frutos</th><th>Média/planta viva</th></tr></thead>
+                    <tbody id="tabelaClonesBody"><tr><td colspan="8">Carregando…</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MODAL DE REVISAO ================= -->
+<div id="modal" class="modal" hidden onclick="if(event.target===this)fecharModal()">
+    <div class="modal-box">
+        <div class="modal-head"><h3 id="modalTitulo">Revisão da leitura</h3><button class="modal-close" onclick="fecharModal()" aria-label="Fechar">×</button></div>
+        <div class="modal-body">
+            <div>
+                <div class="foto-wrap" id="fotoWrap"></div>
+                <div class="legenda" id="legenda"></div>
+            </div>
+            <div>
+                <dl class="info-grid" id="infoGrid"></dl>
+                <div class="val-box" id="valBox"></div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    let authToken = localStorage.getItem("cacausync_jwt") || "";
-    let authUser = JSON.parse(localStorage.getItem("cacausync_user") || "null");
+    /* =====================================================================
+       Estado e utilitarios
+       ===================================================================== */
+    let token = localStorage.getItem('cacausync_jwt') || '';
+    let usuario = JSON.parse(localStorage.getItem('cacausync_user') || 'null');
+    let ensaio = localStorage.getItem('cacausync_ensaio') || 'TC-1801';
+    let pagina = 0, totalPaginas = 0, filtroStatus = '';
+    const TAMANHO_PAGINA = 10;
+    const fotoUrls = new Map();   // id da leitura -> blob URL (a foto exige token, entao nao da para usar <img src> direto)
+    const PALETA = ['#e53935', '#1e88e5', '#fb8c00', '#8e24aa', '#00897b', '#6d4c41', '#d81b60', '#7cb342'];
 
-    function preencherLogin(email, senha) {
-        document.getElementById('loginEmail').value = email;
-        document.getElementById('loginSenha').value = senha;
-        document.getElementById('loginErrorMsg').style.display = 'none';
+    // Tudo que vem do servidor (nome de campanha, observacao, clone...) passa por aqui antes de ir para o HTML.
+    // Sem isso, um CSV com <script> no nome da campanha executaria codigo no navegador do pesquisador (XSS).
+    function esc(v) {
+        return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    const $ = id => document.getElementById(id);
+
+    function toast(msg, erro = false) {
+        const t = document.createElement('div');
+        t.className = 'toast' + (erro ? ' err' : ''); t.textContent = msg;
+        document.body.appendChild(t); setTimeout(() => t.remove(), 3500);
     }
 
+    // Unico ponto que fala com a API: coloca o token, trata 401 (sessao expirada) e extrai a mensagem de erro.
+    async function api(caminho, opcoes = {}) {
+        const resp = await fetch(caminho, { ...opcoes, headers: { ...(opcoes.headers || {}), 'Authorization': `Bearer ${token}` } });
+        if (resp.status === 401) { fazerLogout(); throw new Error('Sessão expirada. Entre novamente.'); }
+        if (!resp.ok) {
+            let msg = `Erro HTTP ${resp.status}`;
+            try { const e = await resp.json(); msg = e.detail || e.title || msg; } catch (_) {}
+            throw new Error(msg);
+        }
+        return resp;
+    }
+    const apiJson = async (c, o) => (await api(c, o)).json();
+
+    /* =====================================================================
+       Login / logout
+       ===================================================================== */
+    function preencherLogin(email) { $('loginEmail').value = email; $('loginSenha').value = 'cepec123'; $('loginErrorMsg').hidden = true; }
+
     async function realizarLogin(e) {
-        if (e) e.preventDefault();
-        const email = document.getElementById('loginEmail').value.trim();
-        const senha = document.getElementById('loginSenha').value;
-        const errBox = document.getElementById('loginErrorMsg');
-        const btn = document.getElementById('btnLoginSubmit');
-
-        errBox.style.display = 'none';
-        btn.disabled = true;
-        btn.textContent = "Autenticando...";
-
+        e.preventDefault();
+        const btn = $('btnLoginSubmit'), erro = $('loginErrorMsg');
+        erro.hidden = true; btn.disabled = true; btn.textContent = 'Autenticando…';
         try {
-            const resp = await fetch('/api/v1/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, senha })
-            });
-
+            const resp = await fetch('/api/v1/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: $('loginEmail').value.trim(), senha: $('loginSenha').value }) });
             if (!resp.ok) {
-                let msg = "Credenciais inválidas. Verifique seu e-mail e senha.";
-                try {
-                    const err = await resp.json();
-                    msg = err.detail || err.title || msg;
-                } catch(e) {}
+                let msg = 'Credenciais inválidas. Verifique seu e-mail e senha.';
+                try { const j = await resp.json(); msg = j.detail || msg; } catch (_) {}
                 throw new Error(msg);
             }
-
             const data = await resp.json();
-            authToken = data.token;
-            authUser = data;
-            localStorage.setItem("cacausync_jwt", authToken);
-            localStorage.setItem("cacausync_user", JSON.stringify(authUser));
-
+            token = data.token; usuario = data;
+            localStorage.setItem('cacausync_jwt', token); localStorage.setItem('cacausync_user', JSON.stringify(usuario));
             mostrarDashboard();
-        } catch (err) {
-            errBox.textContent = `❌ ${err.message}`;
-            errBox.style.display = 'block';
-        } finally {
-            btn.disabled = false;
-            btn.textContent = "Acessar Painel Central";
-        }
+        } catch (err) { erro.textContent = '❌ ' + err.message; erro.hidden = false; }
+        finally { btn.disabled = false; btn.textContent = 'Acessar painel central'; }
     }
 
     function fazerLogout() {
-        authToken = "";
-        authUser = null;
-        localStorage.removeItem("cacausync_jwt");
-        localStorage.removeItem("cacausync_user");
-        document.getElementById('dashboardScreen').style.display = 'none';
-        document.getElementById('loginScreen').style.display = 'flex';
+        token = ''; usuario = null;
+        localStorage.removeItem('cacausync_jwt'); localStorage.removeItem('cacausync_user');
+        fotoUrls.forEach(u => URL.revokeObjectURL(u)); fotoUrls.clear();
+        fecharModal();
+        $('dashboardScreen').hidden = true; $('loginScreen').hidden = false;
     }
 
-    function mostrarDashboard() {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('dashboardScreen').style.display = 'block';
-        if (authUser) {
-            document.getElementById('dashUserDisplay').textContent = `${authUser.nomePesquisador} (${authUser.role})`;
-        }
-        carregarRelatorio();
-    }
-
-    async function enviarArquivoCsv() {
-        const fileInput = document.getElementById('csvFileInput');
-        if (!fileInput.files.length) {
-            alert('Selecione um arquivo CSV exportado pelo CacauApp ou clique em "Simular Coleta CacauApp".');
-            return;
-        }
-        await uploadCsvBlob(fileInput.files[0], fileInput.files[0].name);
-    }
-
-    async function simularColetaAndroid() {
-        const timestamp = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        const csvSimulado = [
-            "Campanha,ID_Gerado,Clone,Parcela,Planta,Resultado,Data,Lat,Lng",
-            `TC-1801,CCN-51_TC-1801_par20_pla1_c0226,CCN-51,20,1,28,28/10 ${timestamp},-14.7892,-39.2781`,
-            `TC-1801,CCN-51_TC-1801_par20_pla2_c0226,CCN-51,20,2,24,28/10 ${timestamp},-14.7893,-39.2782`,
-            `TC-1801,SCP-16005_TC-1801_par1_pla1_c0226,SCP-16005,1,1,21,28/10 ${timestamp},-14.7885,-39.2775`,
-            `TC-1801,PS-13.19_TC-1801_par13_pla1_c0226,PS-13.19,13,1,18,28/10 ${timestamp},-14.7889,-39.2779`,
-            `TC-1801,SCP-17202_TC-1801_par2_pla5_c0226,SCP-17202,2,5,Não Coletável,28/10 ${timestamp},0.0,0.0`
-        ].join("\n");
-
-        const blob = new Blob([csvSimulado], { type: 'text/csv;charset=utf-8;' });
-        await uploadCsvBlob(blob, `Coleta_Simulada_CacauApp_${Date.now()}.csv`);
-    }
-
-    async function uploadCsvBlob(blob, filename) {
-        const statusBox = document.getElementById('syncStatusBox');
-        statusBox.innerHTML = `⏳ Enviando <strong>${filename}</strong> para a API...`;
-
-        const formData = new FormData();
-        formData.append("arquivo", blob, filename);
-        formData.append("codigoEnsaio", "TC-1801");
-
+    async function mostrarDashboard() {
+        $('loginScreen').hidden = true; $('dashboardScreen').hidden = false;
+        $('dashUserDisplay').textContent = `${usuario.nomePesquisador} (${usuario.role.replace('ROLE_', '')})`;
         try {
-            const resp = await fetch('/api/v1/coletas/importar-csv', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${authToken}` },
-                body: formData
-            });
+            const ensaios = await apiJson('/api/v1/ensaios');
+            if (!ensaios.some(e => e.codigo === ensaio) && ensaios.length) ensaio = ensaios[0].codigo;
+            $('ensaioSelect').innerHTML = ensaios.map(e => `<option value="${esc(e.codigo)}" ${e.codigo === ensaio ? 'selected' : ''}>${esc(e.codigo)}</option>`).join('');
+        } catch (_) { return; }
+        atualizarTudo();
+    }
 
-            if (!resp.ok) {
-                let msg = `HTTP ${resp.status}`;
-                try {
-                    const err = await resp.json();
-                    msg = err.detail || err.title || msg;
-                } catch(e) {}
-                throw new Error(msg);
+    function trocarEnsaio() { ensaio = $('ensaioSelect').value; localStorage.setItem('cacausync_ensaio', ensaio); pagina = 0; atualizarTudo(); }
+    function atualizarTudo() { carregarRelatorio(); carregarAuditoria(); }
+
+    async function baixarRota() {
+        try {
+            const blob = await (await api(`/api/v1/ensaios/${encodeURIComponent(ensaio)}/rota-csv`)).blob();
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `dados_cacau_${ensaio.toLowerCase()}.csv`;
+            document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+        } catch (e) { toast(e.message, true); }
+    }
+
+    /* =====================================================================
+       Envio de CSV + fotos
+       ===================================================================== */
+    // Reduz a foto no aparelho (lado maior 1600 px, JPEG 85%): ~0,4 MB em vez de ~5 MB. As caixas do YOLO sao
+    // normalizadas (0 a 1), entao continuam valendo em qualquer tamanho. O original segue intacto no celular.
+    async function reduzirImagem(file, maxLado = 1600, qualidade = 0.85) {
+        if (!file.type.startsWith('image/')) return file;
+        try {
+            const bmp = await createImageBitmap(file);   // respeita a rotacao EXIF no Chrome atual
+            const escala = Math.min(1, maxLado / Math.max(bmp.width, bmp.height));
+            if (escala === 1 && file.size < 1.5 * 1024 * 1024) { bmp.close && bmp.close(); return file; }
+            const c = document.createElement('canvas');
+            c.width = Math.round(bmp.width * escala); c.height = Math.round(bmp.height * escala);
+            c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+            bmp.close && bmp.close();
+            const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', qualidade));
+            return blob ? new File([blob], file.name, { type: 'image/jpeg' }) : file;
+        } catch (_) { return file; }
+    }
+
+    async function enviarColeta() {
+        const csv = $('csvFileInput').files[0];
+        if (!csv) { toast('Escolha o CSV exportado pelo app.', true); return; }
+        await enviarCsvComFotos(csv, Array.from($('fotosInput').files));
+    }
+
+    async function enviarCsvComFotos(csvFile, fotosOriginais) {
+        const box = $('syncStatusBox'), btn = $('btnEnviar');
+        btn.disabled = true;
+        try {
+            box.textContent = '⏳ Preparando fotos…';
+            const fotos = [];
+            for (let i = 0; i < fotosOriginais.length; i++) {
+                box.textContent = `⏳ Reduzindo fotos… ${i + 1}/${fotosOriginais.length}`;
+                fotos.push(await reduzirImagem(fotosOriginais[i]));
             }
+            // Lotes de 12 fotos. O CSV vai em todos os lotes: como a importacao e idempotente, reenviar so anexa o que faltava.
+            const lotes = []; for (let i = 0; i < Math.max(fotos.length, 1); i += 12) lotes.push(fotos.slice(i, i + 12));
+            let primeiro = null, anexadas = 0, avisos = [];
+            for (let i = 0; i < lotes.length; i++) {
+                box.textContent = `⏳ Enviando… lote ${i + 1}/${lotes.length}`;
+                const fd = new FormData();
+                fd.append('arquivo', csvFile, csvFile.name); fd.append('codigoEnsaio', ensaio);
+                lotes[i].forEach(f => fd.append('fotos', f, f.name));
+                const r = await apiJson('/api/v1/coletas/importar-csv', { method: 'POST', body: fd });
+                if (!primeiro) primeiro = r;
+                anexadas += r.fotosAnexadas;
+                avisos = avisos.concat(r.avisos.filter(a => !a.includes('foto(s) não anexada')));
+            }
+            const semPar = fotos.length - anexadas;
+            box.innerHTML = `✅ <b>${esc(primeiro.totalLinhasProcessadas)}</b> linhas lidas · <b>${esc(primeiro.leiturasNovasInseridas)}</b> novas · `
+                + `<b>${esc(primeiro.leiturasDuplicadasIgnoradas)}</b> já existiam · <b>${esc(primeiro.plantasMarcadasNaoColetaveis)}</b> não coletáveis · `
+                + `<b>${esc(anexadas)}</b> foto(s) anexada(s)` + (semPar > 0 ? ` · ⚠ <b>${esc(semPar)}</b> sem par no CSV` : '')
+                + (avisos.length ? `<ul>${avisos.slice(0, 6).map(a => `<li>${esc(a)}</li>`).join('')}</ul>` : '');
+            atualizarTudo();
+        } catch (e) { box.textContent = '❌ ' + e.message; }
+        finally { btn.disabled = false; }
+    }
 
-            const data = await resp.json();
-            statusBox.innerHTML = `✅ <strong>Sincronização concluída com sucesso:</strong> `
-                + `<strong>${data.leiturasNovasInseridas}</strong> novas leituras salvas | `
-                + `<strong>${data.leiturasDuplicadasIgnoradas}</strong> duplicadas ignoradas (idempotência) | `
-                + `<strong>${data.plantasMarcadasNaoColetaveis}</strong> baixas fitossanitárias | `
-                + `<strong>${data.totalFrutosImportadosLote}</strong> frutos adicionados ao ensaio ${data.codigoEnsaio}.`;
+    /* ----- demonstracoes (sem precisar do celular) ----- */
+    function gerarFotoDemo(caixas, nFrutos, w = 800, h = 600) {
+        const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
+        const bg = g.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, '#5c8f46'); bg.addColorStop(1, '#2f5a2a');
+        g.fillStyle = bg; g.fillRect(0, 0, w, h);
+        g.fillStyle = 'rgba(30,70,30,.5)'; for (let i = 0; i < 14; i++) { g.beginPath(); g.ellipse(Math.random() * w, Math.random() * h, 80, 22, Math.random() * 3, 0, 7); g.fill(); }
+        const desenha = (x, y, cw, ch) => { g.fillStyle = '#d9a441'; g.strokeStyle = '#8a5a14'; g.lineWidth = 3;
+            g.beginPath(); g.ellipse(x + cw / 2, y + ch / 2, cw / 2, ch / 2, 0, 0, 7); g.fill(); g.stroke(); };
+        if (caixas && caixas.length) caixas.forEach(b => desenha(b.x * w, b.y * h, b.largura * w, b.altura * h));
+        else for (let i = 0; i < Math.min(nFrutos, 12); i++) desenha(60 + (i % 4) * 180, 60 + Math.floor(i / 4) * 170, 70, 110);
+        return new Promise(r => c.toBlob(b => r(b), 'image/jpeg', 0.85));
+    }
 
-            await carregarRelatorio();
-        } catch (err) {
-            statusBox.innerHTML = `❌ <strong>Erro na importação:</strong> ${err.message}`;
+    async function simularColetaCsv() {
+        const t = new Date(), hh = String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0');
+        const dia = String(t.getDate()).padStart(2, '0') + '/' + String(t.getMonth() + 1).padStart(2, '0');
+        const base = Date.now();
+        const linhas = [
+            ['CCN-51_Parcela20_Planta1', 'CCN-51', 20, 1, 28, -14.7892, -39.2781],
+            ['CCN-51_Parcela20_Planta2', 'CCN-51', 20, 2, 24, -14.7893, -39.2782],
+            ['SCP-16005_Parcela1_Planta1', 'SCP-16005', 1, 1, 21, -14.7885, -39.2775],
+            ['PS-13.19_Parcela13_Planta1', 'PS-13.19', 13, 1, 18, -14.7889, -39.2779],
+            ['SCP-17202_Parcela2_Planta5', 'SCP-17202', 2, 5, 'Não Coletável', 0.0, 0.0]
+        ];
+        const csv = 'Campanha,ID_Gerado,Clone,Parcela,Planta,Resultado,Data,Lat,Lng\n'
+            + linhas.map(l => `${ensaio},${l[0]},${l[1]},${l[2]},${l[3]},${l[4]},${dia} ${hh}:${base % 60},${l[5]},${l[6]}`).join('\n');
+        const csvFile = new File([csv], `Coleta_Custom_Demo_${base}.csv`, { type: 'text/csv' });
+        const fotos = [];
+        for (let i = 0; i < 4; i++) {   // a 5a planta e "Não Coletável": sem foto
+            fotos.push(new File([await gerarFotoDemo(null, linhas[i][4])], `${linhas[i][0]}_${base + i * 1000}.jpg`, { type: 'image/jpeg' }));
         }
+        await enviarCsvComFotos(csvFile, fotos);
+    }
+
+    async function simularEnvioApp() {
+        const box = $('syncStatusBox');
+        const n = Date.now() % 100000;
+        const caixas = [
+            { classe: 'fruto_maduro', confianca: 0.93, x: 0.10, y: 0.22, largura: 0.14, altura: 0.30 },
+            { classe: 'fruto_maduro', confianca: 0.88, x: 0.38, y: 0.15, largura: 0.13, altura: 0.28 },
+            { classe: 'fruto_verde', confianca: 0.81, x: 0.62, y: 0.40, largura: 0.12, altura: 0.26 },
+            { classe: 'monilia', confianca: 0.74, x: 0.80, y: 0.18, largura: 0.12, altura: 0.27 }
+        ];
+        try {
+            box.textContent = '⏳ Enviando JSON com caixas do YOLO…';
+            const plantId = `CCN-51_Parcela20_Planta3_demo${n}`;
+            const r = await apiJson('/api/v1/coletas/sync-json', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ codigoEnsaio: ensaio, leituras: [{ campanha: ensaio, plantId, clone: 'CCN-51', parcela: '20', planta: 3,
+                    resultado: String(caixas.length), data: new Date().toLocaleString('pt-BR'), lat: -14.789, lng: -39.278, deteccoes: caixas }] }) });
+            const lista = await apiJson(`/api/v1/ensaios/${encodeURIComponent(ensaio)}/leituras?size=20`);
+            const alvo = lista.content.find(l => l.plantCode === plantId);
+            if (alvo) {
+                const fd = new FormData(); fd.append('foto', new File([await gerarFotoDemo(caixas, 4)], 'demo.jpg', { type: 'image/jpeg' }));
+                await api(`/api/v1/leituras/${alvo.id}/foto`, { method: 'POST', body: fd });
+            }
+            box.textContent = `✅ Demonstração enviada (${r.leiturasNovasInseridas} leitura). Abra "Revisar" na auditoria para ver as caixas sobre a foto.`;
+            atualizarTudo();
+        } catch (e) { box.textContent = '❌ ' + e.message; }
+    }
+
+    /* =====================================================================
+       Auditoria (lista) e relatorio
+       ===================================================================== */
+    document.querySelectorAll('#filtros .filter-btn').forEach(b => b.addEventListener('click', () => {
+        document.querySelectorAll('#filtros .filter-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active'); filtroStatus = b.dataset.status; pagina = 0; carregarAuditoria();
+    }));
+    function mudarPagina(d) { pagina = Math.max(0, Math.min(totalPaginas - 1, pagina + d)); carregarAuditoria(); }
+
+    async function carregarAuditoria() {
+        const corpo = $('auditoriaBody');
+        try {
+            const q = `page=${pagina}&size=${TAMANHO_PAGINA}` + (filtroStatus ? `&status=${filtroStatus}` : '');
+            const p = await apiJson(`/api/v1/ensaios/${encodeURIComponent(ensaio)}/leituras?${q}`);
+            totalPaginas = p.totalPages;
+            $('pagInfo').textContent = p.totalElements ? `Página ${p.number + 1} de ${p.totalPages} · ${p.totalElements} leitura(s)` : '';
+            $('btnAnt').disabled = p.number <= 0; $('btnProx').disabled = p.number >= p.totalPages - 1;
+            if (!p.content.length) { corpo.innerHTML = '<tr><td colspan="8">Nenhuma leitura neste filtro.</td></tr>'; return; }
+            corpo.innerHTML = p.content.map(l => {
+                const final = l.coletavel ? l.qtdEfetiva : 'Não coletável';
+                const mudou = l.statusValidacao === 'AJUSTADA' ? ` → <b>${esc(l.qtdEfetiva)}</b>` : '';
+                const gps = l.alertaGps ? '<span class="chip PENDENTE">sem GPS</span>' : `${esc(l.latitude.toFixed(4))}, ${esc(l.longitude.toFixed(4))}`;
+                return `<tr>
+                    <td>${l.temFoto ? `<img class="thumb" data-foto="${esc(l.id)}" alt="foto" />` : '<div class="thumb-empty">sem foto</div>'}</td>
+                    <td title="${esc(l.plantCode)}">${esc(l.plantCode.length > 26 ? l.plantCode.slice(0, 26) + '…' : l.plantCode)}</td>
+                    <td><b>${esc(l.codigoClone)}</b></td><td>${esc(l.numeroParcela)}</td>
+                    <td>${l.coletavel ? esc(l.qtdFrutos) : '—'}${l.coletavel ? mudou : ` <span class="chip REJEITADA">${esc(final)}</span>`}</td>
+                    <td>${gps}</td><td><span class="chip ${esc(l.statusValidacao)}">${esc(l.statusValidacao)}</span></td>
+                    <td><button class="btn btn-primary" onclick="abrirRevisao(${Number(l.id)})">Revisar</button></td></tr>`;
+            }).join('');
+            corpo.querySelectorAll('img[data-foto]').forEach(img => carregarFoto(img.dataset.foto).then(u => { if (u) img.src = u; }));
+        } catch (e) { corpo.innerHTML = `<tr><td colspan="8">❌ ${esc(e.message)}</td></tr>`; }
+    }
+
+    async function carregarFoto(id, forcar = false) {
+        if (!forcar && fotoUrls.has(id)) return fotoUrls.get(id);
+        try {
+            const blob = await (await api(`/api/v1/leituras/${id}/foto`)).blob();
+            if (fotoUrls.has(id)) URL.revokeObjectURL(fotoUrls.get(id));
+            const u = URL.createObjectURL(blob); fotoUrls.set(id, u); return u;
+        } catch (_) { return null; }
     }
 
     async function carregarRelatorio() {
         try {
-            const resp = await fetch('/api/v1/ensaios/TC-1801/relatorio-clones');
-            if (!resp.ok) return;
-            const rel = await resp.json();
+            const r = await apiJson(`/api/v1/ensaios/${encodeURIComponent(ensaio)}/relatorio-clones`);
+            $('kpiTotalPlantas').textContent = r.totalPlantasEnsaio; $('kpiPlantasVivas').textContent = r.totalPlantasVivas;
+            $('kpiPlantasMortas').textContent = r.totalPlantasNaoColetaveis; $('kpiTotalFrutos').textContent = r.totalFrutosAcumulados;
+            $('kpiPendentes').textContent = r.leiturasPendentesValidacao; $('kpiAlertasGps').textContent = r.leiturasComAlertaGps;
+            $('tabelaClonesBody').innerHTML = r.rankingClones.map((c, i) => `<tr>
+                <td><b>#${i + 1}</b></td><td><b style="color:var(--green-deep)">${esc(c.codigoClone)}</b></td>
+                <td style="color:var(--text-muted)">${esc(c.descricaoClone || '-')}</td>
+                <td>${esc(c.plantasVivasColetaveis)} / ${esc(c.totalPlantasCadastradas)}</td>
+                <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-track"><div class="progress-fill" style="width:${Number(c.taxaSobrevivenciaPercentual)}%"></div></div><b>${esc(c.taxaSobrevivenciaPercentual)}%</b></div></td>
+                <td>${esc(c.totalLeiturasRealizadas)}</td><td><b>${esc(c.totalFrutosContados)}</b></td>
+                <td><span class="badge-prod">${esc(c.mediaFrutosPorPlantaViva)} frutos/planta</span></td></tr>`).join('');
+        } catch (e) { $('tabelaClonesBody').innerHTML = `<tr><td colspan="8">❌ ${esc(e.message)}</td></tr>`; }
+    }
 
-            document.getElementById('kpiEnsaio').textContent = rel.codigoEnsaio;
-            document.getElementById('kpiTotalPlantas').textContent = rel.totalPlantasEnsaio;
-            document.getElementById('kpiPlantasVivas').textContent = rel.totalPlantasVivas;
-            document.getElementById('kpiPlantasMortas').textContent = rel.totalPlantasNaoColetaveis;
-            document.getElementById('kpiTotalFrutos').textContent = rel.totalFrutosAcumulados;
-            document.getElementById('kpiAlertasGps').textContent = rel.leiturasComAlertaGps;
+    /* =====================================================================
+       Modal de revisao: foto + caixas do YOLO + validacao
+       ===================================================================== */
+    let leituraAberta = null, deteccoesAbertas = [];
 
-            const tbody = document.getElementById('tabelaClonesBody');
-            tbody.innerHTML = rel.rankingClones.map((c, idx) => `
-                <tr>
-                    <td><strong>#${idx + 1}</strong></td>
-                    <td><strong style="color:var(--green-deep);font-size:0.95rem;">${c.codigoClone}</strong></td>
-                    <td style="color:var(--text-muted);">${c.descricaoClone || '-'}</td>
-                    <td>${c.plantasVivasColetaveis} / ${c.totalPlantasCadastradas}</td>
-                    <td>
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <div class="progress-track"><div class="progress-fill" style="width:${c.taxaSobrevivenciaPercentual}%"></div></div>
-                            <span style="font-size:0.8rem;font-weight:700;">${c.taxaSobrevivenciaPercentual}%</span>
-                        </div>
-                    </td>
-                    <td>${c.totalLeiturasRealizadas}</td>
-                    <td><strong>${c.totalFrutosContados}</strong></td>
-                    <td><span class="badge-prod">${c.mediaFrutosPorPlantaViva} frutos/planta</span></td>
-                </tr>
-            `).join('');
-        } catch (e) {
-            console.error("Erro ao carregar ranking", e);
+    function corDaClasse(nome) { let h = 0; for (const ch of nome) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return PALETA[h % PALETA.length]; }
+
+    function desenharCaixas() {
+        const img = $('fotoWrap').querySelector('img'), cv = $('fotoWrap').querySelector('canvas');
+        if (!img || !cv) return;
+        cv.width = img.clientWidth; cv.height = img.clientHeight;
+        const g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height); g.lineWidth = 3; g.font = 'bold 13px Segoe UI, sans-serif';
+        deteccoesAbertas.forEach(d => {
+            const x = d.x * cv.width, y = d.y * cv.height, w = d.largura * cv.width, h = d.altura * cv.height, cor = corDaClasse(d.classe);
+            g.strokeStyle = cor; g.strokeRect(x, y, w, h);
+            const txt = `${d.classe} ${Math.round(d.confianca * 100)}%`, tw = g.measureText(txt).width + 8;
+            g.fillStyle = cor; g.fillRect(x, Math.max(0, y - 18), tw, 18); g.fillStyle = '#fff'; g.fillText(txt, x + 4, Math.max(13, y - 5));
+        });
+    }
+    window.addEventListener('resize', desenharCaixas);
+
+    async function abrirRevisao(id) {
+        $('modal').hidden = false; document.body.style.overflow = 'hidden';
+        $('fotoWrap').innerHTML = '<div class="foto-vazia">Carregando…</div>'; $('legenda').innerHTML = ''; $('infoGrid').innerHTML = ''; $('valBox').innerHTML = '';
+        try { leituraAberta = await apiJson(`/api/v1/leituras/${id}`); } catch (e) { toast(e.message, true); fecharModal(); return; }
+        renderModal();
+    }
+
+    async function renderModal() {
+        const l = leituraAberta; deteccoesAbertas = l.deteccoes || [];
+        $('modalTitulo').textContent = `Leitura #${l.id} — ${l.codigoClone} · parcela ${l.numeroParcela} · planta ${l.numeroPlanta}`;
+
+        if (l.temFoto) {
+            const url = await carregarFoto(l.id, true);
+            $('fotoWrap').innerHTML = url ? `<img alt="Foto da coleta" src="${url}" /><canvas></canvas>` : '<div class="foto-vazia">Não foi possível carregar a foto.</div>';
+            const img = $('fotoWrap').querySelector('img'); if (img) img.onload = desenharCaixas;
+        } else {
+            $('fotoWrap').innerHTML = '<div class="foto-vazia">Esta leitura ainda não tem foto.<br>Anexe uma abaixo para poder conferir.</div>';
         }
+
+        const contagem = {}; deteccoesAbertas.forEach(d => contagem[d.classe] = (contagem[d.classe] || 0) + 1);
+        $('legenda').innerHTML = deteccoesAbertas.length
+            ? Object.entries(contagem).map(([c, n]) => `<span style="background:${corDaClasse(c)}">${esc(c)} × ${n}</span>`).join('')
+            : '<div class="note" style="width:100%">Este envio veio por CSV: o app ainda não manda as caixas do YOLO, só a contagem. Confira o número olhando a foto.</div>';
+
+        const gps = (l.latitude === 0 && l.longitude === 0) ? '<span class="chip PENDENTE">sem sinal de GPS</span>'
+            : `<a href="https://www.google.com/maps?q=${encodeURIComponent(l.latitude + ',' + l.longitude)}" target="_blank" rel="noopener">${esc(l.latitude.toFixed(5))}, ${esc(l.longitude.toFixed(5))}</a>`;
+        $('infoGrid').innerHTML = `
+            <dt>Ensaio</dt><dd>${esc(l.codigoEnsaio)}</dd><dt>Campanha</dt><dd>${esc(l.campanha)}</dd>
+            <dt>Planta</dt><dd>${esc(l.plantCode)}</dd><dt>Coletado em</dt><dd>${esc(l.dataColeta)}</dd>
+            <dt>Enviado por</dt><dd>${esc(l.pesquisadorEmail)}</dd><dt>GPS</dt><dd>${gps}</dd>
+            <dt>IA contou</dt><dd>${l.coletavel ? esc(l.qtdFrutos) + ' fruto(s)' : esc(l.diagnosticoBruto)}</dd>
+            <dt>Status</dt><dd><span class="chip ${esc(l.statusValidacao)}">${esc(l.statusValidacao)}</span>
+                ${l.validadoPor ? `<br><small>por ${esc(l.validadoPor)}</small>` : ''}</dd>
+            ${l.observacaoValidacao ? `<dt>Observação</dt><dd>${esc(l.observacaoValidacao)}</dd>` : ''}`;
+
+        $('valBox').innerHTML = `
+            <div><label class="field-label" for="valQtd">Contagem correta de frutos</label>
+                <input type="number" id="valQtd" min="0" value="${esc(l.qtdEfetiva)}" /></div>
+            <div><label class="field-label" for="valObs">Observação (opcional)</label>
+                <textarea id="valObs" rows="2" maxlength="500" placeholder="Ex.: fruto escondido atrás da folha">${esc(l.observacaoValidacao || '')}</textarea></div>
+            <div class="val-actions">
+                <button class="btn btn-primary" onclick="validar('VALIDADA')">✅ Confirmar a IA</button>
+                <button class="btn btn-blue" onclick="validar('AJUSTADA')">✏️ Salvar contagem</button>
+                <button class="btn btn-danger" onclick="validar('REJEITADA')">⛔ Rejeitar</button>
+                <button class="btn btn-outline" onclick="validar('PENDENTE')">↩ Desfazer</button>
+            </div>
+            ${l.coletavel ? '' : '<div class="note">Marcada como não coletável. Se a foto mostrar frutos, use “Salvar contagem” com um valor maior que 0: a planta volta a contar como viva.</div>'}
+            <div><label class="field-label" for="novaFoto">${l.temFoto ? 'Substituir foto' : 'Anexar foto'}</label>
+                <input type="file" id="novaFoto" accept="image/jpeg,image/png" />
+                <button class="btn btn-outline" style="margin-top:8px" onclick="enviarNovaFoto()">📎 Enviar foto</button></div>`;
+        desenharCaixas();
     }
 
-    // Inicialização
-    if (authToken && authUser) {
-        mostrarDashboard();
+    async function validar(status) {
+        const corpo = { status, observacao: $('valObs').value };
+        if (status === 'AJUSTADA') {
+            const v = parseInt($('valQtd').value, 10);
+            if (Number.isNaN(v) || v < 0) { toast('Informe a contagem correta (0 ou mais).', true); return; }
+            corpo.qtdFrutosValidada = v;
+        }
+        try {
+            leituraAberta = await apiJson(`/api/v1/leituras/${leituraAberta.id}/validacao`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) });
+            toast('Validação registrada.'); renderModal(); atualizarTudo();
+        } catch (e) { toast(e.message, true); }
     }
+
+    async function enviarNovaFoto() {
+        const f = $('novaFoto').files[0];
+        if (!f) { toast('Escolha uma foto.', true); return; }
+        try {
+            const fd = new FormData(); fd.append('foto', await reduzirImagem(f), f.name);
+            leituraAberta = await apiJson(`/api/v1/leituras/${leituraAberta.id}/foto`, { method: 'POST', body: fd });
+            toast('Foto anexada.'); renderModal(); carregarAuditoria();
+        } catch (e) { toast(e.message, true); }
+    }
+
+    function fecharModal() { $('modal').hidden = true; document.body.style.overflow = ''; leituraAberta = null; }
+
+    /* =====================================================================
+       Inicio
+       ===================================================================== */
+    if (token && usuario) mostrarDashboard();
 </script>
 </body>
 </html>
