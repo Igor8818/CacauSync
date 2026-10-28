@@ -172,15 +172,24 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, senha })
             });
+            if (!resp.ok) {
+                let msg = 'Falha na autenticação';
+                try {
+                    const err = await resp.json();
+                    msg = err.detail || err.title || msg;
+                } catch(e) {}
+                throw new Error(msg);
+            }
             const data = await resp.json();
-            if (!resp.ok) throw new Error(data.detail || 'Falha na autenticação');
 
             jwtToken = data.token;
             badgeEl.textContent = data.role + " ATIVO";
             badgeEl.className = "badge badge-ok";
-            statusEl.innerHTML = `✅ Autenticado como <strong>${data.nomePesquisador}</strong> (${data.email}) — Token JWT pronto: <code>${jwtToken.substring(0, 42)}...</code>`;
+            statusEl.innerHTML = `✅ Autenticado como <strong>${data.nomePesquisador}</strong> (${data.email}) — Token JWT ativo!`;
+            return true;
         } catch (err) {
             statusEl.innerHTML = `❌ Erro: ${err.message}`;
+            return false;
         }
     }
 
@@ -195,7 +204,8 @@
 
     async function simularLoteAndroid() {
         if (!jwtToken) {
-            await autenticarJwt();
+            const ok = await autenticarJwt();
+            if (!ok) return;
         }
         const timestamp = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         const csvSimulado = [
@@ -214,7 +224,11 @@
     async function uploadCsvBlob(blob, filename) {
         const syncStatus = document.getElementById('syncStatus');
         if (!jwtToken) {
-            await autenticarJwt();
+            const ok = await autenticarJwt();
+            if (!ok) {
+                syncStatus.innerHTML = `❌ Autentique-se primeiro no Card 1 antes de importar a planilha.`;
+                return;
+            }
         }
         const formData = new FormData();
         formData.append("arquivo", blob, filename);
@@ -226,8 +240,15 @@
                 headers: { 'Authorization': `Bearer ${jwtToken}` },
                 body: formData
             });
+            if (!resp.ok) {
+                let msg = `HTTP ${resp.status}`;
+                try {
+                    const err = await resp.json();
+                    msg = err.detail || err.title || msg;
+                } catch(e) {}
+                throw new Error(msg);
+            }
             const data = await resp.json();
-            if (!resp.ok) throw new Error(data.detail || 'Erro ao importar CSV');
 
             syncStatus.innerHTML = `✅ <strong>Sincronização concluída (${data.nomeArquivo}):</strong> `
                 + `${data.leiturasNovasInseridas} novas leituras salvas | `
