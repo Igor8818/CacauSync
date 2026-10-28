@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CacauSync API — Painel Central de Ensaios Genéticos (CEPEC/CEPLAC)</title>
+    <style>
+        :root {
+            --green-dark: #1b5e20;
+            --green-main: #2e7d32;
+            --green-light: #e8f5e9;
+            --amber: #ef6c00;
+            --amber-light: #fff3e0;
+            --red: #c62828;
+            --bg: #f4f7f4;
+            --card: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+        body { background: var(--bg); color: var(--text); line-height: 1.5; }
+        header {
+            background: linear-gradient(135deg, var(--green-dark), var(--green-main));
+            color: #fff; padding: 20px 32px;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+        }
+        .brand h1 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.3px; }
+        .brand p { font-size: 0.85rem; opacity: 0.9; }
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+        .btn {
+            border: none; border-radius: 8px; padding: 10px 16px; font-weight: 600; font-size: 0.88rem;
+            cursor: pointer; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-white { background: #fff; color: var(--green-dark); }
+        .btn-white:hover { background: var(--green-light); }
+        .btn-green { background: var(--green-main); color: #fff; }
+        .btn-green:hover { background: var(--green-dark); }
+        .btn-outline { background: transparent; border: 1.5px solid var(--green-main); color: var(--green-main); }
+        .btn-outline:hover { background: var(--green-light); }
+        .container { max-width: 1240px; margin: 24px auto; padding: 0 20px; display: grid; gap: 20px; }
+        .grid-top { display: grid; grid-template-columns: 1fr 1.3fr; gap: 20px; }
+        @media (max-width: 900px) { .grid-top { grid-template-columns: 1fr; } }
+        .card {
+            background: var(--card); border-radius: 12px; padding: 20px;
+            border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .card h2 { font-size: 1.05rem; color: var(--green-dark); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .badge {
+            font-size: 0.75rem; padding: 3px 10px; border-radius: 999px; font-weight: 700;
+        }
+        .badge-ok { background: var(--green-light); color: var(--green-dark); }
+        .badge-warn { background: var(--amber-light); color: var(--amber); }
+        .form-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+        input[type="text"], input[type="password"], input[type="file"] {
+            padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; flex: 1;
+        }
+        .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+        .kpi {
+            background: var(--card); border-radius: 12px; padding: 16px; border: 1px solid var(--border);
+            border-left: 4px solid var(--green-main);
+        }
+        .kpi span { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; font-weight: 700; }
+        .kpi strong { display: block; font-size: 1.65rem; color: var(--text); margin-top: 4px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.9rem; }
+        th, td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--border); }
+        th { background: #f9fafb; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.4px; }
+        .progress-bar { width: 100%; background: #e5e7eb; height: 8px; border-radius: 99px; overflow: hidden; }
+        .progress-fill { background: var(--green-main); height: 100%; }
+        .status-box {
+            margin-top: 10px; padding: 10px 12px; border-radius: 8px; font-size: 0.84rem;
+            background: #f8fafc; border: 1px dashed #cbd5e1; color: #334155; word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="brand">
+        <h1>🌱 CEPEC / CEPLAC — CacauSync Central API</h1>
+        <p>Gestão de Ensaios Genéticos & Sincronização Offline-First com CacauApp Android (TFLite)</p>
+    </div>
+    <div class="header-actions">
+        <a href="/api/v1/ensaios/TC-1801/rota-csv" class="btn btn-white">⬇ Baixar Planilha de Rota (FieldBook CSV)</a>
+        <a href="/swagger-ui.html" target="_blank" class="btn btn-white">⚡ Abrir Swagger UI (OpenAPI 3)</a>
+    </div>
+</header>
+
+<div class="container">
+    <div class="grid-top">
+        <!-- Autenticação JWT -->
+        <div class="card">
+            <h2>
+                <span>🔐 1. Autenticação Institucional (Spring Security + JWT)</span>
+                <span id="jwtBadge" class="badge badge-warn">Não Autenticado</span>
+            </h2>
+            <div class="form-row">
+                <input type="text" id="emailInput" value="pesquisador@cepec.gov.br" placeholder="E-mail CEPEC" />
+                <input type="password" id="senhaInput" value="cepec123" placeholder="Senha" />
+                <button class="btn btn-green" onclick="autenticarJwt()">Gerar Token JWT</button>
+            </div>
+            <div id="authStatus" class="status-box">
+                Clique em <strong>Gerar Token JWT</strong> para autenticar como pesquisador de campo e habilitar a sincronização de CSV.
+            </div>
+        </div>
+
+        <!-- Upload / Sincronização CSV do Android -->
+        <div class="card">
+            <h2>
+                <span>📲 2. Sincronizar Coleta do Aplicativo Android (CSV)</span>
+                <span class="badge badge-ok">POST /api/v1/coletas/importar-csv</span>
+            </h2>
+            <div class="form-row">
+                <input type="file" id="csvFileInput" accept=".csv" />
+                <button class="btn btn-green" onclick="enviarArquivoCsv()">Enviar CSV do Celular</button>
+                <button class="btn btn-outline" onclick="simularLoteAndroid()">Simular Coleta CacauApp</button>
+            </div>
+            <div id="syncStatus" class="status-box">
+                Suporta os formatos <code>exportarCSVCEPEC_Personalizado</code> (9 colunas) e <code>exportarCSVFinal</code> (7 colunas) com idempotência e detecção automática de <em>"Não Coletável"</em>.
+            </div>
+        </div>
+    </div>
+
+    <!-- KPIs do Ensaio TC-1801 -->
+    <div class="kpis">
+        <div class="kpi"><span>Ensaio Ativo</span><strong id="kpiEnsaio">TC-1801</strong></div>
+        <div class="kpi"><span>Plantas Catalogadas</span><strong id="kpiTotalPlantas">-</strong></div>
+        <div class="kpi"><span>Plantas Vivas (Stand)</span><strong id="kpiPlantasVivas">-</strong></div>
+        <div class="kpi"><span>Plantas Não Coletáveis</span><strong id="kpiPlantasMortas">-</strong></div>
+        <div class="kpi"><span>Total de Frutos (IA)</span><strong id="kpiTotalFrutos">-</strong></div>
+        <div class="kpi"><span>Alertas de GPS (0.0)</span><strong id="kpiAlertasGps">-</strong></div>
+    </div>
+
+    <!-- Ranking de Produtividade por Clone -->
+    <div class="card">
+        <h2>
+            <span>🏆 Ranking Consolidado de Produtividade e Sobrevivência por Clone (Ensaio TC-1801)</span>
+            <button class="btn btn-outline" onclick="carregarRelatorio()">🔄 Atualizar Relatório</button>
+        </h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Posição</th>
+                    <th>Clone Genético</th>
+                    <th>Descrição</th>
+                    <th>Plantas (Vivas / Total)</th>
+                    <th>Taxa de Sobrevivência</th>
+                    <th>Leituras</th>
+                    <th>Total Frutos</th>
+                    <th>Média Frutos / Planta Viva</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaClonesBody">
+                <tr><td colspan="8">Carregando dados do banco relacional...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let jwtToken = "";
+
+    async function autenticarJwt() {
+        const email = document.getElementById('emailInput').value;
+        const senha = document.getElementById('senhaInput').value;
+        const statusEl = document.getElementById('authStatus');
+        const badgeEl = document.getElementById('jwtBadge');
+
+        try {
+            const resp = await fetch('/api/v1/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, senha })
+            });
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data.detail || 'Falha na autenticação');
+
+            jwtToken = data.token;
+            badgeEl.textContent = data.role + " ATIVO";
+            badgeEl.className = "badge badge-ok";
+            statusEl.innerHTML = `✅ Autenticado como <strong>${data.nomePesquisador}</strong> (${data.email}) — Token JWT pronto: <code>${jwtToken.substring(0, 42)}...</code>`;
+        } catch (err) {
+            statusEl.innerHTML = `❌ Erro: ${err.message}`;
+        }
+    }
+
+    async function enviarArquivoCsv() {
+        const fileInput = document.getElementById('csvFileInput');
+        if (!fileInput.files.length) {
+            alert('Selecione um arquivo CSV exportado pelo CacauApp ou clique em "Simular Coleta CacauApp".');
+            return;
+        }
+        await uploadCsvBlob(fileInput.files[0], fileInput.files[0].name);
+    }
+
+    async function simularLoteAndroid() {
+        if (!jwtToken) {
+            await autenticarJwt();
+        }
+        const timestamp = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const csvSimulado = [
+            "Campanha,ID_Gerado,Clone,Parcela,Planta,Resultado,Data,Lat,Lng",
+            `TC-1801,CCN-51_TC-1801_par20_pla1_c0226,CCN-51,20,1,26,27/10 ${timestamp},-14.7892,-39.2781`,
+            `TC-1801,CCN-51_TC-1801_par20_pla2_c0226,CCN-51,20,2,22,27/10 ${timestamp},-14.7893,-39.2782`,
+            `TC-1801,SCP-16005_TC-1801_par1_pla1_c0226,SCP-16005,1,1,19,27/10 ${timestamp},-14.7885,-39.2775`,
+            `TC-1801,PS-13.19_TC-1801_par13_pla1_c0226,PS-13.19,13,1,15,27/10 ${timestamp},-14.7889,-39.2779`,
+            `TC-1801,SCP-17202_TC-1801_par2_pla5_c0226,SCP-17202,2,5,Não Coletável,27/10 ${timestamp},0.0,0.0`
+        ].join("\n");
+
+        const blob = new Blob([csvSimulado], { type: 'text/csv;charset=utf-8;' });
+        await uploadCsvBlob(blob, `Coleta_Custom_Android_${Date.now()}.csv`);
+    }
+
+    async function uploadCsvBlob(blob, filename) {
+        const syncStatus = document.getElementById('syncStatus');
+        if (!jwtToken) {
+            await autenticarJwt();
+        }
+        const formData = new FormData();
+        formData.append("arquivo", blob, filename);
+        formData.append("codigoEnsaio", "TC-1801");
+
+        try {
+            const resp = await fetch('/api/v1/coletas/importar-csv', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${jwtToken}` },
+                body: formData
+            });
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data.detail || 'Erro ao importar CSV');
+
+            syncStatus.innerHTML = `✅ <strong>Sincronização concluída (${data.nomeArquivo}):</strong> `
+                + `${data.leiturasNovasInseridas} novas leituras salvas | `
+                + `${data.leiturasDuplicadasIgnoradas} duplicadas ignoradas | `
+                + `${data.plantasMarcadasNaoColetaveis} plantas marcadas Não Coletáveis | `
+                + `${data.totalFrutosImportadosLote} frutos adicionados.`;
+            await carregarRelatorio();
+        } catch (err) {
+            syncStatus.innerHTML = `❌ Erro na importação: ${err.message}`;
+        }
+    }
+
+    async function carregarRelatorio() {
+        try {
+            const resp = await fetch('/api/v1/ensaios/TC-1801/relatorio-clones');
+            if (!resp.ok) return;
+            const rel = await resp.json();
+
+            document.getElementById('kpiEnsaio').textContent = rel.codigoEnsaio;
+            document.getElementById('kpiTotalPlantas').textContent = rel.totalPlantasEnsaio;
+            document.getElementById('kpiPlantasVivas').textContent = rel.totalPlantasVivas;
+            document.getElementById('kpiPlantasMortas').textContent = rel.totalPlantasNaoColetaveis;
+            document.getElementById('kpiTotalFrutos').textContent = rel.totalFrutosAcumulados;
+            document.getElementById('kpiAlertasGps').textContent = rel.leiturasComAlertaGps;
+
+            const tbody = document.getElementById('tabelaClonesBody');
+            tbody.innerHTML = rel.rankingClones.map((c, idx) => `
+                <tr>
+                    <td><strong>#${idx + 1}</strong></td>
+                    <td><strong>${c.codigoClone}</strong></td>
+                    <td>${c.descricaoClone || '-'}</td>
+                    <td>${c.plantasVivasColetaveis} / ${c.totalPlantasCadastradas}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div class="progress-bar"><div class="progress-fill" style="width:${c.taxaSobrevivenciaPercentual}%"></div></div>
+                            <span>${c.taxaSobrevivenciaPercentual}%</span>
+                        </div>
+                    </td>
+                    <td>${c.totalLeiturasRealizadas}</td>
+                    <td><strong>${c.totalFrutosContados}</strong></td>
+                    <td><span class="badge badge-ok">${c.mediaFrutosPorPlantaViva} frutos/planta</span></td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    carregarRelatorio();
+</script>
+</body>
+</html>
