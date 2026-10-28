@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:cacausync_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+
+  flyway:
+    enabled: false
+
+security:
+  jwt:
+    secret: test-secret-key-cepec-cacausync-unit-tests-2026
+    issuer: cacausync-api-test
+    expiration-hours: 2

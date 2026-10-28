@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: cacausync-api
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/cacausync_db}
+    username: ${DB_USER:cepec_admin}
+    password: ${DB_PASSWORD:cepec_secret_2026}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 15MB
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:cepec-ceplac-cacausync-jwt-secret-key-2026-bahia-brasil}
+    issuer: cacausync-api
+    expiration-hours: 12
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+
+server:
+  port: ${PORT:8080}
