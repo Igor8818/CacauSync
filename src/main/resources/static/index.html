@@ -3,168 +3,580 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CacauSync API — Painel Central de Ensaios Genéticos (CEPEC/CEPLAC)</title>
+    <title>CacauSync — CEPLAC / CEPEC (Ministério da Agricultura e Pecuária)</title>
     <style>
         :root {
-            --green-dark: #1b5e20;
-            --green-main: #2e7d32;
+            --green-deep: #0f3d17;
+            --green-primary: #1e6b2c;
+            --green-hover: #165322;
             --green-light: #e8f5e9;
-            --amber: #ef6c00;
-            --amber-light: #fff3e0;
+            --green-border: #c8e6c9;
+            --gold-accent: #e5a93b;
+            --gold-bg: #fffbf0;
+            --amber: #e65100;
+            --amber-bg: #fff3e0;
             --red: #c62828;
-            --bg: #f4f7f4;
-            --card: #ffffff;
-            --text: #1f2937;
-            --muted: #6b7280;
-            --border: #e5e7eb;
+            --red-bg: #ffebee;
+            --bg-page: #f0f4f1;
+            --card-bg: #ffffff;
+            --text-dark: #1a221b;
+            --text-muted: #5a6b5c;
+            --border: #d7e0d8;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --shadow-lg: 0 12px 28px rgba(0,0,0,0.12);
         }
+
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-        body { background: var(--bg); color: var(--text); line-height: 1.5; }
-        header {
-            background: linear-gradient(135deg, var(--green-dark), var(--green-main));
-            color: #fff; padding: 20px 32px;
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+        body { background: var(--bg-page); color: var(--text-dark); line-height: 1.5; min-height: 100vh; }
+
+        /* HEADER GOVERNAMENTAL BRASIL / MAPA */
+        .gov-bar {
+            background: #002b11;
+            color: #d1e7dd;
+            font-size: 0.72rem;
+            padding: 4px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--gold-accent);
         }
-        .brand h1 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.3px; }
-        .brand p { font-size: 0.85rem; opacity: 0.9; }
-        .header-actions { display: flex; gap: 10px; align-items: center; }
-        .btn {
-            border: none; border-radius: 8px; padding: 10px 16px; font-weight: 600; font-size: 0.88rem;
-            cursor: pointer; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+        .gov-bar span { font-weight: 700; color: #fff; }
+
+        /* ================= TELA DE LOGIN ================= */
+        #loginScreen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 16px;
+            min-height: calc(100vh - 28px);
         }
-        .btn-white { background: #fff; color: var(--green-dark); }
-        .btn-white:hover { background: var(--green-light); }
-        .btn-green { background: var(--green-main); color: #fff; }
-        .btn-green:hover { background: var(--green-dark); }
-        .btn-outline { background: transparent; border: 1.5px solid var(--green-main); color: var(--green-main); }
-        .btn-outline:hover { background: var(--green-light); }
-        .container { max-width: 1240px; margin: 24px auto; padding: 0 20px; display: grid; gap: 20px; }
-        .grid-top { display: grid; grid-template-columns: 1fr 1.3fr; gap: 20px; }
-        @media (max-width: 900px) { .grid-top { grid-template-columns: 1fr; } }
-        .card {
-            background: var(--card); border-radius: 12px; padding: 20px;
-            border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        .login-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 460px;
+            padding: 36px 32px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+            text-align: center;
         }
-        .card h2 { font-size: 1.05rem; color: var(--green-dark); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .badge {
-            font-size: 0.75rem; padding: 3px 10px; border-radius: 999px; font-weight: 700;
+        .logo-emblem {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1b5e20, #2e7d32);
+            box-shadow: 0 4px 12px rgba(46,125,50,0.3);
+            margin-bottom: 16px;
         }
-        .badge-ok { background: var(--green-light); color: var(--green-dark); }
-        .badge-warn { background: var(--amber-light); color: var(--amber); }
-        .form-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
-        input[type="text"], input[type="password"], input[type="file"] {
-            padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; flex: 1;
+        .login-card h1 {
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: var(--green-deep);
+            letter-spacing: -0.3px;
         }
-        .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
-        .kpi {
-            background: var(--card); border-radius: 12px; padding: 16px; border: 1px solid var(--border);
-            border-left: 4px solid var(--green-main);
+        .login-card .inst-sub {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-top: 2px;
         }
-        .kpi span { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; font-weight: 700; }
-        .kpi strong { display: block; font-size: 1.65rem; color: var(--text); margin-top: 4px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.9rem; }
-        th, td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--border); }
-        th { background: #f9fafb; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.4px; }
-        .progress-bar { width: 100%; background: #e5e7eb; height: 8px; border-radius: 99px; overflow: hidden; }
-        .progress-fill { background: var(--green-main); height: 100%; }
-        .status-box {
-            margin-top: 10px; padding: 10px 12px; border-radius: 8px; font-size: 0.84rem;
-            background: #f8fafc; border: 1px dashed #cbd5e1; color: #334155; word-break: break-all;
+        .login-card .app-desc {
+            font-size: 0.86rem;
+            color: var(--text-muted);
+            margin: 12px 0 24px 0;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .form-group {
+            text-align: left;
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.92rem;
+            transition: all 0.2s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--green-primary);
+            box-shadow: 0 0 0 3px rgba(46,125,50,0.15);
+        }
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, var(--green-primary), var(--green-hover));
+            color: #fff;
+            padding: 13px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(30,107,44,0.25);
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+        .btn-submit:hover {
+            filter: brightness(1.08);
+            transform: translateY(-1px);
+        }
+        .quick-access-box {
+            margin-top: 24px;
+            padding: 14px;
+            background: #f8faf8;
+            border-radius: 10px;
+            border: 1px dashed var(--green-border);
+            text-align: left;
+        }
+        .quick-access-box span {
+            display: block;
+            font-size: 0.74rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .pills { display: flex; gap: 8px; flex-wrap: wrap; }
+        .pill-btn {
+            background: #fff;
+            border: 1px solid var(--green-border);
+            color: var(--green-primary);
+            padding: 6px 12px;
+            border-radius: 99px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .pill-btn:hover { background: var(--green-light); }
+        .login-error {
+            margin-top: 14px;
+            padding: 10px;
+            background: var(--red-bg);
+            color: var(--red);
+            font-size: 0.84rem;
+            border-radius: 8px;
+            border: 1px solid #ffcdd2;
+            display: none;
+        }
+
+        /* ================= PAINEL PRINCIPAL (DASHBOARD) ================= */
+        #dashboardScreen { display: none; }
+        header.dash-header {
+            background: linear-gradient(135deg, var(--green-deep), var(--green-primary));
+            color: #fff;
+            padding: 16px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            box-shadow: var(--shadow-md);
+        }
+        .brand-cluster {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .header-logo-icon {
+            width: 44px;
+            height: 44px;
+            background: #fff;
+            border-radius: 10px;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .dash-title h1 { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.3px; }
+        .dash-title p { font-size: 0.78rem; opacity: 0.9; }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .user-tag {
+            background: rgba(255,255,255,0.15);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(4px);
+        }
+        .btn-hdr {
+            border: none;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s;
+        }
+        .btn-hdr-white { background: #fff; color: var(--green-deep); }
+        .btn-hdr-white:hover { background: var(--green-light); }
+        .btn-hdr-logout { background: rgba(255,255,255,0.15); color: #fff; }
+        .btn-hdr-logout:hover { background: rgba(198,40,40,0.8); }
+
+        .container {
+            max-width: 1240px;
+            margin: 24px auto;
+            padding: 0 20px 40px 20px;
+            display: grid;
+            gap: 20px;
+        }
+
+        /* CARDS KPI */
+        .kpis {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+        }
+        .kpi-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 18px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            border-left: 4px solid var(--green-primary);
+        }
+        .kpi-card span {
+            font-size: 0.74rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+        }
+        .kpi-card strong {
+            display: block;
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            margin-top: 4px;
+        }
+
+        /* ÁREA DE IMPORTAÇÃO E STATUS */
+        .sync-panel {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 22px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+        .sync-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .sync-panel-header h2 {
+            font-size: 1.1rem;
+            color: var(--green-deep);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .badge-endpoint {
+            font-size: 0.75rem;
+            background: var(--green-light);
+            color: var(--green-deep);
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 700;
+            font-family: monospace;
+        }
+        .sync-action-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .file-box {
+            flex: 1;
+            min-width: 260px;
+            position: relative;
+        }
+        input[type="file"] {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px dashed var(--border);
+            border-radius: 8px;
+            font-size: 0.88rem;
+            background: #fafcfa;
+        }
+        .btn-act {
+            border: none;
+            border-radius: 8px;
+            padding: 11px 18px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-upload { background: var(--green-primary); color: #fff; }
+        .btn-upload:hover { background: var(--green-hover); }
+        .btn-simular { background: #fff; border: 1.5px solid var(--green-primary); color: var(--green-primary); }
+        .btn-simular:hover { background: var(--green-light); }
+
+        .sync-status-box {
+            margin-top: 14px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.86rem;
+            background: #f8faf8;
+            border: 1px dashed var(--border);
+            color: var(--text-dark);
+        }
+
+        /* TABELA DE RANKING GENÉTICO */
+        .table-card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 22px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+        .table-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .table-card-header h2 {
+            font-size: 1.1rem;
+            color: var(--green-deep);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            background: #f8faf8;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        tr:hover td { background: #fafcfa; }
+        .progress-track {
+            width: 100%;
+            background: #e0e6e0;
+            height: 7px;
+            border-radius: 99px;
+            overflow: hidden;
+            min-width: 60px;
+        }
+        .progress-fill { background: var(--green-primary); height: 100%; border-radius: 99px; }
+        .badge-prod {
+            display: inline-block;
+            background: var(--green-light);
+            color: var(--green-deep);
+            padding: 3px 10px;
+            border-radius: 99px;
+            font-weight: 700;
+            font-size: 0.8rem;
         }
     </style>
 </head>
 <body>
-<header>
-    <div class="brand">
-        <h1>🌱 CEPEC / CEPLAC — CacauSync Central API</h1>
-        <p>Gestão de Ensaios Genéticos & Sincronização Offline-First com CacauApp Android (TFLite)</p>
-    </div>
-    <div class="header-actions">
-        <a href="/api/v1/ensaios/TC-1801/rota-csv" class="btn btn-white">⬇ Baixar Planilha de Rota (FieldBook CSV)</a>
-        <a href="/swagger-ui.html" target="_blank" class="btn btn-white">⚡ Abrir Swagger UI (OpenAPI 3)</a>
-    </div>
-</header>
 
-<div class="container">
-    <div class="grid-top">
-        <!-- Autenticação JWT -->
-        <div class="card">
-            <h2>
-                <span>🔐 1. Autenticação Institucional (Spring Security + JWT)</span>
-                <span id="jwtBadge" class="badge badge-warn">Não Autenticado</span>
-            </h2>
-            <div class="form-row">
-                <input type="text" id="emailInput" value="pesquisador@cepec.gov.br" placeholder="E-mail CEPEC" />
-                <input type="password" id="senhaInput" value="cepec123" placeholder="Senha" />
-                <button class="btn btn-green" onclick="autenticarJwt()">Gerar Token JWT</button>
+<!-- BARRA DE IDENTIDADE INSTITUCIONAL -->
+<div class="gov-bar">
+    <div>MINISTÉRIO DA AGRICULTURA E PECUÁRIA — <span>CEPLAC / CEPEC</span></div>
+    <div>SISTEMA CENTRAL DE ENSAIOS GENÉTICOS (CACAUSYNC)</div>
+</div>
+
+<!-- ================= 1. TELA DE LOGIN INSTITUCIONAL ================= -->
+<div id="loginScreen">
+    <div class="login-card">
+        <!-- EMBLEMA DO FRUTO DO CACAU CEPEC (SVG VETORIAL) -->
+        <div class="logo-emblem">
+            <svg width="46" height="46" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Folha superior -->
+                <path d="M24 6C20 10 18 16 22 20C26 24 32 22 36 18C36 12 30 6 24 6Z" fill="#81C784"/>
+                <path d="M24 6C23 12 25 18 36 18" stroke="#388E3C" stroke-width="1.8" stroke-linecap="round"/>
+                <!-- Fruto de Cacau Ouro/Bronze com estrias -->
+                <path d="M24 16C15 16 10 23 11 32C12 39 19 44 24 44C29 44 36 39 37 32C38 23 33 16 24 16Z" fill="#F59E0B"/>
+                <path d="M24 16C21 24 21 36 24 44" stroke="#B45309" stroke-width="2" stroke-linecap="round"/>
+                <path d="M18 20C15 26 16 35 20 42" stroke="#B45309" stroke-width="1.6" stroke-linecap="round"/>
+                <path d="M30 20C33 26 32 35 28 42" stroke="#B45309" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+        </div>
+
+        <h1>CEPLAC • CEPEC</h1>
+        <div class="inst-sub">Centro de Pesquisas do Cacau</div>
+        <p class="app-desc">CacauSync API — Acesso institucional para sincronização e análise de ensaios genéticos</p>
+
+        <form onsubmit="realizarLogin(event)">
+            <div class="form-group">
+                <label>E-mail Institucional</label>
+                <input type="email" id="loginEmail" value="pesquisador@cepec.gov.br" required />
             </div>
-            <div id="authStatus" class="status-box">
-                Clique em <strong>Gerar Token JWT</strong> para autenticar como pesquisador de campo e habilitar a sincronização de CSV.
+            <div class="form-group">
+                <label>Senha de Acesso</label>
+                <input type="password" id="loginSenha" value="cepec123" required />
+            </div>
+
+            <button type="submit" class="btn-submit" id="btnLoginSubmit">Acessar Painel Central</button>
+        </form>
+
+        <div id="loginErrorMsg" class="login-error"></div>
+
+        <div class="quick-access-box">
+            <span>Perfis de Demonstração (1 Clique):</span>
+            <div class="pills">
+                <button type="button" class="pill-btn" onclick="preencherLogin('pesquisador@cepec.gov.br', 'cepec123')">🌱 Pesquisador de Campo</button>
+                <button type="button" class="pill-btn" onclick="preencherLogin('coordenador@cepec.gov.br', 'cepec123')">🔬 Coordenador de Genética</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= 2. PAINEL PRINCIPAL (DASHBOARD) ================= -->
+<div id="dashboardScreen">
+    <header class="dash-header">
+        <div class="brand-cluster">
+            <div class="header-logo-icon">
+                <svg width="30" height="30" viewBox="0 0 48 48" fill="none">
+                    <path d="M24 6C20 10 18 16 22 20C26 24 32 22 36 18C36 12 30 6 24 6Z" fill="#2E7D32"/>
+                    <path d="M24 16C15 16 10 23 11 32C12 39 19 44 24 44C29 44 36 39 37 32C38 23 33 16 24 16Z" fill="#F59E0B"/>
+                    <path d="M24 16C21 24 21 36 24 44" stroke="#B45309" stroke-width="2"/>
+                </svg>
+            </div>
+            <div class="dash-title">
+                <h1>CEPEC / CEPLAC — CacauSync Central</h1>
+                <p>Orquestração de Rotas e Ingestão Offline-First do CacauApp Android</p>
             </div>
         </div>
 
-        <!-- Upload / Sincronização CSV do Android -->
-        <div class="card">
-            <h2>
-                <span>📲 2. Sincronizar Coleta do Aplicativo Android (CSV)</span>
-                <span class="badge badge-ok">POST /api/v1/coletas/importar-csv</span>
-            </h2>
-            <div class="form-row">
-                <input type="file" id="csvFileInput" accept=".csv" />
-                <button class="btn btn-green" onclick="enviarArquivoCsv()">Enviar CSV do Celular</button>
-                <button class="btn btn-outline" onclick="simularLoteAndroid()">Simular Coleta CacauApp</button>
+        <div class="header-controls">
+            <div class="user-tag">
+                <span>👤</span>
+                <span id="dashUserDisplay">Carregando...</span>
             </div>
-            <div id="syncStatus" class="status-box">
-                Suporta os formatos <code>exportarCSVCEPEC_Personalizado</code> (9 colunas) e <code>exportarCSVFinal</code> (7 colunas) com idempotência e detecção automática de <em>"Não Coletável"</em>.
+            <a href="/api/v1/ensaios/TC-1801/rota-csv" class="btn-hdr btn-hdr-white">⬇ Baixar Rota (FieldBook CSV)</a>
+            <a href="/swagger-ui.html" target="_blank" class="btn-hdr btn-hdr-white">⚡ Swagger UI</a>
+            <button class="btn-hdr btn-hdr-logout" onclick="fazerLogout()">Sair</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- KPIS DO ENSAIO -->
+        <div class="kpis">
+            <div class="kpi-card"><span>Ensaio Ativo</span><strong id="kpiEnsaio">TC-1801</strong></div>
+            <div class="kpi-card"><span>Plantas Catalogadas</span><strong id="kpiTotalPlantas">-</strong></div>
+            <div class="kpi-card"><span>Plantas Vivas (Stand)</span><strong id="kpiPlantasVivas">-</strong></div>
+            <div class="kpi-card"><span>Plantas Não Coletáveis</span><strong id="kpiPlantasMortas">-</strong></div>
+            <div class="kpi-card"><span>Total Frutos (IA)</span><strong id="kpiTotalFrutos">-</strong></div>
+            <div class="kpi-card"><span>Alertas GPS (0.0)</span><strong id="kpiAlertasGps">-</strong></div>
+        </div>
+
+        <!-- ÁREA DE SINCRONIZAÇÃO CSV DO CELULAR -->
+        <div class="sync-panel">
+            <div class="sync-panel-header">
+                <h2>📲 Sincronizar Coletas de Campo (CacauApp Android)</h2>
+                <span class="badge-endpoint">POST /api/v1/coletas/importar-csv</span>
+            </div>
+            <div class="sync-action-row">
+                <div class="file-box">
+                    <input type="file" id="csvFileInput" accept=".csv" />
+                </div>
+                <button class="btn-act btn-upload" onclick="enviarArquivoCsv()">📤 Enviar CSV do Celular</button>
+                <button class="btn-act btn-simular" onclick="simularColetaAndroid()">⚡ Simular Coleta CacauApp</button>
+            </div>
+            <div id="syncStatusBox" class="sync-status-box">
+                Pronto para receber arquivos CSV exportados pelo aplicativo Android. Suporta identificação automática de plantas mortas/secas, bloqueio de duplicatas e auditoria de GPS.
             </div>
         </div>
-    </div>
 
-    <!-- KPIs do Ensaio TC-1801 -->
-    <div class="kpis">
-        <div class="kpi"><span>Ensaio Ativo</span><strong id="kpiEnsaio">TC-1801</strong></div>
-        <div class="kpi"><span>Plantas Catalogadas</span><strong id="kpiTotalPlantas">-</strong></div>
-        <div class="kpi"><span>Plantas Vivas (Stand)</span><strong id="kpiPlantasVivas">-</strong></div>
-        <div class="kpi"><span>Plantas Não Coletáveis</span><strong id="kpiPlantasMortas">-</strong></div>
-        <div class="kpi"><span>Total de Frutos (IA)</span><strong id="kpiTotalFrutos">-</strong></div>
-        <div class="kpi"><span>Alertas de GPS (0.0)</span><strong id="kpiAlertasGps">-</strong></div>
-    </div>
-
-    <!-- Ranking de Produtividade por Clone -->
-    <div class="card">
-        <h2>
-            <span>🏆 Ranking Consolidado de Produtividade e Sobrevivência por Clone (Ensaio TC-1801)</span>
-            <button class="btn btn-outline" onclick="carregarRelatorio()">🔄 Atualizar Relatório</button>
-        </h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Posição</th>
-                    <th>Clone Genético</th>
-                    <th>Descrição</th>
-                    <th>Plantas (Vivas / Total)</th>
-                    <th>Taxa de Sobrevivência</th>
-                    <th>Leituras</th>
-                    <th>Total Frutos</th>
-                    <th>Média Frutos / Planta Viva</th>
-                </tr>
-            </thead>
-            <tbody id="tabelaClonesBody">
-                <tr><td colspan="8">Carregando dados do banco relacional...</td></tr>
-            </tbody>
-        </table>
+        <!-- TABELA DE RANKING GENÉTICO -->
+        <div class="table-card">
+            <div class="table-card-header">
+                <h2>🏆 Ranking de Produtividade e Sobrevivência por Clone (Ensaio TC-1801)</h2>
+                <button class="btn-act btn-simular" onclick="carregarRelatorio()">🔄 Atualizar Indicadores</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">Posição</th>
+                        <th>Clone Genético</th>
+                        <th>Descrição / Origem</th>
+                        <th>Plantas (Vivas / Total)</th>
+                        <th>Taxa Sobrevivência</th>
+                        <th>Leituras</th>
+                        <th>Total Frutos</th>
+                        <th>Média Frutos / Planta Viva</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaClonesBody">
+                    <tr><td colspan="8">Carregando dados agronômicos...</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <script>
-    let jwtToken = "";
+    let authToken = localStorage.getItem("cacausync_jwt") || "";
+    let authUser = JSON.parse(localStorage.getItem("cacausync_user") || "null");
 
-    async function autenticarJwt() {
-        const email = document.getElementById('emailInput').value;
-        const senha = document.getElementById('senhaInput').value;
-        const statusEl = document.getElementById('authStatus');
-        const badgeEl = document.getElementById('jwtBadge');
+    function preencherLogin(email, senha) {
+        document.getElementById('loginEmail').value = email;
+        document.getElementById('loginSenha').value = senha;
+        document.getElementById('loginErrorMsg').style.display = 'none';
+    }
+
+    async function realizarLogin(e) {
+        if (e) e.preventDefault();
+        const email = document.getElementById('loginEmail').value.trim();
+        const senha = document.getElementById('loginSenha').value;
+        const errBox = document.getElementById('loginErrorMsg');
+        const btn = document.getElementById('btnLoginSubmit');
+
+        errBox.style.display = 'none';
+        btn.disabled = true;
+        btn.textContent = "Autenticando...";
 
         try {
             const resp = await fetch('/api/v1/auth/login', {
@@ -172,25 +584,48 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, senha })
             });
+
             if (!resp.ok) {
-                let msg = 'Falha na autenticação';
+                let msg = "Credenciais inválidas. Verifique seu e-mail e senha.";
                 try {
                     const err = await resp.json();
                     msg = err.detail || err.title || msg;
                 } catch(e) {}
                 throw new Error(msg);
             }
-            const data = await resp.json();
 
-            jwtToken = data.token;
-            badgeEl.textContent = data.role + " ATIVO";
-            badgeEl.className = "badge badge-ok";
-            statusEl.innerHTML = `✅ Autenticado como <strong>${data.nomePesquisador}</strong> (${data.email}) — Token JWT ativo!`;
-            return true;
+            const data = await resp.json();
+            authToken = data.token;
+            authUser = data;
+            localStorage.setItem("cacausync_jwt", authToken);
+            localStorage.setItem("cacausync_user", JSON.stringify(authUser));
+
+            mostrarDashboard();
         } catch (err) {
-            statusEl.innerHTML = `❌ Erro: ${err.message}`;
-            return false;
+            errBox.textContent = `❌ ${err.message}`;
+            errBox.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "Acessar Painel Central";
         }
+    }
+
+    function fazerLogout() {
+        authToken = "";
+        authUser = null;
+        localStorage.removeItem("cacausync_jwt");
+        localStorage.removeItem("cacausync_user");
+        document.getElementById('dashboardScreen').style.display = 'none';
+        document.getElementById('loginScreen').style.display = 'flex';
+    }
+
+    function mostrarDashboard() {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('dashboardScreen').style.display = 'block';
+        if (authUser) {
+            document.getElementById('dashUserDisplay').textContent = `${authUser.nomePesquisador} (${authUser.role})`;
+        }
+        carregarRelatorio();
     }
 
     async function enviarArquivoCsv() {
@@ -202,34 +637,25 @@
         await uploadCsvBlob(fileInput.files[0], fileInput.files[0].name);
     }
 
-    async function simularLoteAndroid() {
-        if (!jwtToken) {
-            const ok = await autenticarJwt();
-            if (!ok) return;
-        }
+    async function simularColetaAndroid() {
         const timestamp = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         const csvSimulado = [
             "Campanha,ID_Gerado,Clone,Parcela,Planta,Resultado,Data,Lat,Lng",
-            `TC-1801,CCN-51_TC-1801_par20_pla1_c0226,CCN-51,20,1,26,27/10 ${timestamp},-14.7892,-39.2781`,
-            `TC-1801,CCN-51_TC-1801_par20_pla2_c0226,CCN-51,20,2,22,27/10 ${timestamp},-14.7893,-39.2782`,
-            `TC-1801,SCP-16005_TC-1801_par1_pla1_c0226,SCP-16005,1,1,19,27/10 ${timestamp},-14.7885,-39.2775`,
-            `TC-1801,PS-13.19_TC-1801_par13_pla1_c0226,PS-13.19,13,1,15,27/10 ${timestamp},-14.7889,-39.2779`,
-            `TC-1801,SCP-17202_TC-1801_par2_pla5_c0226,SCP-17202,2,5,Não Coletável,27/10 ${timestamp},0.0,0.0`
+            `TC-1801,CCN-51_TC-1801_par20_pla1_c0226,CCN-51,20,1,28,28/10 ${timestamp},-14.7892,-39.2781`,
+            `TC-1801,CCN-51_TC-1801_par20_pla2_c0226,CCN-51,20,2,24,28/10 ${timestamp},-14.7893,-39.2782`,
+            `TC-1801,SCP-16005_TC-1801_par1_pla1_c0226,SCP-16005,1,1,21,28/10 ${timestamp},-14.7885,-39.2775`,
+            `TC-1801,PS-13.19_TC-1801_par13_pla1_c0226,PS-13.19,13,1,18,28/10 ${timestamp},-14.7889,-39.2779`,
+            `TC-1801,SCP-17202_TC-1801_par2_pla5_c0226,SCP-17202,2,5,Não Coletável,28/10 ${timestamp},0.0,0.0`
         ].join("\n");
 
         const blob = new Blob([csvSimulado], { type: 'text/csv;charset=utf-8;' });
-        await uploadCsvBlob(blob, `Coleta_Custom_Android_${Date.now()}.csv`);
+        await uploadCsvBlob(blob, `Coleta_Simulada_CacauApp_${Date.now()}.csv`);
     }
 
     async function uploadCsvBlob(blob, filename) {
-        const syncStatus = document.getElementById('syncStatus');
-        if (!jwtToken) {
-            const ok = await autenticarJwt();
-            if (!ok) {
-                syncStatus.innerHTML = `❌ Autentique-se primeiro no Card 1 antes de importar a planilha.`;
-                return;
-            }
-        }
+        const statusBox = document.getElementById('syncStatusBox');
+        statusBox.innerHTML = `⏳ Enviando <strong>${filename}</strong> para a API...`;
+
         const formData = new FormData();
         formData.append("arquivo", blob, filename);
         formData.append("codigoEnsaio", "TC-1801");
@@ -237,9 +663,10 @@
         try {
             const resp = await fetch('/api/v1/coletas/importar-csv', {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${jwtToken}` },
+                headers: { 'Authorization': `Bearer ${authToken}` },
                 body: formData
             });
+
             if (!resp.ok) {
                 let msg = `HTTP ${resp.status}`;
                 try {
@@ -248,16 +675,17 @@
                 } catch(e) {}
                 throw new Error(msg);
             }
-            const data = await resp.json();
 
-            syncStatus.innerHTML = `✅ <strong>Sincronização concluída (${data.nomeArquivo}):</strong> `
-                + `${data.leiturasNovasInseridas} novas leituras salvas | `
-                + `${data.leiturasDuplicadasIgnoradas} duplicadas ignoradas | `
-                + `${data.plantasMarcadasNaoColetaveis} plantas marcadas Não Coletáveis | `
-                + `${data.totalFrutosImportadosLote} frutos adicionados.`;
+            const data = await resp.json();
+            statusBox.innerHTML = `✅ <strong>Sincronização concluída com sucesso:</strong> `
+                + `<strong>${data.leiturasNovasInseridas}</strong> novas leituras salvas | `
+                + `<strong>${data.leiturasDuplicadasIgnoradas}</strong> duplicadas ignoradas (idempotência) | `
+                + `<strong>${data.plantasMarcadasNaoColetaveis}</strong> baixas fitossanitárias | `
+                + `<strong>${data.totalFrutosImportadosLote}</strong> frutos adicionados ao ensaio ${data.codigoEnsaio}.`;
+
             await carregarRelatorio();
         } catch (err) {
-            syncStatus.innerHTML = `❌ Erro na importação: ${err.message}`;
+            statusBox.innerHTML = `❌ <strong>Erro na importação:</strong> ${err.message}`;
         }
     }
 
@@ -278,26 +706,29 @@
             tbody.innerHTML = rel.rankingClones.map((c, idx) => `
                 <tr>
                     <td><strong>#${idx + 1}</strong></td>
-                    <td><strong>${c.codigoClone}</strong></td>
-                    <td>${c.descricaoClone || '-'}</td>
+                    <td><strong style="color:var(--green-deep);font-size:0.95rem;">${c.codigoClone}</strong></td>
+                    <td style="color:var(--text-muted);">${c.descricaoClone || '-'}</td>
                     <td>${c.plantasVivasColetaveis} / ${c.totalPlantasCadastradas}</td>
                     <td>
                         <div style="display:flex;align-items:center;gap:8px;">
-                            <div class="progress-bar"><div class="progress-fill" style="width:${c.taxaSobrevivenciaPercentual}%"></div></div>
-                            <span>${c.taxaSobrevivenciaPercentual}%</span>
+                            <div class="progress-track"><div class="progress-fill" style="width:${c.taxaSobrevivenciaPercentual}%"></div></div>
+                            <span style="font-size:0.8rem;font-weight:700;">${c.taxaSobrevivenciaPercentual}%</span>
                         </div>
                     </td>
                     <td>${c.totalLeiturasRealizadas}</td>
                     <td><strong>${c.totalFrutosContados}</strong></td>
-                    <td><span class="badge badge-ok">${c.mediaFrutosPorPlantaViva} frutos/planta</span></td>
+                    <td><span class="badge-prod">${c.mediaFrutosPorPlantaViva} frutos/planta</span></td>
                 </tr>
             `).join('');
         } catch (e) {
-            console.error(e);
+            console.error("Erro ao carregar ranking", e);
         }
     }
 
-    carregarRelatorio();
+    // Inicialização
+    if (authToken && authUser) {
+        mostrarDashboard();
+    }
 </script>
 </body>
 </html>
