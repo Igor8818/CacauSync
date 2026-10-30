@@ -3,6 +3,7 @@ package br.gov.ceplac.cepec.cacausync.service;
 import br.gov.ceplac.cepec.cacausync.domain.entity.*;
 import br.gov.ceplac.cepec.cacausync.dto.ArquivoFoto;
 import br.gov.ceplac.cepec.cacausync.dto.LeituraColetaResponse;
+import br.gov.ceplac.cepec.cacausync.dto.LeituraSincronizadaDto;
 import br.gov.ceplac.cepec.cacausync.dto.LinhaColetaCsvDto;
 import br.gov.ceplac.cepec.cacausync.dto.ResultadoImportacaoCsvResponse;
 import br.gov.ceplac.cepec.cacausync.dto.SyncJsonRequest;
@@ -130,6 +131,7 @@ public class ColetaSyncService {
         int somaFrutos = 0;
         int fotosAnexadas = 0;
         List<String> avisos = new ArrayList<>();
+        List<LeituraSincronizadaDto> leiturasSincronizadas = new ArrayList<>();
 
         for (int i = 0; i < linhas.size(); i++) {
             LinhaColetaCsvDto item = linhas.get(i);
@@ -141,6 +143,7 @@ public class ColetaSyncService {
                 duplicadas++;
                 // Caso comum: o CSV foi enviado antes e agora chegaram as fotos. Anexamos so se ainda nao tem.
                 LeituraColeta ja = existente.get();
+                leiturasSincronizadas.add(new LeituraSincronizadaDto(item.plantId(), ja.getId()));
                 if (foto != null && !ja.temFoto() && anexarFotoSegura(ja, foto, avisos)) {
                     leituraColetaRepository.save(ja);
                     fotosAnexadas++;
@@ -183,7 +186,9 @@ public class ColetaSyncService {
                 fotosAnexadas++;
             }
 
-            leituraColetaRepository.save(leitura);
+            LeituraColeta salva = leituraColetaRepository.save(leitura);
+            Long idSalvo = (salva != null) ? salva.getId() : leitura.getId();
+            leiturasSincronizadas.add(new LeituraSincronizadaDto(item.plantId(), idSalvo));
             inseridas++;
             somaFrutos += item.qtdFrutos();
         }
@@ -207,7 +212,8 @@ public class ColetaSyncService {
                 fotosAnexadas,
                 fotosIgnoradas,
                 LocalDateTime.now(),
-                avisos
+                avisos,
+                leiturasSincronizadas
         );
     }
 
