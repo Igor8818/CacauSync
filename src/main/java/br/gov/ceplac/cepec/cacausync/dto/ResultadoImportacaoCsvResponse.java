@@ -15,5 +15,37 @@ public record ResultadoImportacaoCsvResponse(
     int fotosAnexadas,
     int fotosIgnoradas,
     LocalDateTime processadoEm,
-    List<String> avisos
-) {}
+    List<String> avisos,
+    List<LeituraSincronizadaDto> leituras
+) {
+    public ResultadoImportacaoCsvResponse(
+            String codigoEnsaio,
+            String nomeArquivo,
+            int totalLinhasProcessadas,
+            int leiturasNovasInseridas,
+            int leiturasDuplicadasIgnoradas,
+            int plantasMarcadasNaoColetaveis,
+            int alertasGpsZerado,
+            int totalFrutosImportadosLote,
+            int fotosAnexadas,
+            int fotosIgnoradas,
+            LocalDateTime processadoEm,
+            List<String> avisos
+    ) {
+        this(
+                codigoEnsaio,
+                nomeArquivo,
+                totalLinhasProcessadas,
+                leiturasNovasInseridas,
+                leiturasDuplicadasIgnoradas,
+                plantasMarcadasNaoColetaveis,
+                alertasGpsZerado,
+                totalFrutosImportadosLote,
+                fotosAnexadas,
+                fotosIgnoradas,
+                processadoEm,
+                avisos,
+                List.of()
+        );
+    }
+}
