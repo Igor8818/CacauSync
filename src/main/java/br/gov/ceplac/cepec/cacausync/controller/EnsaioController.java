@@ -89,4 +89,19 @@ public class EnsaioController {
                 .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
                 .body(csv.getBytes(StandardCharsets.UTF_8));
     }
+
+    @GetMapping(value = "/{codigo}/analise-csv", produces = "text/csv")
+    @Operation(
+            summary = "Baixar planilha analítica consolidada (pós-auditoria) com doenças e validações",
+            description = "Exporta todas as leituras do ensaio com contagens da IA, contagens validadas, Sadios, Vassoura, Podridão, Não Avaliável, GPS e auditor."
+    )
+    public ResponseEntity<byte[]> exportarAnaliseCsv(@PathVariable String codigo) {
+        String csv = ensaioService.exportarAnaliseCompletaCsv(codigo);
+        String filename = "analise_auditada_" + codigo.toLowerCase() + ".csv";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+                .body(csv.getBytes(StandardCharsets.UTF_8));
+    }
 }

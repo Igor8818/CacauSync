@@ -7,10 +7,6 @@ import jakarta.validation.constraints.NotEmpty;
 
 import java.util.List;
 
-/**
- * Contrato JSON para sincronizar direto do app (futuro botao "Enviar ao laboratorio").
- * Diferente do CSV, ja carrega as caixas do YOLO (deteccoes).
- */
 public record SyncJsonRequest(
     @NotBlank(message = "Informe o codigo do ensaio (ex: TC-1801)")
     String codigoEnsaio,
@@ -22,7 +18,6 @@ public record SyncJsonRequest(
     public record ItemSync(
         @NotBlank(message = "campanha obrigatoria") String campanha,
         @NotBlank(message = "plantId obrigatorio") String plantId,
-        // "clone" e nome proibido para componente de record em Java; no JSON continua se chamando "clone".
         @JsonProperty("clone") String cloneCodigo,
         String parcela,
         Integer planta,
@@ -30,6 +25,19 @@ public record SyncJsonRequest(
         @NotBlank(message = "data obrigatoria") String data,
         Double lat,
         Double lng,
+        Integer sadios,
+        Integer vassoura,
+        Integer podridao,
+        Integer naoAvaliavel,
         List<DeteccaoDto> deteccoes
-    ) {}
+    ) {
+        /** Construtor retrocompatível de 10 argumentos. */
+        public ItemSync(
+                String campanha, String plantId, String cloneCodigo, String parcela, Integer planta,
+                String resultado, String data, Double lat, Double lng, List<DeteccaoDto> deteccoes
+        ) {
+            this(campanha, plantId, cloneCodigo, parcela, planta, resultado, data, lat, lng,
+                    null, null, null, null, deteccoes);
+        }
+    }
 }

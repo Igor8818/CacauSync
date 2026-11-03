@@ -1,10 +1,13 @@
 package br.gov.ceplac.cepec.cacausync.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 /**
  * Uma caixa (quadradinho) que o YOLO desenhou na foto.
  * Todas as medidas sao normalizadas entre 0 e 1 em relacao a largura/altura da imagem,
  * para funcionar em qualquer resolucao: x,y = canto superior esquerdo.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record DeteccaoDto(
     String classe,
     double confianca,

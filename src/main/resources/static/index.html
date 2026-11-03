@@ -10,6 +10,7 @@
             --green-light: #e8f5e9; --green-border: #c8e6c9; --gold-accent: #e5a93b;
             --amber: #b45309; --amber-bg: #fff3e0; --red: #c62828; --red-bg: #ffebee;
             --blue: #1565c0; --blue-bg: #e3f2fd;
+            --cor-sadio: #00e676; --cor-vassoura: #ff9100; --cor-podridao: #ff1744; --cor-nao-aval: #90a4ae;
             --bg-page: #f0f4f1; --card-bg: #ffffff; --text-dark: #1a221b; --text-muted: #5a6b5c;
             --border: #d7e0d8;
             --shadow-sm: 0 1px 3px rgba(0,0,0,0.06); --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
@@ -63,12 +64,14 @@
         .btn-hdr.logout:hover { background: rgba(198,40,40,0.8); }
         select.ensaio-select { padding: 7px 10px; border-radius: 8px; border: none; font-weight: 700; color: var(--green-deep); font-size: 0.82rem; }
 
-        .container { max-width: 1240px; margin: 20px auto; padding: 0 16px 40px; display: grid; gap: 18px; }
-        .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+        .container { max-width: 1280px; margin: 20px auto; padding: 0 16px 40px; display: grid; gap: 18px; }
+        .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
         .kpi-card { background: var(--card-bg); border-radius: 12px; padding: 14px 16px; border: 1px solid var(--border); border-left: 4px solid var(--green-primary); box-shadow: var(--shadow-sm); }
         .kpi-card.warn { border-left-color: var(--gold-accent); }
+        .kpi-card.danger { border-left-color: var(--red); }
+        .kpi-card.blue { border-left-color: var(--blue); }
         .kpi-card span { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.4px; }
-        .kpi-card strong { display: block; font-size: 1.7rem; font-weight: 800; margin-top: 2px; }
+        .kpi-card strong { display: block; font-size: 1.6rem; font-weight: 800; margin-top: 2px; }
 
         .panel { background: var(--card-bg); border-radius: 14px; padding: 20px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
         .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
@@ -81,7 +84,7 @@
         .field-label { display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 4px; color: var(--text-dark); }
         input[type="file"] { width: 100%; padding: 9px 12px; border: 1.5px dashed var(--border); border-radius: 8px; font-size: 0.85rem; background: #fafcfa; }
         .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
-        .btn { border: none; border-radius: 8px; padding: 10px 16px; font-weight: 700; font-size: 0.86rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+        .btn { border: none; border-radius: 8px; padding: 9px 15px; font-weight: 700; font-size: 0.84rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
         .btn:disabled { opacity: .55; cursor: not-allowed; }
         .btn-primary { background: var(--green-primary); color: #fff; } .btn-primary:hover:not(:disabled) { background: var(--green-hover); }
         .btn-outline { background: #fff; border: 1.5px solid var(--green-primary); color: var(--green-primary); } .btn-outline:hover:not(:disabled) { background: var(--green-light); }
@@ -91,18 +94,25 @@
         .status-box ul { margin: 6px 0 0 18px; font-size: 0.8rem; color: var(--text-muted); }
 
         .table-wrap { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
         th { background: #f8faf8; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
         tr:hover td { background: #fafcfa; }
         .progress-track { width: 100%; background: #e0e6e0; height: 7px; border-radius: 99px; overflow: hidden; min-width: 60px; }
         .progress-fill { background: var(--green-primary); height: 100%; }
+        .progress-fill.danger { background: var(--red); }
         .badge-prod { display: inline-block; background: var(--green-light); color: var(--green-deep); padding: 3px 10px; border-radius: 99px; font-weight: 700; font-size: 0.78rem; }
-        .chip { display: inline-block; padding: 3px 10px; border-radius: 99px; font-weight: 700; font-size: 0.74rem; }
+        .chip { display: inline-block; padding: 3px 8px; border-radius: 99px; font-weight: 700; font-size: 0.72rem; }
         .chip.PENDENTE { background: var(--amber-bg); color: var(--amber); }
         .chip.VALIDADA { background: var(--green-light); color: var(--green-deep); }
         .chip.AJUSTADA { background: var(--blue-bg); color: var(--blue); }
         .chip.REJEITADA { background: var(--red-bg); color: var(--red); }
+        .chip-doenca { display: inline-block; padding: 2px 7px; border-radius: 6px; font-weight: 700; font-size: 0.72rem; margin-right: 4px; }
+        .chip-sadio { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
+        .chip-vassoura { background: #fff3e0; color: #b45309; border: 1px solid #ffe0b2; }
+        .chip-podridao { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+        .chip-nao-aval { background: #eceff1; color: #455a64; border: 1px solid #cfd8dc; }
+
         .thumb { width: 52px; height: 40px; object-fit: cover; border-radius: 6px; background: #e8ede8; display: block; }
         .thumb-empty { width: 52px; height: 40px; border-radius: 6px; background: #f1f3f1; color: #9aa79b; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; text-align: center; }
         .filters { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -110,26 +120,35 @@
         .filter-btn.active { background: var(--green-primary); color: #fff; border-color: var(--green-primary); }
         .pager { display: flex; gap: 10px; align-items: center; justify-content: flex-end; margin-top: 12px; font-size: 0.82rem; color: var(--text-muted); }
 
-        /* ---------- MODAL DE REVISAO ---------- */
-        .modal { position: fixed; inset: 0; background: rgba(10,25,12,0.65); z-index: 50; display: flex; align-items: flex-start; justify-content: center; padding: 20px 12px; overflow-y: auto; }
-        .modal-box { background: #fff; border-radius: 14px; width: 100%; max-width: 1020px; box-shadow: var(--shadow-lg); }
+        /* ---------- MODAL DE REVISAO INTERATIVO ---------- */
+        .modal { position: fixed; inset: 0; background: rgba(10,25,12,0.72); z-index: 50; display: flex; align-items: flex-start; justify-content: center; padding: 20px 12px; overflow-y: auto; }
+        .modal-box { background: #fff; border-radius: 14px; width: 100%; max-width: 1080px; box-shadow: var(--shadow-lg); }
         .modal-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--border); }
-        .modal-head h3 { font-size: 1rem; color: var(--green-deep); }
+        .modal-head h3 { font-size: 1.05rem; color: var(--green-deep); }
         .modal-close { background: none; border: none; font-size: 1.6rem; cursor: pointer; color: var(--text-muted); line-height: 1; }
         .modal-body { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; padding: 20px; }
-        @media (max-width: 800px) { .modal-body { grid-template-columns: 1fr; } }
-        .foto-wrap { position: relative; background: #0d1a0f; border-radius: 10px; overflow: hidden; min-height: 180px; display: flex; align-items: center; justify-content: center; }
-        .foto-wrap img { display: block; width: 100%; height: auto; }
-        .foto-wrap canvas { position: absolute; left: 0; top: 0; pointer-events: none; }
+        @media (max-width: 820px) { .modal-body { grid-template-columns: 1fr; } }
+        
+        .foto-container { position: relative; background: #0d1a0f; border-radius: 10px; overflow: hidden; min-height: 220px; display: flex; align-items: center; justify-content: center; user-select: none; }
+        .foto-container img { display: block; width: 100%; height: auto; pointer-events: none; }
+        .foto-container canvas { position: absolute; left: 0; top: 0; cursor: crosshair; }
         .foto-vazia { color: #9db39f; font-size: 0.85rem; padding: 40px 20px; text-align: center; }
-        .legenda { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-        .legenda span { font-size: 0.76rem; font-weight: 700; padding: 3px 9px; border-radius: 99px; color: #fff; }
-        .info-grid { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 0.84rem; margin-bottom: 14px; }
+
+        .editor-instrucoes { font-size: 0.76rem; color: #2e7d32; background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px; padding: 6px 10px; margin-top: 8px; }
+        .caixa-selecionada-painel { background: #263238; color: #fff; border-radius: 8px; padding: 10px; margin-top: 8px; display: grid; gap: 6px; }
+        .caixa-selecionada-painel .botoes-classe { display: flex; gap: 6px; flex-wrap: wrap; }
+        .btn-class-pill { border: none; border-radius: 6px; padding: 4px 8px; font-size: 0.74rem; font-weight: 700; cursor: pointer; }
+        
+        .legenda { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .legenda span { font-size: 0.74rem; font-weight: 700; padding: 3px 9px; border-radius: 99px; color: #fff; }
+        .info-grid { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 0.83rem; margin-bottom: 12px; }
         .info-grid dt { color: var(--text-muted); font-weight: 600; } .info-grid dd { font-weight: 600; word-break: break-all; }
+        
+        .doencas-inputs-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
         .val-box { border-top: 1px solid var(--border); padding-top: 14px; display: grid; gap: 10px; }
-        .val-box input[type=number], .val-box textarea, .val-box select { width: 100%; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.9rem; }
+        .val-box input[type=number], .val-box textarea, .val-box select { width: 100%; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.88rem; }
         .val-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .note { font-size: 0.78rem; color: var(--text-muted); background: #f8faf8; border: 1px dashed var(--border); border-radius: 8px; padding: 8px 10px; }
+        .note { font-size: 0.76rem; color: var(--text-muted); background: #f8faf8; border: 1px dashed var(--border); border-radius: 8px; padding: 8px 10px; }
         .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #123b19; color: #fff; padding: 10px 18px; border-radius: 99px; font-size: 0.85rem; z-index: 99; box-shadow: var(--shadow-lg); }
         .toast.err { background: var(--red); }
     </style>
@@ -156,7 +175,7 @@
         </div>
         <h1>CEPLAC • CEPEC</h1>
         <div class="inst-sub">Centro de Pesquisas do Cacau</div>
-        <p class="app-desc">CacauSync — acesso institucional para sincronização, auditoria e análise de ensaios genéticos</p>
+        <p class="app-desc">CacauSync — acesso institucional para sincronização, auditoria fitossanitária e análise de ensaios genéticos</p>
 
         <form onsubmit="realizarLogin(event)">
             <div class="form-group"><label for="loginEmail">E-mail institucional</label>
@@ -190,12 +209,13 @@
             </div>
             <div class="dash-title">
                 <h1>CacauSync — CEPEC / CEPLAC</h1>
-                <p>Sincronização offline-first, auditoria de fotos e ranking de clones</p>
+                <p>Sincronização offline-first, auditoria fitossanitária com IA e produtividade de clones</p>
             </div>
         </div>
         <div class="header-controls">
             <select id="ensaioSelect" class="ensaio-select" title="Ensaio" onchange="trocarEnsaio()"></select>
             <div class="user-tag">👤 <span id="dashUserDisplay"></span></div>
+            <button class="btn-hdr" onclick="baixarAnaliseAuditada()">📊 Baixar Análise Auditada (CSV)</button>
             <button class="btn-hdr" onclick="baixarRota()">⬇ Rota (FieldBook CSV)</button>
             <a class="btn-hdr" href="/swagger-ui.html" target="_blank" rel="noopener">⚡ Swagger</a>
             <button class="btn-hdr logout" onclick="fazerLogout()">Sair</button>
@@ -203,11 +223,14 @@
     </header>
 
     <div class="container">
+        <!-- KPIs FITOSSANITÁRIOS E PRODUTIVIDADE -->
         <div class="kpis">
             <div class="kpi-card"><span>Plantas catalogadas</span><strong id="kpiTotalPlantas">-</strong></div>
             <div class="kpi-card"><span>Plantas vivas</span><strong id="kpiPlantasVivas">-</strong></div>
-            <div class="kpi-card"><span>Não coletáveis</span><strong id="kpiPlantasMortas">-</strong></div>
-            <div class="kpi-card"><span>Frutos (validados)</span><strong id="kpiTotalFrutos">-</strong></div>
+            <div class="kpi-card"><span>Total Frutos (validados)</span><strong id="kpiTotalFrutos">-</strong></div>
+            <div class="kpi-card blue"><span>🟢 Frutos Sadios</span><strong id="kpiTotalSadios">-</strong></div>
+            <div class="kpi-card danger"><span>🟠 Vassoura / 🔴 Podridão</span><strong id="kpiTotalDoentes">-</strong></div>
+            <div class="kpi-card danger"><span>Taxa de Infecção</span><strong id="kpiTaxaInfeccao">-</strong></div>
             <div class="kpi-card warn"><span>Aguardando validação</span><strong id="kpiPendentes">-</strong></div>
             <div class="kpi-card"><span>Alertas de GPS</span><strong id="kpiAlertasGps">-</strong></div>
         </div>
@@ -218,25 +241,25 @@
                 <h2>📲 Enviar coleta do celular (CSV + fotos)</h2>
                 <span class="badge-endpoint">POST /api/v1/coletas/importar-csv</span>
             </div>
-            <p class="hint">No celular, abra este mesmo endereço no Chrome (o IP do computador na rede Wi-Fi, porta 8080). Escolha o CSV exportado pelo app e as fotos da pasta <b>Pictures/CEPEC_Analise</b>. As fotos são reduzidas no próprio aparelho antes de subir.</p>
+            <p class="hint">No celular ou computador, selecione a planilha CSV exportada pelo app e as fotos correspondentes da pasta <b>Pictures/CEPEC_Analise</b>. As fotos são casadas pelo nome com as linhas e diminuídas no aparelho antes do envio.</p>
             <div class="sync-grid">
-                <div><label class="field-label" for="csvFileInput">1. Planilha CSV do app</label>
+                <div><label class="field-label" for="csvFileInput">1. Planilha CSV do app (ou dados_cacau.csv)</label>
                     <input type="file" id="csvFileInput" accept=".csv,text/csv" /></div>
                 <div><label class="field-label" for="fotosInput">2. Fotos da coleta (opcional, várias)</label>
                     <input type="file" id="fotosInput" accept="image/*" multiple /></div>
             </div>
             <div class="actions">
                 <button class="btn btn-primary" id="btnEnviar" onclick="enviarColeta()">📤 Enviar para o laboratório</button>
-                <button class="btn btn-outline" onclick="simularColetaCsv()">⚡ Demonstração: CSV + fotos</button>
+                <button class="btn btn-outline" onclick="simularColetaCsv()">⚡ Demonstração: CSV 15 colunas + fotos</button>
                 <button class="btn btn-outline" onclick="simularEnvioApp()">⚡ Demonstração: envio do app com caixas do YOLO</button>
             </div>
-            <div id="syncStatusBox" class="status-box">Pronto. Reenviar o mesmo CSV é seguro: nada é duplicado, só as fotos que faltavam são anexadas.</div>
+            <div id="syncStatusBox" class="status-box">Pronto. Reenviar o mesmo CSV é seguro: nada é duplicado, apenas novas fotos são anexadas.</div>
         </div>
 
         <!-- AUDITORIA -->
         <div class="panel">
             <div class="panel-head">
-                <h2>🔎 Auditoria de coletas — confira a foto e valide</h2>
+                <h2>🔎 Auditoria fitossanitária — confira a foto, caixas YOLO e valide</h2>
                 <div class="filters" id="filtros">
                     <button class="filter-btn active" data-status="">Todas</button>
                     <button class="filter-btn" data-status="PENDENTE">Pendentes</button>
@@ -247,8 +270,8 @@
             </div>
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Foto</th><th>Planta</th><th>Clone</th><th>Parcela</th><th>Frutos (IA → valor final)</th><th>GPS</th><th>Status</th><th></th></tr></thead>
-                    <tbody id="auditoriaBody"><tr><td colspan="8">Carregando…</td></tr></tbody>
+                    <thead><tr><th>Foto</th><th>Planta</th><th>Clone</th><th>Parcela</th><th>Frutos (IA → Final)</th><th>Classes Fitossanitárias</th><th>GPS</th><th>Status</th><th></th></tr></thead>
+                    <tbody id="auditoriaBody"><tr><td colspan="9">Carregando…</td></tr></tbody>
                 </table>
             </div>
             <div class="pager">
@@ -261,27 +284,45 @@
         <!-- RANKING -->
         <div class="panel">
             <div class="panel-head">
-                <h2>🏆 Ranking de produtividade e sobrevivência por clone</h2>
+                <h2>🏆 Ranking fitossanitário e produtividade por clone</h2>
                 <button class="btn btn-outline" onclick="carregarRelatorio()">🔄 Atualizar</button>
             </div>
-            <p class="hint">Conta só o que está validado ou aguardando; leituras rejeitadas ficam de fora e leituras ajustadas valem o número do pesquisador.</p>
+            <p class="hint">Conta as leituras validadas ou aguardando; rejeitadas ficam de fora e ajustadas valem os números corrigidos pelo pesquisador.</p>
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>#</th><th>Clone</th><th>Descrição</th><th>Plantas (vivas/total)</th><th>Sobrevivência</th><th>Leituras</th><th>Frutos</th><th>Média/planta viva</th></tr></thead>
-                    <tbody id="tabelaClonesBody"><tr><td colspan="8">Carregando…</td></tr></tbody>
+                    <thead><tr><th>#</th><th>Clone</th><th>Vivas/Total</th><th>Sobrevivência</th><th>Total Frutos</th><th>Sadios</th><th>Vassoura</th><th>Podridão</th><th>Infecção (%)</th><th>Média/Planta Viva</th></tr></thead>
+                    <tbody id="tabelaClonesBody"><tr><td colspan="10">Carregando…</td></tr></tbody>
                 </table>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ================= MODAL DE REVISAO ================= -->
+<!-- ================= MODAL DE REVISAO COM EDITOR INTERATIVO ================= -->
 <div id="modal" class="modal" hidden onclick="if(event.target===this)fecharModal()">
     <div class="modal-box">
-        <div class="modal-head"><h3 id="modalTitulo">Revisão da leitura</h3><button class="modal-close" onclick="fecharModal()" aria-label="Fechar">×</button></div>
+        <div class="modal-head">
+            <h3 id="modalTitulo">Revisão Fitossanitária da Leitura</h3>
+            <button class="modal-close" onclick="fecharModal()" aria-label="Fechar">×</button>
+        </div>
         <div class="modal-body">
             <div>
-                <div class="foto-wrap" id="fotoWrap"></div>
+                <div class="foto-container" id="fotoWrap"></div>
+                <div class="editor-instrucoes">
+                    💡 <b>Como validar:</b> Clique em uma caixa para mudar a doença ou excluí-la. Clique em qualquer área da foto para adicionar um fruto manualmente.
+                </div>
+                <div id="painelCaixaSelecionada" class="caixa-selecionada-painel" hidden>
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <span id="labelCaixaSel" style="font-weight:700">Fruto Selecionado</span>
+                        <button class="btn btn-danger" style="padding:2px 8px;font-size:0.7rem" onclick="excluirCaixaSelecionada()">🗑 Excluir Caixa</button>
+                    </div>
+                    <div class="botoes-classe">
+                        <button class="btn-class-pill" style="background:var(--cor-sadio);color:#000" onclick="alterarClasseCaixaSel('Sadio')">Sadio</button>
+                        <button class="btn-class-pill" style="background:var(--cor-vassoura);color:#000" onclick="alterarClasseCaixaSel('Vassoura de Bruxa')">Vassoura</button>
+                        <button class="btn-class-pill" style="background:var(--cor-podridao);color:#fff" onclick="alterarClasseCaixaSel('Podridão')">Podridão</button>
+                        <button class="btn-class-pill" style="background:var(--cor-nao-aval);color:#000" onclick="alterarClasseCaixaSel('Não Avaliável')">Não Aval.</button>
+                    </div>
+                </div>
                 <div class="legenda" id="legenda"></div>
             </div>
             <div>
@@ -294,18 +335,23 @@
 
 <script>
     /* =====================================================================
-       Estado e utilitarios
+       Estado e utilitários
        ===================================================================== */
     let token = localStorage.getItem('cacausync_jwt') || '';
     let usuario = JSON.parse(localStorage.getItem('cacausync_user') || 'null');
     let ensaio = localStorage.getItem('cacausync_ensaio') || 'TC-1801';
     let pagina = 0, totalPaginas = 0, filtroStatus = '';
     const TAMANHO_PAGINA = 10;
-    const fotoUrls = new Map();   // id da leitura -> blob URL (a foto exige token, entao nao da para usar <img src> direto)
-    const PALETA = ['#e53935', '#1e88e5', '#fb8c00', '#8e24aa', '#00897b', '#6d4c41', '#d81b60', '#7cb342'];
+    const fotoUrls = new Map();
+    
+    // Cores padronizadas com o app mobile
+    const CORES_CLASSES = {
+        'sadio': '#00e676', 'cacau_sadio': '#00e676', 'fruto_maduro': '#00e676', 'fruto_verde': '#00e676', 'cacau': '#00e676', 'fruto': '#00e676',
+        'vassoura': '#ff9100', 'vassoura de bruxa': '#ff9100', 'vassoura_bruxa': '#ff9100',
+        'podridao': '#ff1744', 'podridão': '#ff1744', 'monilia': '#ff1744', 'monília': '#ff1744',
+        'nao_avaliavel': '#90a4ae', 'não avaliável': '#90a4ae', 'nao avaliavel': '#90a4ae'
+    };
 
-    // Tudo que vem do servidor (nome de campanha, observacao, clone...) passa por aqui antes de ir para o HTML.
-    // Sem isso, um CSV com <script> no nome da campanha executaria codigo no navegador do pesquisador (XSS).
     function esc(v) {
         return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
@@ -317,7 +363,6 @@
         document.body.appendChild(t); setTimeout(() => t.remove(), 3500);
     }
 
-    // Unico ponto que fala com a API: coloca o token, trata 401 (sessao expirada) e extrai a mensagem de erro.
     async function api(caminho, opcoes = {}) {
         const resp = await fetch(caminho, { ...opcoes, headers: { ...(opcoes.headers || {}), 'Authorization': `Bearer ${token}` } });
         if (resp.status === 401) { fazerLogout(); throw new Error('Sessão expirada. Entre novamente.'); }
@@ -330,8 +375,17 @@
     }
     const apiJson = async (c, o) => (await api(c, o)).json();
 
+    function corPorClasse(nome) {
+        if (!nome) return '#00e676';
+        const k = nome.toLowerCase().trim();
+        for (const [chave, cor] of Object.entries(CORES_CLASSES)) {
+            if (k.includes(chave)) return cor;
+        }
+        return '#00e676';
+    }
+
     /* =====================================================================
-       Login / logout
+       Login / Logout
        ===================================================================== */
     function preencherLogin(email) { $('loginEmail').value = email; $('loginSenha').value = 'cepec123'; $('loginErrorMsg').hidden = true; }
 
@@ -385,15 +439,21 @@
         } catch (e) { toast(e.message, true); }
     }
 
+    async function baixarAnaliseAuditada() {
+        try {
+            const blob = await (await api(`/api/v1/ensaios/${encodeURIComponent(ensaio)}/analise-csv`)).blob();
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `analise_auditada_${ensaio.toLowerCase()}.csv`;
+            document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+        } catch (e) { toast(e.message, true); }
+    }
+
     /* =====================================================================
-       Envio de CSV + fotos
+       Envio de CSV + Fotos
        ===================================================================== */
-    // Reduz a foto no aparelho (lado maior 1600 px, JPEG 85%): ~0,4 MB em vez de ~5 MB. As caixas do YOLO sao
-    // normalizadas (0 a 1), entao continuam valendo em qualquer tamanho. O original segue intacto no celular.
     async function reduzirImagem(file, maxLado = 1600, qualidade = 0.85) {
         if (!file.type.startsWith('image/')) return file;
         try {
-            const bmp = await createImageBitmap(file);   // respeita a rotacao EXIF no Chrome atual
+            const bmp = await createImageBitmap(file);
             const escala = Math.min(1, maxLado / Math.max(bmp.width, bmp.height));
             if (escala === 1 && file.size < 1.5 * 1024 * 1024) { bmp.close && bmp.close(); return file; }
             const c = document.createElement('canvas');
@@ -421,7 +481,6 @@
                 box.textContent = `⏳ Reduzindo fotos… ${i + 1}/${fotosOriginais.length}`;
                 fotos.push(await reduzirImagem(fotosOriginais[i]));
             }
-            // Lotes de 12 fotos. O CSV vai em todos os lotes: como a importacao e idempotente, reenviar so anexa o que faltava.
             const lotes = []; for (let i = 0; i < Math.max(fotos.length, 1); i += 12) lotes.push(fotos.slice(i, i + 12));
             let primeiro = null, anexadas = 0, avisos = [];
             for (let i = 0; i < lotes.length; i++) {
@@ -444,16 +503,18 @@
         finally { btn.disabled = false; }
     }
 
-    /* ----- demonstracoes (sem precisar do celular) ----- */
-    function gerarFotoDemo(caixas, nFrutos, w = 800, h = 600) {
+    function gerarFotoDemo(caixas, w = 800, h = 600) {
         const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
         const bg = g.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, '#5c8f46'); bg.addColorStop(1, '#2f5a2a');
         g.fillStyle = bg; g.fillRect(0, 0, w, h);
         g.fillStyle = 'rgba(30,70,30,.5)'; for (let i = 0; i < 14; i++) { g.beginPath(); g.ellipse(Math.random() * w, Math.random() * h, 80, 22, Math.random() * 3, 0, 7); g.fill(); }
-        const desenha = (x, y, cw, ch) => { g.fillStyle = '#d9a441'; g.strokeStyle = '#8a5a14'; g.lineWidth = 3;
-            g.beginPath(); g.ellipse(x + cw / 2, y + ch / 2, cw / 2, ch / 2, 0, 0, 7); g.fill(); g.stroke(); };
-        if (caixas && caixas.length) caixas.forEach(b => desenha(b.x * w, b.y * h, b.largura * w, b.altura * h));
-        else for (let i = 0; i < Math.min(nFrutos, 12); i++) desenha(60 + (i % 4) * 180, 60 + Math.floor(i / 4) * 170, 70, 110);
+        
+        caixas.forEach(b => {
+            const bx = b.x * w, by = b.y * h, bw = b.largura * w, bh = b.altura * h;
+            g.fillStyle = b.classe.includes('vassoura') ? '#ff9100' : (b.classe.includes('podr') ? '#ff1744' : '#d9a441');
+            g.strokeStyle = '#222'; g.lineWidth = 2;
+            g.beginPath(); g.ellipse(bx + bw / 2, by + bh / 2, bw / 2, bh / 2, 0, 0, 7); g.fill(); g.stroke();
+        });
         return new Promise(r => c.toBlob(b => r(b), 'image/jpeg', 0.85));
     }
 
@@ -461,20 +522,40 @@
         const t = new Date(), hh = String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0');
         const dia = String(t.getDate()).padStart(2, '0') + '/' + String(t.getMonth() + 1).padStart(2, '0');
         const base = Date.now();
-        const linhas = [
-            ['CCN-51_Parcela20_Planta1', 'CCN-51', 20, 1, 28, -14.7892, -39.2781],
-            ['CCN-51_Parcela20_Planta2', 'CCN-51', 20, 2, 24, -14.7893, -39.2782],
-            ['SCP-16005_Parcela1_Planta1', 'SCP-16005', 1, 1, 21, -14.7885, -39.2775],
-            ['PS-13.19_Parcela13_Planta1', 'PS-13.19', 13, 1, 18, -14.7889, -39.2779],
-            ['SCP-17202_Parcela2_Planta5', 'SCP-17202', 2, 5, 'Não Coletável', 0.0, 0.0]
+        
+        const caixasPlanta1 = [
+            { classe: 'Sadio', confianca: 0.94, x: 0.12, y: 0.20, largura: 0.15, altura: 0.30 },
+            { classe: 'Sadio', confianca: 0.91, x: 0.35, y: 0.18, largura: 0.14, altura: 0.28 },
+            { classe: 'Vassoura de Bruxa', confianca: 0.86, x: 0.65, y: 0.35, largura: 0.13, altura: 0.26 }
         ];
-        const csv = 'Campanha,ID_Gerado,Clone,Parcela,Planta,Resultado,Data,Lat,Lng\n'
-            + linhas.map(l => `${ensaio},${l[0]},${l[1]},${l[2]},${l[3]},${l[4]},${dia} ${hh}:${base % 60},${l[5]},${l[6]}`).join('\n');
+
+        const caixasPlanta2 = [
+            { classe: 'Sadio', confianca: 0.92, x: 0.20, y: 0.25, largura: 0.16, altura: 0.32 },
+            { classe: 'Podridão', confianca: 0.85, x: 0.55, y: 0.30, largura: 0.15, altura: 0.29 }
+        ];
+
+        const jsonC1 = JSON.stringify(caixasPlanta1).replace(/"/g, '""');
+        const jsonC2 = JSON.stringify(caixasPlanta2).replace(/"/g, '""');
+
+        const linhas = [
+            `"${ensaio}","CCN-51_Parcela20_Planta1","CCN-51","20","1","3","${dia} ${hh}",-14.7892,-39.2781,3,2,1,0,0,"${jsonC1}"`,
+            `"${ensaio}","CCN-51_Parcela20_Planta2","CCN-51","20","2","2","${dia} ${hh}",-14.7893,-39.2782,2,1,0,1,0,"${jsonC2}"`,
+            `"${ensaio}","SCP-16005_Parcela1_Planta1","SCP-16005","1","1","4","${dia} ${hh}",-14.7885,-39.2775,4,4,0,0,0,""`,
+            `"${ensaio}","PS-13.19_Parcela13_Planta1","PS-13.19","13","1","2","${dia} ${hh}",-14.7889,-39.2779,2,1,1,0,0,""`,
+            `"${ensaio}","SCP-17202_Parcela2_Planta5","SCP-17202","2","5","Não Coletável","${dia} ${hh}",0.0,0.0,0,0,0,0,0,""`
+        ];
+
+        const csv = 'Campanha,ID_Gerado,Clone,Parcela,Planta,Resultado,Data,Lat,Lng,Total_Frutos,Sadios,Vassoura,Podridao,Nao_Avaliavel,Deteccoes_YOLO\n'
+            + linhas.join('\n');
         const csvFile = new File([csv], `Coleta_Custom_Demo_${base}.csv`, { type: 'text/csv' });
-        const fotos = [];
-        for (let i = 0; i < 4; i++) {   // a 5a planta e "Não Coletável": sem foto
-            fotos.push(new File([await gerarFotoDemo(null, linhas[i][4])], `${linhas[i][0]}_${base + i * 1000}.jpg`, { type: 'image/jpeg' }));
-        }
+        
+        const fotos = [
+            new File([await gerarFotoDemo(caixasPlanta1)], `CCN-51_Parcela20_Planta1_${base}.jpg`, { type: 'image/jpeg' }),
+            new File([await gerarFotoDemo(caixasPlanta2)], `CCN-51_Parcela20_Planta2_${base + 1000}.jpg`, { type: 'image/jpeg' }),
+            new File([await gerarFotoDemo([])], `SCP-16005_Parcela1_Planta1_${base + 2000}.jpg`, { type: 'image/jpeg' }),
+            new File([await gerarFotoDemo([])], `PS-13.19_Parcela13_Planta1_${base + 3000}.jpg`, { type: 'image/jpeg' })
+        ];
+
         await enviarCsvComFotos(csvFile, fotos);
     }
 
@@ -482,30 +563,52 @@
         const box = $('syncStatusBox');
         const n = Date.now() % 100000;
         const caixas = [
-            { classe: 'fruto_maduro', confianca: 0.93, x: 0.10, y: 0.22, largura: 0.14, altura: 0.30 },
-            { classe: 'fruto_maduro', confianca: 0.88, x: 0.38, y: 0.15, largura: 0.13, altura: 0.28 },
-            { classe: 'fruto_verde', confianca: 0.81, x: 0.62, y: 0.40, largura: 0.12, altura: 0.26 },
-            { classe: 'monilia', confianca: 0.74, x: 0.80, y: 0.18, largura: 0.12, altura: 0.27 }
+            { classe: 'Sadio', confianca: 0.94, x: 0.12, y: 0.22, largura: 0.15, altura: 0.30 },
+            { classe: 'Sadio', confianca: 0.89, x: 0.38, y: 0.18, largura: 0.14, altura: 0.28 },
+            { classe: 'Vassoura de Bruxa', confianca: 0.83, x: 0.62, y: 0.38, largura: 0.13, altura: 0.26 },
+            { classe: 'Podridão', confianca: 0.76, x: 0.80, y: 0.20, largura: 0.13, altura: 0.27 }
         ];
         try {
-            box.textContent = '⏳ Enviando JSON com caixas do YOLO…';
-            const plantId = `CCN-51_Parcela20_Planta3_demo${n}`;
-            const r = await apiJson('/api/v1/coletas/sync-json', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ codigoEnsaio: ensaio, leituras: [{ campanha: ensaio, plantId, clone: 'CCN-51', parcela: '20', planta: 3,
-                    resultado: String(caixas.length), data: new Date().toLocaleString('pt-BR'), lat: -14.789, lng: -39.278, deteccoes: caixas }] }) });
-            const lista = await apiJson(`/api/v1/ensaios/${encodeURIComponent(ensaio)}/leituras?size=20`);
-            const alvo = lista.content.find(l => l.plantCode === plantId);
-            if (alvo) {
-                const fd = new FormData(); fd.append('foto', new File([await gerarFotoDemo(caixas, 4)], 'demo.jpg', { type: 'image/jpeg' }));
-                await api(`/api/v1/leituras/${alvo.id}/foto`, { method: 'POST', body: fd });
+            box.textContent = '⏳ Enviando JSON do aplicativo com caixas do YOLO…';
+            const plantId = `CCN-51_P20_Pl3_demo${n}`;
+            const r = await apiJson('/api/v1/coletas/sync-json', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    codigoEnsaio: ensaio,
+                    leituras: [{
+                        campanha: ensaio,
+                        plantId: plantId,
+                        clone: 'CCN-51',
+                        parcela: '20',
+                        planta: 3,
+                        resultado: '4',
+                        data: new Date().toLocaleString('pt-BR'),
+                        lat: -14.789,
+                        lng: -39.278,
+                        sadios: 2,
+                        vassoura: 1,
+                        podridao: 1,
+                        naoAvaliavel: 0,
+                        deteccoes: caixas
+                    }]
+                })
+            });
+            
+            const leituraId = (r.leituras && r.leituras.length > 0) ? r.leituras[0].leituraId : null;
+            if (leituraId) {
+                const fd = new FormData();
+                fd.append('foto', new File([await gerarFotoDemo(caixas)], 'demo_yolo.jpg', { type: 'image/jpeg' }));
+                await api(`/api/v1/leituras/${leituraId}/foto`, { method: 'POST', body: fd });
             }
-            box.textContent = `✅ Demonstração enviada (${r.leiturasNovasInseridas} leitura). Abra "Revisar" na auditoria para ver as caixas sobre a foto.`;
+
+            box.textContent = `✅ Demonstração enviada com sucesso! Abra "Revisar" na tabela para ver e editar as caixas na foto.`;
             atualizarTudo();
         } catch (e) { box.textContent = '❌ ' + e.message; }
     }
 
     /* =====================================================================
-       Auditoria (lista) e relatorio
+       Auditoria e Relatório
        ===================================================================== */
     document.querySelectorAll('#filtros .filter-btn').forEach(b => b.addEventListener('click', () => {
         document.querySelectorAll('#filtros .filter-btn').forEach(x => x.classList.remove('active'));
@@ -521,21 +624,29 @@
             totalPaginas = p.totalPages;
             $('pagInfo').textContent = p.totalElements ? `Página ${p.number + 1} de ${p.totalPages} · ${p.totalElements} leitura(s)` : '';
             $('btnAnt').disabled = p.number <= 0; $('btnProx').disabled = p.number >= p.totalPages - 1;
-            if (!p.content.length) { corpo.innerHTML = '<tr><td colspan="8">Nenhuma leitura neste filtro.</td></tr>'; return; }
+            if (!p.content.length) { corpo.innerHTML = '<tr><td colspan="9">Nenhuma leitura neste filtro.</td></tr>'; return; }
             corpo.innerHTML = p.content.map(l => {
                 const final = l.coletavel ? l.qtdEfetiva : 'Não coletável';
                 const mudou = l.statusValidacao === 'AJUSTADA' ? ` → <b>${esc(l.qtdEfetiva)}</b>` : '';
                 const gps = l.alertaGps ? '<span class="chip PENDENTE">sem GPS</span>' : `${esc(l.latitude.toFixed(4))}, ${esc(l.longitude.toFixed(4))}`;
+                
+                const classesBadges = l.coletavel ? `
+                    <span class="chip-doenca chip-sadio" title="Sadios">🟢 ${l.qtdSadios || 0}</span>
+                    <span class="chip-doenca chip-vassoura" title="Vassoura">🟠 ${l.qtdVassoura || 0}</span>
+                    <span class="chip-doenca chip-podridao" title="Podridão">🔴 ${l.qtdPodridao || 0}</span>
+                ` : '—';
+
                 return `<tr>
                     <td>${l.temFoto ? `<img class="thumb" data-foto="${esc(l.id)}" alt="foto" />` : '<div class="thumb-empty">sem foto</div>'}</td>
-                    <td title="${esc(l.plantCode)}">${esc(l.plantCode.length > 26 ? l.plantCode.slice(0, 26) + '…' : l.plantCode)}</td>
+                    <td title="${esc(l.plantCode)}">${esc(l.plantCode.length > 24 ? l.plantCode.slice(0, 24) + '…' : l.plantCode)}</td>
                     <td><b>${esc(l.codigoClone)}</b></td><td>${esc(l.numeroParcela)}</td>
                     <td>${l.coletavel ? esc(l.qtdFrutos) : '—'}${l.coletavel ? mudou : ` <span class="chip REJEITADA">${esc(final)}</span>`}</td>
+                    <td>${classesBadges}</td>
                     <td>${gps}</td><td><span class="chip ${esc(l.statusValidacao)}">${esc(l.statusValidacao)}</span></td>
                     <td><button class="btn btn-primary" onclick="abrirRevisao(${Number(l.id)})">Revisar</button></td></tr>`;
             }).join('');
             corpo.querySelectorAll('img[data-foto]').forEach(img => carregarFoto(img.dataset.foto).then(u => { if (u) img.src = u; }));
-        } catch (e) { corpo.innerHTML = `<tr><td colspan="8">❌ ${esc(e.message)}</td></tr>`; }
+        } catch (e) { corpo.innerHTML = `<tr><td colspan="9">❌ ${esc(e.message)}</td></tr>`; }
     }
 
     async function carregarFoto(id, forcar = false) {
@@ -550,103 +661,256 @@
     async function carregarRelatorio() {
         try {
             const r = await apiJson(`/api/v1/ensaios/${encodeURIComponent(ensaio)}/relatorio-clones`);
-            $('kpiTotalPlantas').textContent = r.totalPlantasEnsaio; $('kpiPlantasVivas').textContent = r.totalPlantasVivas;
-            $('kpiPlantasMortas').textContent = r.totalPlantasNaoColetaveis; $('kpiTotalFrutos').textContent = r.totalFrutosAcumulados;
-            $('kpiPendentes').textContent = r.leiturasPendentesValidacao; $('kpiAlertasGps').textContent = r.leiturasComAlertaGps;
+            $('kpiTotalPlantas').textContent = r.totalPlantasEnsaio;
+            $('kpiPlantasVivas').textContent = r.totalPlantasVivas;
+            $('kpiTotalFrutos').textContent = r.totalFrutosAcumulados;
+            $('kpiTotalSadios').textContent = r.totalFrutosSadios;
+            $('kpiTotalDoentes').textContent = (r.totalFrutosVassoura + r.totalFrutosPodridao);
+            $('kpiTaxaInfeccao').textContent = r.taxaInfeccaoEnsaioPercentual + '%';
+            $('kpiPendentes').textContent = r.leiturasPendentesValidacao;
+            $('kpiAlertasGps').textContent = r.leiturasComAlertaGps;
+
             $('tabelaClonesBody').innerHTML = r.rankingClones.map((c, i) => `<tr>
-                <td><b>#${i + 1}</b></td><td><b style="color:var(--green-deep)">${esc(c.codigoClone)}</b></td>
-                <td style="color:var(--text-muted)">${esc(c.descricaoClone || '-')}</td>
+                <td><b>#${i + 1}</b></td>
+                <td><b style="color:var(--green-deep)">${esc(c.codigoClone)}</b></td>
                 <td>${esc(c.plantasVivasColetaveis)} / ${esc(c.totalPlantasCadastradas)}</td>
-                <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-track"><div class="progress-fill" style="width:${Number(c.taxaSobrevivenciaPercentual)}%"></div></div><b>${esc(c.taxaSobrevivenciaPercentual)}%</b></div></td>
-                <td>${esc(c.totalLeiturasRealizadas)}</td><td><b>${esc(c.totalFrutosContados)}</b></td>
+                <td><div style="display:flex;align-items:center;gap:6px"><div class="progress-track"><div class="progress-fill" style="width:${Number(c.taxaSobrevivenciaPercentual)}%"></div></div><b>${esc(c.taxaSobrevivenciaPercentual)}%</b></div></td>
+                <td><b>${esc(c.totalFrutosContados)}</b></td>
+                <td><span style="color:#1b5e20;font-weight:700">${esc(c.totalFrutosSadios)}</span></td>
+                <td><span style="color:#b45309;font-weight:700">${esc(c.totalFrutosVassoura)}</span></td>
+                <td><span style="color:#c62828;font-weight:700">${esc(c.totalFrutosPodridao)}</span></td>
+                <td><div style="display:flex;align-items:center;gap:6px"><div class="progress-track"><div class="progress-fill danger" style="width:${Math.min(100, Number(c.taxaInfeccaoPercentual))}%"></div></div><b>${esc(c.taxaInfeccaoPercentual)}%</b></div></td>
                 <td><span class="badge-prod">${esc(c.mediaFrutosPorPlantaViva)} frutos/planta</span></td></tr>`).join('');
-        } catch (e) { $('tabelaClonesBody').innerHTML = `<tr><td colspan="8">❌ ${esc(e.message)}</td></tr>`; }
+        } catch (e) { $('tabelaClonesBody').innerHTML = `<tr><td colspan="10">❌ ${esc(e.message)}</td></tr>`; }
     }
 
     /* =====================================================================
-       Modal de revisao: foto + caixas do YOLO + validacao
+       Modal de Revisão Interativo: Edição de Caixas YOLO e Doenças
        ===================================================================== */
-    let leituraAberta = null, deteccoesAbertas = [];
-
-    function corDaClasse(nome) { let h = 0; for (const ch of nome) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return PALETA[h % PALETA.length]; }
+    let leituraAberta = null;
+    let deteccoesAbertas = [];
+    let indiceCaixaSelecionada = -1;
 
     function desenharCaixas() {
         const img = $('fotoWrap').querySelector('img'), cv = $('fotoWrap').querySelector('canvas');
         if (!img || !cv) return;
         cv.width = img.clientWidth; cv.height = img.clientHeight;
-        const g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height); g.lineWidth = 3; g.font = 'bold 13px Segoe UI, sans-serif';
-        deteccoesAbertas.forEach(d => {
-            const x = d.x * cv.width, y = d.y * cv.height, w = d.largura * cv.width, h = d.altura * cv.height, cor = corDaClasse(d.classe);
-            g.strokeStyle = cor; g.strokeRect(x, y, w, h);
-            const txt = `${d.classe} ${Math.round(d.confianca * 100)}%`, tw = g.measureText(txt).width + 8;
-            g.fillStyle = cor; g.fillRect(x, Math.max(0, y - 18), tw, 18); g.fillStyle = '#fff'; g.fillText(txt, x + 4, Math.max(13, y - 5));
+        const g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height);
+        
+        deteccoesAbertas.forEach((d, idx) => {
+            const x = d.x * cv.width, y = d.y * cv.height, w = d.largura * cv.width, h = d.altura * cv.height;
+            const cor = corPorClasse(d.classe);
+            const isSel = (idx === indiceCaixaSelecionada);
+
+            g.lineWidth = isSel ? 4 : 2.5;
+            g.strokeStyle = isSel ? '#ffffff' : cor;
+            g.strokeRect(x, y, w, h);
+            
+            if (isSel) {
+                g.lineWidth = 2;
+                g.strokeStyle = cor;
+                g.strokeRect(x - 2, y - 2, w + 4, h + 4);
+            }
+
+            const txt = `#${idx + 1} ${d.classe}`;
+            g.font = 'bold 12px Segoe UI, sans-serif';
+            const tw = g.measureText(txt).width + 8;
+            g.fillStyle = cor;
+            g.fillRect(x, Math.max(0, y - 18), tw, 18);
+            g.fillStyle = (cor === '#00e676' || cor === '#ff9100') ? '#000' : '#fff';
+            g.fillText(txt, x + 4, Math.max(13, y - 5));
         });
+        atualizarResumoCaixas();
     }
     window.addEventListener('resize', desenharCaixas);
 
+    function onCanvasClick(e) {
+        const cv = $('fotoWrap').querySelector('canvas');
+        if (!cv) return;
+        const rect = cv.getBoundingClientRect();
+        const clickX = (e.clientX - rect.left) / cv.width;
+        const clickY = (e.clientY - rect.top) / cv.height;
+
+        // Verifica se clicou em uma caixa existente
+        let encontrado = -1;
+        for (let i = deteccoesAbertas.length - 1; i >= 0; i--) {
+            const d = deteccoesAbertas[i];
+            if (clickX >= d.x && clickX <= (d.x + d.largura) && clickY >= d.y && clickY <= (d.y + d.altura)) {
+                encontrado = i;
+                break;
+            }
+        }
+
+        if (encontrado >= 0) {
+            indiceCaixaSelecionada = encontrado;
+            $('painelCaixaSelecionada').hidden = false;
+            $('labelCaixaSel').textContent = `Fruto #${indiceCaixaSelecionada + 1}: ${deteccoesAbertas[encontrado].classe}`;
+        } else {
+            if (indiceCaixaSelecionada >= 0) {
+                indiceCaixaSelecionada = -1;
+                $('painelCaixaSelecionada').hidden = true;
+            } else {
+                // Adiciona nova caixa manual
+                const boxW = 0.12, boxH = 0.22;
+                const nova = {
+                    classe: 'Sadio',
+                    confianca: 1.0,
+                    x: Math.max(0, Math.min(1 - boxW, clickX - boxW / 2)),
+                    y: Math.max(0, Math.min(1 - boxH, clickY - boxH / 2)),
+                    largura: boxW,
+                    altura: boxH
+                };
+                deteccoesAbertas.push(nova);
+                indiceCaixaSelecionada = deteccoesAbertas.length - 1;
+                $('painelCaixaSelecionada').hidden = false;
+                $('labelCaixaSel').textContent = `Novo Fruto #${indiceCaixaSelecionada + 1}: Sadio`;
+            }
+        }
+        desenharCaixas();
+    }
+
+    function alterarClasseCaixaSel(novaClasse) {
+        if (indiceCaixaSelecionada >= 0 && indiceCaixaSelecionada < deteccoesAbertas.length) {
+            deteccoesAbertas[indiceCaixaSelecionada].classe = novaClasse;
+            $('labelCaixaSel').textContent = `Fruto #${indiceCaixaSelecionada + 1}: ${novaClasse}`;
+            desenharCaixas();
+        }
+    }
+
+    function excluirCaixaSelecionada() {
+        if (indiceCaixaSelecionada >= 0 && indiceCaixaSelecionada < deteccoesAbertas.length) {
+            deteccoesAbertas.splice(indiceCaixaSelecionada, 1);
+            indiceCaixaSelecionada = -1;
+            $('painelCaixaSelecionada').hidden = true;
+            desenharCaixas();
+        }
+    }
+
+    function atualizarResumoCaixas() {
+        let s = 0, v = 0, p = 0, na = 0;
+        deteccoesAbertas.forEach(d => {
+            const cl = (d.classe || '').toLowerCase();
+            if (cl.includes('vassoura')) v++;
+            else if (cl.includes('podr') || cl.includes('monil')) p++;
+            else if (cl.includes('nao') || cl.includes('não')) na++;
+            else s++;
+        });
+        
+        // Se há caixas desenhadas, reflete automaticamente nos inputs
+        if (deteccoesAbertas.length > 0) {
+            $('valQtd').value = deteccoesAbertas.length;
+            $('valSadios').value = s;
+            $('valVassoura').value = v;
+            $('valPodridao').value = p;
+            $('valNaoAval').value = na;
+        }
+
+        const contagem = {};
+        deteccoesAbertas.forEach(d => contagem[d.classe] = (contagem[d.classe] || 0) + 1);
+        $('legenda').innerHTML = deteccoesAbertas.length
+            ? Object.entries(contagem).map(([c, n]) => `<span style="background:${corPorClasse(c)};color:${(corPorClasse(c)==='#00e676'||corPorClasse(c)==='#ff9100')?'#000':'#fff'}">${esc(c)} × ${n}</span>`).join('')
+            : '<div class="note" style="width:100%">Esta leitura não possui caixas registradas da IA. Você pode clicar na foto para adicionar frutos ou ajustar os números abaixo.</div>';
+    }
+
     async function abrirRevisao(id) {
         $('modal').hidden = false; document.body.style.overflow = 'hidden';
-        $('fotoWrap').innerHTML = '<div class="foto-vazia">Carregando…</div>'; $('legenda').innerHTML = ''; $('infoGrid').innerHTML = ''; $('valBox').innerHTML = '';
+        $('fotoWrap').innerHTML = '<div class="foto-vazia">Carregando foto e metadados…</div>';
+        $('painelCaixaSelecionada').hidden = true;
+        $('legenda').innerHTML = ''; $('infoGrid').innerHTML = ''; $('valBox').innerHTML = '';
+        indiceCaixaSelecionada = -1;
         try { leituraAberta = await apiJson(`/api/v1/leituras/${id}`); } catch (e) { toast(e.message, true); fecharModal(); return; }
         renderModal();
     }
 
     async function renderModal() {
-        const l = leituraAberta; deteccoesAbertas = l.deteccoes || [];
-        $('modalTitulo').textContent = `Leitura #${l.id} — ${l.codigoClone} · parcela ${l.numeroParcela} · planta ${l.numeroPlanta}`;
+        const l = leituraAberta;
+        deteccoesAbertas = l.deteccoes ? JSON.parse(JSON.stringify(l.deteccoes)) : [];
+        $('modalTitulo').textContent = `Leitura #${l.id} — ${l.codigoClone} · Parcela ${l.numeroParcela} · Planta ${l.numeroPlanta}`;
 
         if (l.temFoto) {
             const url = await carregarFoto(l.id, true);
-            $('fotoWrap').innerHTML = url ? `<img alt="Foto da coleta" src="${url}" /><canvas></canvas>` : '<div class="foto-vazia">Não foi possível carregar a foto.</div>';
-            const img = $('fotoWrap').querySelector('img'); if (img) img.onload = desenharCaixas;
+            $('fotoWrap').innerHTML = url ? `<img alt="Foto da coleta" src="${url}" /><canvas></canvas>` : '<div class="foto-vazia">Não foi possível carregar a imagem.</div>';
+            const img = $('fotoWrap').querySelector('img');
+            const cv = $('fotoWrap').querySelector('canvas');
+            if (img && cv) {
+                img.onload = () => { desenharCaixas(); };
+                cv.onclick = onCanvasClick;
+            }
         } else {
-            $('fotoWrap').innerHTML = '<div class="foto-vazia">Esta leitura ainda não tem foto.<br>Anexe uma abaixo para poder conferir.</div>';
+            $('fotoWrap').innerHTML = '<div class="foto-vazia">Esta leitura ainda não tem foto.<br>Você pode anexar uma foto abaixo para auditar.</div>';
         }
-
-        const contagem = {}; deteccoesAbertas.forEach(d => contagem[d.classe] = (contagem[d.classe] || 0) + 1);
-        $('legenda').innerHTML = deteccoesAbertas.length
-            ? Object.entries(contagem).map(([c, n]) => `<span style="background:${corDaClasse(c)}">${esc(c)} × ${n}</span>`).join('')
-            : '<div class="note" style="width:100%">Este envio veio por CSV: o app ainda não manda as caixas do YOLO, só a contagem. Confira o número olhando a foto.</div>';
 
         const gps = (l.latitude === 0 && l.longitude === 0) ? '<span class="chip PENDENTE">sem sinal de GPS</span>'
             : `<a href="https://www.google.com/maps?q=${encodeURIComponent(l.latitude + ',' + l.longitude)}" target="_blank" rel="noopener">${esc(l.latitude.toFixed(5))}, ${esc(l.longitude.toFixed(5))}</a>`;
+        
         $('infoGrid').innerHTML = `
-            <dt>Ensaio</dt><dd>${esc(l.codigoEnsaio)}</dd><dt>Campanha</dt><dd>${esc(l.campanha)}</dd>
-            <dt>Planta</dt><dd>${esc(l.plantCode)}</dd><dt>Coletado em</dt><dd>${esc(l.dataColeta)}</dd>
-            <dt>Enviado por</dt><dd>${esc(l.pesquisadorEmail)}</dd><dt>GPS</dt><dd>${gps}</dd>
-            <dt>IA contou</dt><dd>${l.coletavel ? esc(l.qtdFrutos) + ' fruto(s)' : esc(l.diagnosticoBruto)}</dd>
-            <dt>Status</dt><dd><span class="chip ${esc(l.statusValidacao)}">${esc(l.statusValidacao)}</span>
-                ${l.validadoPor ? `<br><small>por ${esc(l.validadoPor)}</small>` : ''}</dd>
+            <dt>Ensaio</dt><dd>${esc(l.codigoEnsaio)}</dd>
+            <dt>Campanha</dt><dd>${esc(l.campanha)}</dd>
+            <dt>Planta</dt><dd>${esc(l.plantCode)}</dd>
+            <dt>Data Coleta</dt><dd>${esc(l.dataColeta)}</dd>
+            <dt>Enviado por</dt><dd>${esc(l.pesquisadorEmail)}</dd>
+            <dt>GPS</dt><dd>${gps}</dd>
+            <dt>Diagnóstico IA</dt><dd>${l.coletavel ? esc(l.qtdFrutos) + ' fruto(s)' : esc(l.diagnosticoBruto)}</dd>
+            <dt>Status Atual</dt><dd><span class="chip ${esc(l.statusValidacao)}">${esc(l.statusValidacao)}</span>
+                ${l.validadoPor ? `<br><small>validado por ${esc(l.validadoPor)}</small>` : ''}</dd>
             ${l.observacaoValidacao ? `<dt>Observação</dt><dd>${esc(l.observacaoValidacao)}</dd>` : ''}`;
 
         $('valBox').innerHTML = `
-            <div><label class="field-label" for="valQtd">Contagem correta de frutos</label>
+            <div style="font-weight:700;font-size:0.88rem;color:var(--green-deep)">Classificação Fitossanitária Validada</div>
+            <div class="doencas-inputs-grid">
+                <div><label class="field-label" for="valSadios">🟢 Sadios</label>
+                    <input type="number" id="valSadios" min="0" value="${esc(l.qtdSadios || (l.coletavel ? l.qtdEfetiva : 0))}" /></div>
+                <div><label class="field-label" for="valVassoura">🟠 Vassoura</label>
+                    <input type="number" id="valVassoura" min="0" value="${esc(l.qtdVassoura || 0)}" /></div>
+                <div><label class="field-label" for="valPodridao">🔴 Podridão</label>
+                    <input type="number" id="valPodridao" min="0" value="${esc(l.qtdPodridao || 0)}" /></div>
+                <div><label class="field-label" for="valNaoAval">⚪ Não Aval.</label>
+                    <input type="number" id="valNaoAval" min="0" value="${esc(l.qtdNaoAvaliavel || 0)}" /></div>
+            </div>
+            <div><label class="field-label" for="valQtd">Total de Frutos Validados</label>
                 <input type="number" id="valQtd" min="0" value="${esc(l.qtdEfetiva)}" /></div>
-            <div><label class="field-label" for="valObs">Observação (opcional)</label>
-                <textarea id="valObs" rows="2" maxlength="500" placeholder="Ex.: fruto escondido atrás da folha">${esc(l.observacaoValidacao || '')}</textarea></div>
+            <div><label class="field-label" for="valObs">Observação do Pesquisador (opcional)</label>
+                <textarea id="valObs" rows="2" maxlength="500" placeholder="Ex.: fruto sadio com mancha natural, sem vassoura">${esc(l.observacaoValidacao || '')}</textarea></div>
             <div class="val-actions">
-                <button class="btn btn-primary" onclick="validar('VALIDADA')">✅ Confirmar a IA</button>
-                <button class="btn btn-blue" onclick="validar('AJUSTADA')">✏️ Salvar contagem</button>
+                <button class="btn btn-primary" onclick="validar('VALIDADA')">✅ Confirmar IA</button>
+                <button class="btn btn-blue" onclick="validar('AJUSTADA')">✏️ Salvar Validação</button>
                 <button class="btn btn-danger" onclick="validar('REJEITADA')">⛔ Rejeitar</button>
                 <button class="btn btn-outline" onclick="validar('PENDENTE')">↩ Desfazer</button>
             </div>
-            ${l.coletavel ? '' : '<div class="note">Marcada como não coletável. Se a foto mostrar frutos, use “Salvar contagem” com um valor maior que 0: a planta volta a contar como viva.</div>'}
+            ${l.coletavel ? '' : '<div class="note">Esta leitura estava marcada como Não Coletável. Ao salvar com frutos > 0, ela volta a contar como planta viva no ensaio.</div>'}
             <div><label class="field-label" for="novaFoto">${l.temFoto ? 'Substituir foto' : 'Anexar foto'}</label>
                 <input type="file" id="novaFoto" accept="image/jpeg,image/png" />
-                <button class="btn btn-outline" style="margin-top:8px" onclick="enviarNovaFoto()">📎 Enviar foto</button></div>`;
+                <button class="btn btn-outline" style="margin-top:6px" onclick="enviarNovaFoto()">📎 Enviar foto</button></div>`;
+        
         desenharCaixas();
     }
 
     async function validar(status) {
-        const corpo = { status, observacao: $('valObs').value };
-        if (status === 'AJUSTADA') {
+        const corpo = {
+            status,
+            observacao: $('valObs').value.trim(),
+            qtdSadios: parseInt($('valSadios').value, 10) || 0,
+            qtdVassoura: parseInt($('valVassoura').value, 10) || 0,
+            qtdPodridao: parseInt($('valPodridao').value, 10) || 0,
+            qtdNaoAvaliavel: parseInt($('valNaoAval').value, 10) || 0,
+            deteccoes: deteccoesAbertas
+        };
+
+        if (status === 'AJUSTADA' || status === 'VALIDADA') {
             const v = parseInt($('valQtd').value, 10);
-            if (Number.isNaN(v) || v < 0) { toast('Informe a contagem correta (0 ou mais).', true); return; }
+            if (Number.isNaN(v) || v < 0) { toast('Informe a contagem correta de frutos.', true); return; }
             corpo.qtdFrutosValidada = v;
         }
+
         try {
-            leituraAberta = await apiJson(`/api/v1/leituras/${leituraAberta.id}/validacao`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) });
-            toast('Validação registrada.'); renderModal(); atualizarTudo();
+            leituraAberta = await apiJson(`/api/v1/leituras/${leituraAberta.id}/validacao`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(corpo)
+            });
+            toast('Validação registrada com sucesso!');
+            renderModal();
+            atualizarTudo();
         } catch (e) { toast(e.message, true); }
     }
 
@@ -656,14 +920,14 @@
         try {
             const fd = new FormData(); fd.append('foto', await reduzirImagem(f), f.name);
             leituraAberta = await apiJson(`/api/v1/leituras/${leituraAberta.id}/foto`, { method: 'POST', body: fd });
-            toast('Foto anexada.'); renderModal(); carregarAuditoria();
+            toast('Foto anexada com sucesso!'); renderModal(); carregarAuditoria();
         } catch (e) { toast(e.message, true); }
     }
 
     function fecharModal() { $('modal').hidden = true; document.body.style.overflow = ''; leituraAberta = null; }
 
     /* =====================================================================
-       Inicio
+       Inicialização
        ===================================================================== */
     if (token && usuario) mostrarDashboard();
 </script>

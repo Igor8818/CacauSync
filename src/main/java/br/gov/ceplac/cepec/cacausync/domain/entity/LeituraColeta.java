@@ -24,6 +24,18 @@ public class LeituraColeta {
     @Column(name = "qtd_frutos", nullable = false)
     private Integer qtdFrutos = 0;
 
+    @Column(name = "qtd_sadios", nullable = false)
+    private Integer qtdSadios = 0;
+
+    @Column(name = "qtd_vassoura", nullable = false)
+    private Integer qtdVassoura = 0;
+
+    @Column(name = "qtd_podridao", nullable = false)
+    private Integer qtdPodridao = 0;
+
+    @Column(name = "qtd_nao_avaliavel", nullable = false)
+    private Integer qtdNaoAvaliavel = 0;
+
     @Column(nullable = false)
     private Boolean coletavel = true;
 
@@ -94,6 +106,31 @@ public class LeituraColeta {
     /** Leitura entra nas somas/medias? So se for coletavel e nao tiver sido rejeitada. */
     public boolean contaNoRelatorio() {
         return Boolean.TRUE.equals(coletavel) && statusValidacao != StatusValidacao.REJEITADA;
+    }
+
+    public int qtdSadiosEfetiva() {
+        if (!contaNoRelatorio()) return 0;
+        int somaClasses = safe(qtdSadios) + safe(qtdVassoura) + safe(qtdPodridao) + safe(qtdNaoAvaliavel);
+        if (somaClasses == 0) {
+            return qtdEfetiva();
+        }
+        return safe(qtdSadios);
+    }
+
+    public int qtdVassouraEfetiva() {
+        return contaNoRelatorio() ? safe(qtdVassoura) : 0;
+    }
+
+    public int qtdPodridaoEfetiva() {
+        return contaNoRelatorio() ? safe(qtdPodridao) : 0;
+    }
+
+    public int qtdNaoAvaliavelEfetiva() {
+        return contaNoRelatorio() ? safe(qtdNaoAvaliavel) : 0;
+    }
+
+    private int safe(Integer v) {
+        return v != null && v > 0 ? v : 0;
     }
 
     public boolean temFoto() {
@@ -263,4 +300,16 @@ public class LeituraColeta {
     public void setDeteccoesJson(String deteccoesJson) {
         this.deteccoesJson = deteccoesJson;
     }
+
+    public Integer getQtdSadios() { return qtdSadios != null ? qtdSadios : 0; }
+    public void setQtdSadios(Integer qtdSadios) { this.qtdSadios = qtdSadios != null ? Math.max(0, qtdSadios) : 0; }
+
+    public Integer getQtdVassoura() { return qtdVassoura != null ? qtdVassoura : 0; }
+    public void setQtdVassoura(Integer qtdVassoura) { this.qtdVassoura = qtdVassoura != null ? Math.max(0, qtdVassoura) : 0; }
+
+    public Integer getQtdPodridao() { return qtdPodridao != null ? qtdPodridao : 0; }
+    public void setQtdPodridao(Integer qtdPodridao) { this.qtdPodridao = qtdPodridao != null ? Math.max(0, qtdPodridao) : 0; }
+
+    public Integer getQtdNaoAvaliavel() { return qtdNaoAvaliavel != null ? qtdNaoAvaliavel : 0; }
+    public void setQtdNaoAvaliavel(Integer qtdNaoAvaliavel) { this.qtdNaoAvaliavel = qtdNaoAvaliavel != null ? Math.max(0, qtdNaoAvaliavel) : 0; }
 }

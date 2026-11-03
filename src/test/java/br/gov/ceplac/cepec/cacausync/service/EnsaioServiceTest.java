@@ -142,6 +142,43 @@ class EnsaioServiceTest {
         assertThat(clonePrimeiro.mediaFrutosPorPlantaViva()).isEqualTo(7.0);
     }
 
+    @Test
+    @DisplayName("Deve calcular totais fitossanitários no relatório e exportar análise analítica CSV completa")
+    void deveCalcularTotaisFitossanitariosEExportarAnaliseCompleta() {
+        Ensaio ensaio = new Ensaio("TC-1801", "Ensaio TC-1801", "CEPEC");
+        Clone clone = new Clone("CCN-51", "Clone CCN-51", "CEPEC");
+        Parcela parcela = new Parcela(ensaio, clone, 1, "20");
+        Planta p1 = criarPlantaComId(1L, parcela, "CCN-51_par20_pla1", 1, SituacaoPlanta.NORMAL);
+
+        LeituraColeta l1 = criarLeitura(p1, 10, true, false);
+        l1.setCampanha("Safra 2026");
+        l1.setQtdSadios(6);
+        l1.setQtdVassoura(2);
+        l1.setQtdPodridao(1);
+        l1.setQtdNaoAvaliavel(1);
+        l1.setDataColetaStr("27/10 14:00");
+        l1.setLatitude(-14.78);
+        l1.setLongitude(-39.22);
+        l1.setStatusValidacao(StatusValidacao.VALIDADA);
+        l1.setValidadoPor("pesquisador@ceplac.gov.br");
+
+        when(ensaioRepository.findByCodigoIgnoreCase("TC-1801")).thenReturn(Optional.of(ensaio));
+        when(plantaRepository.findByParcelaEnsaioCodigoIgnoreCaseOrderByOrdemRotaAsc("TC-1801")).thenReturn(List.of(p1));
+        when(leituraColetaRepository.findByPlantaParcelaEnsaioCodigoIgnoreCaseOrderByImportadoEmDesc("TC-1801"))
+                .thenReturn(List.of(l1));
+
+        RelatorioProdutividadeEnsaioResponse relatorio = ensaioService.gerarRelatorioProdutividade("TC-1801");
+        assertThat(relatorio.totalFrutosSadios()).isEqualTo(6);
+        assertThat(relatorio.totalFrutosVassoura()).isEqualTo(2);
+        assertThat(relatorio.totalFrutosPodridao()).isEqualTo(1);
+        assertThat(relatorio.totalFrutosNaoAvaliavel()).isEqualTo(1);
+        assertThat(relatorio.taxaInfeccaoEnsaioPercentual()).isEqualTo(30.0); // 3 doentes / 10 frutos = 30.0%
+
+        String csvAnalise = ensaioService.exportarAnaliseCompletaCsv("TC-1801");
+        assertThat(csvAnalise).startsWith("Ensaio,Campanha,Plant_ID,Clone,Parcela,Planta,Qtd_IA,Qtd_Validada,Qtd_Efetiva,Sadios,Vassoura,Podridao,Nao_Avaliavel,Status_Validacao,Validado_Por,Validado_Em,Observacao,Data_Coleta,Latitude,Longitude,Tem_Foto\n");
+        assertThat(csvAnalise).contains("TC-1801,Safra 2026,CCN-51_par20_pla1,CCN-51,20,1,10,,10,6,2,1,1,VALIDADA,pesquisador@ceplac.gov.br");
+    }
+
     private Planta criarPlantaComId(Long id, Parcela parcela, String code, int num, SituacaoPlanta situacao) {
         Planta p = new Planta(parcela, code, num, num, situacao);
         p.setId(id);

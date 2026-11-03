@@ -116,6 +116,10 @@ public class EnsaioService {
 
             int totalLeiturasClone = 0;
             int totalFrutosClone = 0;
+            int totalSadiosClone = 0;
+            int totalVassouraClone = 0;
+            int totalPodridaoClone = 0;
+            int totalNaoAvalClone = 0;
 
             for (Planta p : plantasDoClone) {
                 List<LeituraColeta> leiturasPlanta = leiturasPorPlantaId.getOrDefault(p.getId(), List.of());
@@ -126,12 +130,20 @@ public class EnsaioService {
                     }
                     if (l.contaNoRelatorio()) {
                         totalFrutosClone += l.qtdEfetiva();
+                        totalSadiosClone += l.qtdSadiosEfetiva();
+                        totalVassouraClone += l.qtdVassouraEfetiva();
+                        totalPodridaoClone += l.qtdPodridaoEfetiva();
+                        totalNaoAvalClone += l.qtdNaoAvaliavelEfetiva();
                     }
                 }
             }
 
             double mediaFrutosPorPlantaViva = plantasVivas > 0
                     ? arredondar((double) totalFrutosClone / plantasVivas)
+                    : 0.0;
+            int doentesClone = totalVassouraClone + totalPodridaoClone;
+            double taxaInfeccaoClone = totalFrutosClone > 0
+                    ? arredondar((doentesClone * 100.0) / totalFrutosClone)
                     : 0.0;
 
             ranking.add(new ProdutividadeCloneDto(
@@ -143,6 +155,11 @@ public class EnsaioService {
                     taxaSobrevivencia,
                     totalLeiturasClone,
                     totalFrutosClone,
+                    totalSadiosClone,
+                    totalVassouraClone,
+                    totalPodridaoClone,
+                    totalNaoAvalClone,
+                    taxaInfeccaoClone,
                     mediaFrutosPorPlantaViva
             ));
         }
@@ -155,6 +172,27 @@ public class EnsaioService {
                 .filter(LeituraColeta::contaNoRelatorio)
                 .mapToInt(LeituraColeta::qtdEfetiva)
                 .sum();
+        int totalSadiosEnsaio = leituras.stream()
+                .filter(LeituraColeta::contaNoRelatorio)
+                .mapToInt(LeituraColeta::qtdSadiosEfetiva)
+                .sum();
+        int totalVassouraEnsaio = leituras.stream()
+                .filter(LeituraColeta::contaNoRelatorio)
+                .mapToInt(LeituraColeta::qtdVassouraEfetiva)
+                .sum();
+        int totalPodridaoEnsaio = leituras.stream()
+                .filter(LeituraColeta::contaNoRelatorio)
+                .mapToInt(LeituraColeta::qtdPodridaoEfetiva)
+                .sum();
+        int totalNaoAvalEnsaio = leituras.stream()
+                .filter(LeituraColeta::contaNoRelatorio)
+                .mapToInt(LeituraColeta::qtdNaoAvaliavelEfetiva)
+                .sum();
+        int doentesEnsaio = totalVassouraEnsaio + totalPodridaoEnsaio;
+        double taxaInfeccaoEnsaio = totalFrutosEnsaio > 0
+                ? arredondar((doentesEnsaio * 100.0) / totalFrutosEnsaio)
+                : 0.0;
+
         int alertasGps = (int) leituras.stream().filter(l -> Boolean.TRUE.equals(l.getAlertaGps())).count();
         int pendentes = (int) leituras.stream().filter(l -> l.getStatusValidacao() == StatusValidacao.PENDENTE).count();
         int rejeitadas = (int) leituras.stream().filter(l -> l.getStatusValidacao() == StatusValidacao.REJEITADA).count();
@@ -169,6 +207,11 @@ public class EnsaioService {
                 plantas.size() - totalVivasEnsaio,
                 leituras.size(),
                 totalFrutosEnsaio,
+                totalSadiosEnsaio,
+                totalVassouraEnsaio,
+                totalPodridaoEnsaio,
+                totalNaoAvalEnsaio,
+                taxaInfeccaoEnsaio,
                 alertasGps,
                 pendentes,
                 validadas,
@@ -207,6 +250,53 @@ public class EnsaioService {
                     .append('\n');
         }
         return csv.toString();
+    }
+
+    /**
+     * Exporta a planilha analítica consolidada pós-auditoria com detalhamento fitossanitário e validações.
+     */
+    @Transactional(readOnly = true)
+    public String exportarAnaliseCompletaCsv(String codigoEnsaio) {
+        Ensaio ensaio = ensaioRepository.findByCodigoIgnoreCase(codigoEnsaio)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Ensaio genético não encontrado: " + codigoEnsaio));
+
+        List<LeituraColeta> leituras = leituraColetaRepository.findByPlantaParcelaEnsaioCodigoIgnoreCaseOrderByImportadoEmDesc(ensaio.getCodigo());
+        StringBuilder csv = new StringBuilder();
+        csv.append("Ensaio,Campanha,Plant_ID,Clone,Parcela,Planta,Qtd_IA,Qtd_Validada,Qtd_Efetiva,Sadios,Vassoura,Podridao,Nao_Avaliavel,Status_Validacao,Validado_Por,Validado_Em,Observacao,Data_Coleta,Latitude,Longitude,Tem_Foto\n");
+
+        for (LeituraColeta l : leituras) {
+            csv.append(ensaio.getCodigo()).append(',')
+                    .append(csvField(l.getCampanha())).append(',')
+                    .append(csvField(l.getPlanta().getPlantCode())).append(',')
+                    .append(csvField(l.getPlanta().getParcela().getClone().getCodigo())).append(',')
+                    .append(csvField(l.getPlanta().getParcela().getNumeroParcela())).append(',')
+                    .append(l.getPlanta().getNumeroPlanta()).append(',')
+                    .append(l.getQtdFrutos()).append(',')
+                    .append(l.getQtdFrutosValidada() != null ? l.getQtdFrutosValidada() : "").append(',')
+                    .append(l.qtdEfetiva()).append(',')
+                    .append(l.getQtdSadios()).append(',')
+                    .append(l.getQtdVassoura()).append(',')
+                    .append(l.getQtdPodridao()).append(',')
+                    .append(l.getQtdNaoAvaliavel()).append(',')
+                    .append(l.getStatusValidacao().name()).append(',')
+                    .append(csvField(l.getValidadoPor())).append(',')
+                    .append(l.getValidadoEm() != null ? l.getValidadoEm().toString() : "").append(',')
+                    .append(csvField(l.getObservacaoValidacao())).append(',')
+                    .append(csvField(l.getDataColetaStr())).append(',')
+                    .append(l.getLatitude()).append(',')
+                    .append(l.getLongitude()).append(',')
+                    .append(l.temFoto())
+                    .append('\n');
+        }
+        return csv.toString();
+    }
+
+    private String csvField(String val) {
+        if (val == null) return "";
+        if (val.contains(",") || val.contains("\"") || val.contains("\n") || val.contains("\r")) {
+            return "\"" + val.replace("\"", "\"\"") + "\"";
+        }
+        return val;
     }
 
     private double arredondar(double valor) {

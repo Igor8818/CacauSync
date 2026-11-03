@@ -75,6 +75,20 @@ class FotoMatcherTest {
     }
 
     @Test
+    @DisplayName("Casamento canônico: casa planta com ID longo do banco (par1_pla3) com foto no padrão simplificado (P1_Pl3)")
+    void casaPelaChaveCanonicaQuandoIdDiferente() {
+        // Linha com ID longo do FieldBook CEPEC
+        var linha = new LinhaColetaCsvDto("TC-1801", "SCP-16005_TC-1801_par1_pla3_c0226", "SCP-16005", "1", 3, "10", 10, true, "27/10 10:00", -14.0, -39.0);
+        // Foto tirada pelo app usando nomenclatura P1_Pl3
+        var foto = foto("SCP-16005_P1_Pl3_1761690000000.jpg");
+
+        var r = matcher.casar(List.of(linha), List.of(foto));
+
+        assertThat(r.fotoPorLinha().get(0)).isSameAs(foto);
+        assertThat(r.fotosSemPar()).isZero();
+    }
+
+    @Test
     @DisplayName("Sem fotos: nenhuma linha recebe foto e nada fica sem par")
     void semFotos() {
         var r = matcher.casar(List.of(linha("A_P1_Pl1")), List.of());

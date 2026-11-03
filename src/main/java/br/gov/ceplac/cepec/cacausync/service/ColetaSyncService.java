@@ -2,6 +2,7 @@ package br.gov.ceplac.cepec.cacausync.service;
 
 import br.gov.ceplac.cepec.cacausync.domain.entity.*;
 import br.gov.ceplac.cepec.cacausync.dto.ArquivoFoto;
+import br.gov.ceplac.cepec.cacausync.dto.DeteccaoDto;
 import br.gov.ceplac.cepec.cacausync.dto.LeituraColetaResponse;
 import br.gov.ceplac.cepec.cacausync.dto.LeituraSincronizadaDto;
 import br.gov.ceplac.cepec.cacausync.dto.LinhaColetaCsvDto;
@@ -80,28 +81,47 @@ public class ColetaSyncService {
     @Transactional
     public ResultadoImportacaoCsvResponse sincronizarJson(SyncJsonRequest request, String pesquisadorEmail) {
         List<LinhaColetaCsvDto> linhas = request.leituras().stream()
-                .map(item -> new LinhaColetaCsvDto(
-                        item.campanha().trim(),
-                        item.plantId().trim(),
-                        item.cloneCodigo() != null && !item.cloneCodigo().isBlank() ? item.cloneCodigo().trim() : extrairClone(item.plantId()),
-                        item.parcela() != null && !item.parcela().isBlank() ? item.parcela().trim() : "1",
-                        item.planta() != null ? item.planta() : 1,
-                        item.resultado().trim(),
-                        CsvColetaParser.extrairQuantidade(item.resultado()),
-                        CsvColetaParser.isPlantaColetavel(item.resultado()),
-                        item.data().trim(),
-                        item.lat() != null ? item.lat() : 0.0,
-                        item.lng() != null ? item.lng() : 0.0,
-                        item.deteccoes() != null ? item.deteccoes() : List.of()
-                ))
+                .map(item -> {
+                    boolean col = CsvColetaParser.isPlantaColetavel(item.resultado());
+                    int qtd = col ? CsvColetaParser.extrairQuantidade(item.resultado()) : 0;
+                    List<DeteccaoDto> dets = item.deteccoes() != null ? item.deteccoes() : List.of();
+                    if (item.sadios() != null || item.vassoura() != null || item.podridao() != null || item.naoAvaliavel() != null) {
+                        return new LinhaColetaCsvDto(
+                                item.campanha().trim(),
+                                item.plantId().trim(),
+                                item.cloneCodigo() != null && !item.cloneCodigo().isBlank() ? item.cloneCodigo().trim() : extrairClone(item.plantId()),
+                                item.parcela() != null && !item.parcela().isBlank() ? item.parcela().trim() : "1",
+                                item.planta() != null ? item.planta() : 1,
+                                item.resultado().trim(),
+                                qtd,
+                                col && item.sadios() != null ? item.sadios() : 0,
+                                col && item.vassoura() != null ? item.vassoura() : 0,
+                                col && item.podridao() != null ? item.podridao() : 0,
+                                col && item.naoAvaliavel() != null ? item.naoAvaliavel() : 0,
+                                col,
+                                item.data().trim(),
+                                item.lat() != null ? item.lat() : 0.0,
+                                item.lng() != null ? item.lng() : 0.0,
+                                dets
+                        );
+                    }
+                    return new LinhaColetaCsvDto(
+                            item.campanha().trim(),
+                            item.plantId().trim(),
+                            item.cloneCodigo() != null && !item.cloneCodigo().isBlank() ? item.cloneCodigo().trim() : extrairClone(item.plantId()),
+                            item.parcela() != null && !item.parcela().isBlank() ? item.parcela().trim() : "1",
+                            item.planta() != null ? item.planta() : 1,
+                            item.resultado().trim(),
+                            qtd,
+                            col,
+                            item.data().trim(),
+                            item.lat() != null ? item.lat() : 0.0,
+                            item.lng() != null ? item.lng() : 0.0,
+                            dets
+                    );
+                })
                 .toList();
-        // Planta nao coletavel nunca tem frutos, mesmo que o app mande um numero junto.
-        List<LinhaColetaCsvDto> normalizadas = linhas.stream()
-                .map(l -> l.coletavel() ? l : new LinhaColetaCsvDto(
-                        l.campanha(), l.plantId(), l.cloneCodigo(), l.numeroParcela(), l.numeroPlanta(),
-                        l.resultadoBruto(), 0, false, l.dataColeta(), l.latitude(), l.longitude(), l.deteccoes()))
-                .toList();
-        return processarLinhas(request.codigoEnsaio(), normalizadas, "sync-json", pesquisadorEmail, List.of());
+        return processarLinhas(request.codigoEnsaio(), linhas, "sync-json", pesquisadorEmail, List.of());
     }
 
     private ResultadoImportacaoCsvResponse processarLinhas(
@@ -173,6 +193,10 @@ public class ColetaSyncService {
             leitura.setPesquisadorEmail(pesquisadorEmail);
             leitura.setCampanha(item.campanha());
             leitura.setQtdFrutos(item.qtdFrutos());
+            leitura.setQtdSadios(item.qtdSadios());
+            leitura.setQtdVassoura(item.qtdVassoura());
+            leitura.setQtdPodridao(item.qtdPodridao());
+            leitura.setQtdNaoAvaliavel(item.qtdNaoAvaliavel());
             leitura.setColetavel(item.coletavel());
             leitura.setDiagnosticoBruto(item.resultadoBruto());
             leitura.setDataColetaStr(item.dataColeta());

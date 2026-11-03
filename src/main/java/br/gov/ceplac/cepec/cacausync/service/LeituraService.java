@@ -75,6 +75,14 @@ public class LeituraService {
             plantaRepository.save(planta);
         }
 
+        if (req.deteccoes() != null) {
+            leitura.setDeteccoesJson(leituraMapper.serializarDeteccoes(req.deteccoes()));
+        }
+        if (req.qtdSadios() != null) leitura.setQtdSadios(req.qtdSadios());
+        if (req.qtdVassoura() != null) leitura.setQtdVassoura(req.qtdVassoura());
+        if (req.qtdPodridao() != null) leitura.setQtdPodridao(req.qtdPodridao());
+        if (req.qtdNaoAvaliavel() != null) leitura.setQtdNaoAvaliavel(req.qtdNaoAvaliavel());
+
         return leituraMapper.paraResponse(leituraRepository.save(leitura));
     }
 
