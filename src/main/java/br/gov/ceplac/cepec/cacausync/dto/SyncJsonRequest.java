@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Pattern;
 
 import java.util.List;
 
@@ -21,7 +22,9 @@ public record SyncJsonRequest(
         @JsonProperty("clone") String cloneCodigo,
         String parcela,
         Integer planta,
-        @NotBlank(message = "resultado obrigatorio (numero ou 'Não Coletável')") String resultado,
+        @NotBlank(message = "resultado obrigatorio (numero ou 'Não Coletável')")
+        @Pattern(regexp = "^(\\d+|Não Coletável)$", message = "resultado deve ser um número inteiro ou 'Não Coletável'")
+        String resultado,
         @NotBlank(message = "data obrigatoria") String data,
         Double lat,
         Double lng,
@@ -29,7 +32,7 @@ public record SyncJsonRequest(
         Integer vassoura,
         Integer podridao,
         Integer naoAvaliavel,
-        List<DeteccaoDto> deteccoes
+        @Valid List<DeteccaoDto> deteccoes
     ) {
         /** Construtor retrocompatível de 10 argumentos. */
         public ItemSync(

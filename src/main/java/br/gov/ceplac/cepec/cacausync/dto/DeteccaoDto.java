@@ -1,6 +1,11 @@
 package br.gov.ceplac.cepec.cacausync.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 /**
  * Uma caixa (quadradinho) que o YOLO desenhou na foto.
@@ -9,10 +14,17 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record DeteccaoDto(
+    @NotBlank(message = "Classe da deteccao e obrigatoria")
+    @Pattern(regexp = "^(Sadio|Vassoura de Bruxa|Podridão|Não Avaliável|cacau|outro)$", message = "Classe de deteccao invalida")
     String classe,
-    double confianca,
-    double x,
-    double y,
-    double largura,
-    double altura
-) {}
+    @DecimalMin("0.0") @DecimalMax("1.0") double confianca,
+    @DecimalMin("0.0") @DecimalMax("1.0") double x,
+    @DecimalMin("0.0") @DecimalMax("1.0") double y,
+    @DecimalMin("0.0") @DecimalMax("1.0") double largura,
+    @DecimalMin("0.0") @DecimalMax("1.0") double altura
+) {
+    @AssertTrue(message = "Geometria da caixa extrapola os limites da imagem (x + largura deve ser <= 1.0001 e y + altura <= 1.0001)")
+    public boolean isGeometriaValida() {
+        return (x + largura <= 1.0001) && (y + altura <= 1.0001);
+    }
+}
