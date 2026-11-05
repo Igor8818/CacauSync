@@ -151,6 +151,23 @@
         .note { font-size: 0.76rem; color: var(--text-muted); background: #f8faf8; border: 1px dashed var(--border); border-radius: 8px; padding: 8px 10px; }
         .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #123b19; color: #fff; padding: 10px 18px; border-radius: 99px; font-size: 0.85rem; z-index: 99; box-shadow: var(--shadow-lg); }
         .toast.err { background: var(--red); }
+
+        /* ---------- PRODUTIVIDADE / PARÂMETROS / MAPA (SPEC-003) ---------- */
+        .kpi-card.gold { border-left-color: var(--gold-accent); }
+        .params-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; background: #f8faf8; border: 1px dashed var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+        .params-bar label { display: block; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-bottom: 3px; }
+        .params-bar input, .params-bar select { padding: 7px 9px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.85rem; width: 130px; }
+        .stack-bar { display: flex; height: 10px; min-width: 110px; border-radius: 99px; overflow: hidden; background: #e0e6e0; }
+        .stack-bar i { display: block; height: 100%; }
+        .cobertura-note { font-size: 0.78rem; color: var(--text-muted); margin: 6px 0 12px; }
+        .cobertura-note b { color: var(--text-dark); }
+        .aviso-estimativa { font-size: 0.74rem; color: var(--amber); background: var(--amber-bg); border: 1px solid #ffe0b2; border-radius: 8px; padding: 6px 10px; margin-bottom: 10px; }
+        #mapaFocos { width: 100%; height: 340px; background: #f4f8f4; border: 1px solid var(--border); border-radius: 10px; }
+        .mapa-legenda { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.76rem; margin-top: 8px; color: var(--text-muted); }
+        .mapa-legenda span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; background: var(--c); vertical-align: middle; }
+        .val-actions.proxima { grid-template-columns: 1fr; }
+        .atalhos { font-size: 0.72rem; color: var(--text-muted); }
+        .atalhos kbd { background: #eef2ee; border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; font-family: monospace; }
     </style>
 </head>
 <body>
@@ -233,6 +250,9 @@
             <div class="kpi-card danger"><span>Taxa de Infecção</span><strong id="kpiTaxaInfeccao">-</strong></div>
             <div class="kpi-card warn"><span>Aguardando validação</span><strong id="kpiPendentes">-</strong></div>
             <div class="kpi-card"><span>Alertas de GPS</span><strong id="kpiAlertasGps">-</strong></div>
+            <div class="kpi-card blue"><span>Cobertura da coleta</span><strong id="kpiCobertura">-</strong></div>
+            <div class="kpi-card gold"><span>Produtividade estimada (@/ha)</span><strong id="kpiArrobasHa">-</strong></div>
+            <div class="kpi-card danger"><span>Perda por doenças (@/ha)</span><strong id="kpiPerdaArrobasHa">-</strong></div>
         </div>
 
         <!-- ENVIO -->
@@ -287,12 +307,36 @@
                 <h2>🏆 Ranking fitossanitário e produtividade por clone</h2>
                 <button class="btn btn-outline" onclick="carregarRelatorio()">🔄 Atualizar</button>
             </div>
-            <p class="hint">Conta as leituras validadas ou aguardando; rejeitadas ficam de fora e ajustadas valem os números corrigidos pelo pesquisador.</p>
+            <p class="hint">Cada planta conta <b>uma vez</b> (leitura mais recente, sem rejeitadas; ajustadas valem o número corrigido). A média usa só plantas vivas <b>já avaliadas</b> e o ranking ordena pelos frutos <b>sadios</b> por planta — fruto com vassoura ou podridão é perda, não colheita.</p>
+            <div class="params-bar">
+                <div><label for="parIndice">Índice de fruto (frutos sadios/kg seco)</label><input type="number" id="parIndice" min="1" max="200" step="0.5" value="22" /></div>
+                <div><label for="parDensidade">Densidade (plantas/ha)</label><input type="number" id="parDensidade" min="1" max="10000" step="1" value="1111" /></div>
+                <div><label for="parCampanha">Campanha</label><select id="parCampanha"><option value="">Todas</option></select></div>
+                <button class="btn btn-primary" onclick="aplicarParametros()">Aplicar</button>
+                <button class="btn btn-outline" onclick="restaurarParametros()">Padrão</button>
+            </div>
+            <div id="coberturaNote" class="cobertura-note"></div>
+            <div class="aviso-estimativa">⚠ Estimativa <b>indicativa</b>: converte a contagem pontual de frutos sadios em amêndoa seca (1 @ = 15 kg) e pondera pela sobrevivência do clone. Não substitui a pesagem da safra.</div>
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>#</th><th>Clone</th><th>Vivas/Total</th><th>Sobrevivência</th><th>Total Frutos</th><th>Sadios</th><th>Vassoura</th><th>Podridão</th><th>Infecção (%)</th><th>Média/Planta Viva</th></tr></thead>
-                    <tbody id="tabelaClonesBody"><tr><td colspan="10">Carregando…</td></tr></tbody>
+                    <thead><tr><th>#</th><th>Clone</th><th>Avaliadas/Vivas</th><th>Sobrevivência</th><th>Frutos (total)</th><th>Sadios · Vassoura · Podridão</th><th>Infecção (%)</th><th>Sadios/Planta</th><th>kg/ha</th><th>@/ha</th><th>Perda (@/ha)</th></tr></thead>
+                    <tbody id="tabelaClonesBody"><tr><td colspan="11">Carregando…</td></tr></tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- MAPA DE FOCOS -->
+        <div class="panel">
+            <div class="panel-head">
+                <h2>🗺️ Mapa de focos da quadra (GPS das leituras)</h2>
+                <button class="btn btn-outline" onclick="carregarMapa()">🔄 Atualizar</button>
+            </div>
+            <p class="hint">Cada ponto é uma planta avaliada, posicionada pelo GPS do celular. Clique no ponto para abrir a revisão.</p>
+            <svg id="mapaFocos" viewBox="0 0 800 340" preserveAspectRatio="xMidYMid meet"></svg>
+            <div class="mapa-legenda">
+                <span style="--c:#00c853">Sadia</span><span style="--c:#ff9100">Foco de vassoura</span>
+                <span style="--c:#ff1744">Foco de podridão</span><span style="--c:#90a4ae">Não coletável</span>
+                <span id="mapaInfo"></span>
             </div>
         </div>
     </div>
@@ -429,7 +473,7 @@
     }
 
     function trocarEnsaio() { ensaio = $('ensaioSelect').value; localStorage.setItem('cacausync_ensaio', ensaio); pagina = 0; atualizarTudo(); }
-    function atualizarTudo() { carregarRelatorio(); carregarAuditoria(); }
+    function atualizarTudo() { carregarRelatorio(); carregarAuditoria(); carregarMapa(); }
 
     async function baixarRota() {
         try {
@@ -658,9 +702,49 @@
         } catch (_) { return null; }
     }
 
+    /* =====================================================================
+       Parâmetros agronômicos (SPEC-003)
+       ===================================================================== */
+    const PARAM_PADRAO = { indice: 22, densidade: 1111, campanha: '' };
+    let params = JSON.parse(localStorage.getItem('cacausync_params') || 'null') || { ...PARAM_PADRAO };
+
+    const fmt = (n, casas = 1) => Number(n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas });
+
+    function sincronizarCamposParametros() {
+        $('parIndice').value = params.indice;
+        $('parDensidade').value = params.densidade;
+    }
+
+    function aplicarParametros() {
+        const indice = parseFloat($('parIndice').value), densidade = parseInt($('parDensidade').value, 10);
+        if (!(indice > 0 && indice <= 200)) { toast('O índice de fruto deve estar entre 1 e 200.', true); return; }
+        if (!(densidade >= 1 && densidade <= 10000)) { toast('A densidade deve estar entre 1 e 10000 plantas/ha.', true); return; }
+        params = { indice, densidade, campanha: $('parCampanha').value };
+        localStorage.setItem('cacausync_params', JSON.stringify(params));
+        carregarRelatorio();
+    }
+
+    function restaurarParametros() {
+        params = { ...PARAM_PADRAO };
+        localStorage.setItem('cacausync_params', JSON.stringify(params));
+        sincronizarCamposParametros();
+        carregarRelatorio();
+    }
+
+    function barraClasses(s, v, p, na) {
+        const t = s + v + p + na;
+        if (!t) return '<div class="stack-bar"></div>';
+        const w = x => (x * 100 / t).toFixed(1);
+        return `<div class="stack-bar" title="Sadios ${s} · Vassoura ${v} · Podridão ${p} · Não aval. ${na}">`
+            + `<i style="width:${w(s)}%;background:#00c853"></i><i style="width:${w(v)}%;background:#ff9100"></i>`
+            + `<i style="width:${w(p)}%;background:#ff1744"></i><i style="width:${w(na)}%;background:#90a4ae"></i></div>`;
+    }
+
     async function carregarRelatorio() {
         try {
-            const r = await apiJson(`/api/v1/ensaios/${encodeURIComponent(ensaio)}/relatorio-clones`);
+            const q = new URLSearchParams({ indiceFruto: params.indice, plantasPorHa: params.densidade });
+            if (params.campanha) q.set('campanha', params.campanha);
+            const r = await apiJson(`/api/v1/ensaios/${encodeURIComponent(ensaio)}/relatorio-clones?${q}`);
             $('kpiTotalPlantas').textContent = r.totalPlantasEnsaio;
             $('kpiPlantasVivas').textContent = r.totalPlantasVivas;
             $('kpiTotalFrutos').textContent = r.totalFrutosAcumulados;
@@ -669,20 +753,97 @@
             $('kpiTaxaInfeccao').textContent = r.taxaInfeccaoEnsaioPercentual + '%';
             $('kpiPendentes').textContent = r.leiturasPendentesValidacao;
             $('kpiAlertasGps').textContent = r.leiturasComAlertaGps;
+            $('kpiCobertura').textContent = fmt(r.coberturaPercentual) + '%';
+            $('kpiArrobasHa').textContent = fmt(r.estimativa.produtividadeRealArrobasHa);
+            $('kpiPerdaArrobasHa').textContent = fmt(r.estimativa.perdaDoencasArrobasHa);
+
+            // Campanhas disponíveis (mantém a seleção atual)
+            const sel = $('parCampanha');
+            sel.innerHTML = '<option value="">Todas</option>' + r.campanhasDisponiveis
+                .map(c => `<option value="${esc(c)}" ${c.toLowerCase() === (params.campanha || '').toLowerCase() ? 'selected' : ''}>${esc(c)}</option>`).join('');
+            sincronizarCamposParametros();
+
+            const parcial = r.coberturaPercentual < 100;
+            $('coberturaNote').innerHTML = `<b>${esc(r.totalPlantasAvaliadas)}</b> de <b>${esc(r.totalPlantasVivas)}</b> plantas vivas avaliadas (<b>${esc(fmt(r.coberturaPercentual))}%</b>)`
+                + ` · índice de fruto <b>${esc(r.parametros.indiceFruto)}</b> · <b>${esc(r.parametros.plantasPorHa)}</b> plantas/ha`
+                + (r.parametros.campanha ? ` · campanha <b>${esc(r.parametros.campanha)}</b>` : '')
+                + (parcial ? ' · <span class="chip PENDENTE">estimativa parcial: faltam plantas a visitar</span>' : '');
 
             $('tabelaClonesBody').innerHTML = r.rankingClones.map((c, i) => `<tr>
                 <td><b>#${i + 1}</b></td>
                 <td><b style="color:var(--green-deep)">${esc(c.codigoClone)}</b></td>
-                <td>${esc(c.plantasVivasColetaveis)} / ${esc(c.totalPlantasCadastradas)}</td>
+                <td>${esc(c.plantasAvaliadas)} / ${esc(c.plantasVivasColetaveis)} <small style="color:var(--text-muted)">(${esc(fmt(c.coberturaPercentual, 0))}%)</small></td>
                 <td><div style="display:flex;align-items:center;gap:6px"><div class="progress-track"><div class="progress-fill" style="width:${Number(c.taxaSobrevivenciaPercentual)}%"></div></div><b>${esc(c.taxaSobrevivenciaPercentual)}%</b></div></td>
                 <td><b>${esc(c.totalFrutosContados)}</b></td>
-                <td><span style="color:#1b5e20;font-weight:700">${esc(c.totalFrutosSadios)}</span></td>
-                <td><span style="color:#b45309;font-weight:700">${esc(c.totalFrutosVassoura)}</span></td>
-                <td><span style="color:#c62828;font-weight:700">${esc(c.totalFrutosPodridao)}</span></td>
+                <td>${barraClasses(c.totalFrutosSadios, c.totalFrutosVassoura, c.totalFrutosPodridao, c.totalFrutosNaoAvaliavel)}
+                    <small><span style="color:#1b5e20;font-weight:700">${esc(c.totalFrutosSadios)}</span> · <span style="color:#b45309;font-weight:700">${esc(c.totalFrutosVassoura)}</span> · <span style="color:#c62828;font-weight:700">${esc(c.totalFrutosPodridao)}</span></small></td>
                 <td><div style="display:flex;align-items:center;gap:6px"><div class="progress-track"><div class="progress-fill danger" style="width:${Math.min(100, Number(c.taxaInfeccaoPercentual))}%"></div></div><b>${esc(c.taxaInfeccaoPercentual)}%</b></div></td>
-                <td><span class="badge-prod">${esc(c.mediaFrutosPorPlantaViva)} frutos/planta</span></td></tr>`).join('');
-        } catch (e) { $('tabelaClonesBody').innerHTML = `<tr><td colspan="10">❌ ${esc(e.message)}</td></tr>`; }
+                <td><span class="badge-prod">${esc(fmt(c.estimativa.mediaSadiosPorPlantaAvaliada, 2))}</span></td>
+                <td>${esc(fmt(c.estimativa.produtividadeRealKgHa))}</td>
+                <td><b>${esc(fmt(c.estimativa.produtividadeRealArrobasHa))}</b></td>
+                <td style="color:#c62828">${esc(fmt(c.estimativa.perdaDoencasArrobasHa))}</td></tr>`).join('');
+        } catch (e) { $('tabelaClonesBody').innerHTML = `<tr><td colspan="11">❌ ${esc(e.message)}</td></tr>`; }
     }
+
+    /* =====================================================================
+       Mapa de focos (GPS das leituras)
+       ===================================================================== */
+    async function carregarMapa() {
+        const svg = $('mapaFocos');
+        try {
+            const p = await apiJson(`/api/v1/ensaios/${encodeURIComponent(ensaio)}/leituras?page=0&size=1000`);
+            const porPlanta = new Map();
+            let semGps = 0;
+            for (const l of p.content) {                       // vem da mais recente para a mais antiga
+                if (l.statusValidacao === 'REJEITADA' || porPlanta.has(l.plantCode)) continue;
+                if (!l.latitude && !l.longitude) { semGps++; continue; }
+                porPlanta.set(l.plantCode, l);
+            }
+            const pts = [...porPlanta.values()];
+            $('mapaInfo').textContent = `${pts.length} planta(s) com GPS` + (semGps ? ` · ${semGps} sem GPS` : '');
+            if (!pts.length) {
+                svg.innerHTML = '<text x="400" y="170" text-anchor="middle" fill="#789" font-size="14">Sem leituras com GPS neste ensaio.</text>';
+                return;
+            }
+            const lats = pts.map(l => l.latitude), lngs = pts.map(l => l.longitude);
+            const minLat = Math.min(...lats), maxLat = Math.max(...lats), minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+            const cosLat = Math.cos(((minLat + maxLat) / 2) * Math.PI / 180);
+            const spanX = Math.max((maxLng - minLng) * cosLat, 1e-6), spanY = Math.max(maxLat - minLat, 1e-6);
+            const escala = Math.min(740 / spanX, 300 / spanY);
+            const offX = (800 - spanX * escala) / 2, offY = (340 - spanY * escala) / 2;
+            svg.innerHTML = pts.map(l => {
+                const x = offX + (l.longitude - minLng) * cosLat * escala;
+                const y = 340 - offY - (l.latitude - minLat) * escala;
+                const v = l.qtdVassoura || 0, pod = l.qtdPodridao || 0;
+                const cor = !l.coletavel ? '#90a4ae' : (v + pod === 0 ? '#00c853' : (pod >= v ? '#ff1744' : '#ff9100'));
+                return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="7" fill="${cor}" stroke="#fff" stroke-width="1.5" style="cursor:pointer" onclick="abrirRevisao(${Number(l.id)})">`
+                    + `<title>${esc(l.plantCode)} · ${l.coletavel ? esc(l.qtdEfetiva) + ' fruto(s) · vassoura ' + esc(v) + ' · podridão ' + esc(pod) : 'não coletável'}</title></circle>`;
+            }).join('');
+        } catch (e) { svg.innerHTML = `<text x="400" y="170" text-anchor="middle" fill="#c62828" font-size="14">${esc(e.message)}</text>`; }
+    }
+
+    function somarClasses() {
+        const g = id => parseInt($(id).value, 10) || 0;
+        const soma = g('valSadios') + g('valVassoura') + g('valPodridao') + g('valNaoAval');
+        if (soma > 0) $('valQtd').value = soma;
+    }
+
+    async function abrirProximaPendente() {
+        try {
+            const p = await apiJson(`/api/v1/ensaios/${encodeURIComponent(ensaio)}/leituras?status=PENDENTE&page=0&size=1&sort=importadoEm,asc`);
+            if (p.content.length) { await abrirRevisao(p.content[0].id); }
+            else { toast('Nenhuma leitura pendente. Tudo revisado! 🎉'); fecharModal(); }
+        } catch (e) { toast(e.message, true); }
+    }
+
+    document.addEventListener('keydown', e => {
+        if ($('modal').hidden) return;
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || e.ctrlKey || e.metaKey || e.altKey) return;
+        const classes = { '1': 'Sadio', '2': 'Vassoura de Bruxa', '3': 'Podridão', '4': 'Não Avaliável' };
+        if (classes[e.key] && indiceCaixaSelecionada >= 0) { alterarClasseCaixaSel(classes[e.key]); e.preventDefault(); }
+        else if ((e.key === 'Delete' || e.key === 'Backspace') && indiceCaixaSelecionada >= 0) { excluirCaixaSelecionada(); e.preventDefault(); }
+        else if (e.key === 'Escape') { if (indiceCaixaSelecionada >= 0) { indiceCaixaSelecionada = -1; $('painelCaixaSelecionada').hidden = true; desenharCaixas(); } else fecharModal(); }
+    });
 
     /* =====================================================================
        Modal de Revisão Interativo: Edição de Caixas YOLO e Doenças
@@ -859,13 +1020,13 @@
             <div style="font-weight:700;font-size:0.88rem;color:var(--green-deep)">Classificação Fitossanitária Validada</div>
             <div class="doencas-inputs-grid">
                 <div><label class="field-label" for="valSadios">🟢 Sadios</label>
-                    <input type="number" id="valSadios" min="0" value="${esc(l.qtdSadios || (l.coletavel ? l.qtdEfetiva : 0))}" /></div>
+                    <input type="number" id="valSadios" oninput="somarClasses()" min="0" value="${esc(sadiosIniciais(l))}" /></div>
                 <div><label class="field-label" for="valVassoura">🟠 Vassoura</label>
-                    <input type="number" id="valVassoura" min="0" value="${esc(l.qtdVassoura || 0)}" /></div>
+                    <input type="number" id="valVassoura" oninput="somarClasses()" min="0" value="${esc(l.qtdVassoura || 0)}" /></div>
                 <div><label class="field-label" for="valPodridao">🔴 Podridão</label>
-                    <input type="number" id="valPodridao" min="0" value="${esc(l.qtdPodridao || 0)}" /></div>
+                    <input type="number" id="valPodridao" oninput="somarClasses()" min="0" value="${esc(l.qtdPodridao || 0)}" /></div>
                 <div><label class="field-label" for="valNaoAval">⚪ Não Aval.</label>
-                    <input type="number" id="valNaoAval" min="0" value="${esc(l.qtdNaoAvaliavel || 0)}" /></div>
+                    <input type="number" id="valNaoAval" oninput="somarClasses()" min="0" value="${esc(l.qtdNaoAvaliavel || 0)}" /></div>
             </div>
             <div><label class="field-label" for="valQtd">Total de Frutos Validados</label>
                 <input type="number" id="valQtd" min="0" value="${esc(l.qtdEfetiva)}" /></div>
@@ -877,6 +1038,11 @@
                 <button class="btn btn-danger" onclick="validar('REJEITADA')">⛔ Rejeitar</button>
                 <button class="btn btn-outline" onclick="validar('PENDENTE')">↩ Desfazer</button>
             </div>
+            <div class="val-actions">
+                <button class="btn btn-primary" onclick="validar('VALIDADA', true)">✅ Confirmar IA e próxima ▶</button>
+                <button class="btn btn-blue" onclick="validar('AJUSTADA', true)">✏️ Salvar e próxima ▶</button>
+            </div>
+            <div class="atalhos">Atalhos com uma caixa selecionada: <kbd>1</kbd> Sadio · <kbd>2</kbd> Vassoura · <kbd>3</kbd> Podridão · <kbd>4</kbd> Não aval. · <kbd>Del</kbd> excluir · <kbd>Esc</kbd> fechar</div>
             ${l.coletavel ? '' : '<div class="note">Esta leitura estava marcada como Não Coletável. Ao salvar com frutos > 0, ela volta a contar como planta viva no ensaio.</div>'}
             <div><label class="field-label" for="novaFoto">${l.temFoto ? 'Substituir foto' : 'Anexar foto'}</label>
                 <input type="file" id="novaFoto" accept="image/jpeg,image/png" />
@@ -885,16 +1051,26 @@
         desenharCaixas();
     }
 
-    async function validar(status) {
+    let validando = false;
+    function sadiosIniciais(l) {
+        const soma = (l.qtdSadios || 0) + (l.qtdVassoura || 0) + (l.qtdPodridao || 0) + (l.qtdNaoAvaliavel || 0);
+        return soma > 0 ? (l.qtdSadios || 0) : (l.coletavel ? l.qtdEfetiva : 0);
+    }
+
+    async function validar(status, irParaProxima = false) {
+        if (validando || !leituraAberta) return;
         const corpo = {
             status,
             observacao: $('valObs').value.trim(),
-            qtdSadios: parseInt($('valSadios').value, 10) || 0,
-            qtdVassoura: parseInt($('valVassoura').value, 10) || 0,
-            qtdPodridao: parseInt($('valPodridao').value, 10) || 0,
-            qtdNaoAvaliavel: parseInt($('valNaoAval').value, 10) || 0,
-            deteccoes: deteccoesAbertas
         };
+        // Rejeitar/Desfazer não mexem nas classes e caixas originais do app (SPEC-003 §2.6).
+        if (status === 'VALIDADA' || status === 'AJUSTADA') {
+            corpo.qtdSadios = parseInt($('valSadios').value, 10) || 0;
+            corpo.qtdVassoura = parseInt($('valVassoura').value, 10) || 0;
+            corpo.qtdPodridao = parseInt($('valPodridao').value, 10) || 0;
+            corpo.qtdNaoAvaliavel = parseInt($('valNaoAval').value, 10) || 0;
+            corpo.deteccoes = deteccoesAbertas;
+        }
 
         if (status === 'AJUSTADA' || status === 'VALIDADA') {
             const v = parseInt($('valQtd').value, 10);
@@ -902,6 +1078,7 @@
             corpo.qtdFrutosValidada = v;
         }
 
+        validando = true;
         try {
             leituraAberta = await apiJson(`/api/v1/leituras/${leituraAberta.id}/validacao`, {
                 method: 'PUT',
@@ -909,9 +1086,10 @@
                 body: JSON.stringify(corpo)
             });
             toast('Validação registrada com sucesso!');
-            renderModal();
             atualizarTudo();
+            if (irParaProxima) { await abrirProximaPendente(); } else { renderModal(); }
         } catch (e) { toast(e.message, true); }
+        finally { validando = false; }
     }
 
     async function enviarNovaFoto() {
@@ -929,7 +1107,7 @@
     /* =====================================================================
        Inicialização
        ===================================================================== */
-    if (token && usuario) mostrarDashboard();
+    if (token && usuario) { sincronizarCamposParametros(); mostrarDashboard(); }
 </script>
 </body>
 </html>

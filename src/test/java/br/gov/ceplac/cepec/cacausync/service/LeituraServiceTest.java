@@ -141,6 +141,56 @@ class LeituraServiceTest {
     }
 
     @Test
+    @DisplayName("SPEC-003: ajuste com classes que não somam o total validado é rejeitado; com soma correta é aceito")
+    void ajusteExigeQueAsClassesFechemComOTotal() {
+        LeituraColeta l = leitura(12, true);
+        leituraExiste(l);
+
+        assertThatThrownBy(() -> leituraService.validar(7L,
+                new ValidarLeituraRequest(StatusValidacao.AJUSTADA, 10, null, 5, 2, 1, 0, null), "p@x"))
+                .isInstanceOf(RegraNegocioException.class)
+                .hasMessageContaining("soma das classes");
+        assertThat(l.getStatusValidacao()).isEqualTo(StatusValidacao.PENDENTE); // nada foi gravado
+
+        LeituraColetaResponse r = leituraService.validar(7L,
+                new ValidarLeituraRequest(StatusValidacao.AJUSTADA, 10, null, 6, 2, 1, 1, null), "p@x");
+        assertThat(r.qtdEfetiva()).isEqualTo(10);
+        assertThat(l.getQtdSadios()).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("SPEC-003: confirmar a IA com classes diferentes da contagem da IA manda usar 'Salvar Validação'")
+    void confirmarIaComClassesAlteradasEhRejeitado() {
+        leituraExiste(leitura(12, true));
+
+        assertThatThrownBy(() -> leituraService.validar(7L,
+                new ValidarLeituraRequest(StatusValidacao.VALIDADA, 9, null, 5, 2, 2, 0, null), "p@x"))
+                .isInstanceOf(RegraNegocioException.class)
+                .hasMessageContaining("Salvar Validação");
+
+        // Classes batendo com a contagem da IA: confirma normalmente.
+        LeituraColetaResponse r = leituraService.validar(7L,
+                new ValidarLeituraRequest(StatusValidacao.VALIDADA, 12, null, 8, 2, 2, 0, null), "p@x");
+        assertThat(r.statusValidacao()).isEqualTo(StatusValidacao.VALIDADA);
+    }
+
+    @Test
+    @DisplayName("SPEC-003: rejeitar e desfazer não sobrescrevem classes e caixas originais do app")
+    void rejeitarEDesfazerPreservamClassesOriginais() {
+        LeituraColeta l = leitura(6, true);
+        l.setQtdSadios(4); l.setQtdVassoura(2);
+        leituraExiste(l);
+
+        leituraService.validar(7L, new ValidarLeituraRequest(StatusValidacao.REJEITADA, null, "x", 0, 0, 0, 0, java.util.List.of()), "p@x");
+        assertThat(l.getQtdSadios()).isEqualTo(4);
+        assertThat(l.getQtdVassoura()).isEqualTo(2);
+
+        leituraService.validar(7L, new ValidarLeituraRequest(StatusValidacao.PENDENTE, null, null, 9, 9, 9, 9, null), "p@x");
+        assertThat(l.getQtdSadios()).isEqualTo(4);
+        assertThat(l.getQtdVassoura()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Substituir a foto grava a nova e apaga a antiga do disco")
     void substituirFotoApagaAAntiga() {
         LeituraColeta l = leitura(5, true);

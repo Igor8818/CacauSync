@@ -3,6 +3,7 @@ package br.gov.ceplac.cepec.cacausync.service;
 import br.gov.ceplac.cepec.cacausync.domain.entity.*;
 import br.gov.ceplac.cepec.cacausync.dto.ProdutividadeCloneDto;
 import br.gov.ceplac.cepec.cacausync.dto.RelatorioProdutividadeEnsaioResponse;
+import br.gov.ceplac.cepec.cacausync.exception.RegraNegocioException;
 import br.gov.ceplac.cepec.cacausync.repository.EnsaioRepository;
 import br.gov.ceplac.cepec.cacausync.repository.LeituraColetaRepository;
 import br.gov.ceplac.cepec.cacausync.repository.PlantaRepository;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -139,7 +141,181 @@ class EnsaioServiceTest {
         ProdutividadeCloneDto clonePrimeiro = relatorio.rankingClones().get(0);
         assertThat(clonePrimeiro.totalFrutosContados()).isEqualTo(14);
         assertThat(clonePrimeiro.totalLeiturasRealizadas()).isEqualTo(1);
-        assertThat(clonePrimeiro.mediaFrutosPorPlantaViva()).isEqualTo(7.0);
+        // SPEC-003: o divisor é "planta viva AVALIADA" (p2 foi rejeitada, logo não conta): 14 frutos / 1 planta.
+        assertThat(clonePrimeiro.mediaFrutosPorPlantaViva()).isEqualTo(14.0);
+        assertThat(clonePrimeiro.plantasAvaliadas()).isEqualTo(1);
+        assertThat(clonePrimeiro.coberturaPercentual()).isEqualTo(50.0);
+    }
+
+    @Test
+    @DisplayName("SPEC-003: fruto doente não infla a produtividade — o ranking e a estimativa partem dos frutos SADIOS")
+    void produtividadeLiquidaUsaApenasFrutosSadios() {
+        Ensaio ensaio = new Ensaio("TC-1801", "Ensaio", "CEPEC");
+        Parcela parA = new Parcela(ensaio, new Clone("CLONE-A", "A", "CEPEC"), 1, "1");
+        Parcela parB = new Parcela(ensaio, new Clone("CLONE-B", "B", "CEPEC"), 1, "2");
+        Planta a1 = criarPlantaComId(1L, parA, "A_1", 1, SituacaoPlanta.NORMAL);
+        Planta b1 = criarPlantaComId(2L, parB, "B_1", 1, SituacaoPlanta.NORMAL);
+
+        // A: 10 frutos, mas 8 doentes (2 sadios). B: 6 frutos, todos sadios.
+        LeituraColeta la = criarLeitura(a1, 10, true, false);
+        la.setQtdSadios(2); la.setQtdVassoura(5); la.setQtdPodridao(3);
+        LeituraColeta lb = criarLeitura(b1, 6, true, false);
+        lb.setQtdSadios(6);
+
+        mockEnsaio(ensaio, List.of(a1, b1), List.of(la, lb));
+
+        RelatorioProdutividadeEnsaioResponse r = ensaioService.gerarRelatorioProdutividade("TC-1801");
+
+        assertThat(r.rankingClones().get(0).codigoClone()).isEqualTo("CLONE-B");
+        assertThat(r.rankingClones().get(1).codigoClone()).isEqualTo("CLONE-A");
+        ProdutividadeCloneDto b = r.rankingClones().get(0);
+        // 6 sadios/planta ÷ 22 frutos/kg × 1111 plantas/ha × 100% sobrevivência
+        assertThat(b.estimativa().produtividadeRealKgHa()).isEqualTo(303.0);
+        assertThat(b.estimativa().produtividadeRealArrobasHa()).isEqualTo(20.2);
+        assertThat(b.estimativa().perdaDoencasKgHa()).isZero();
+        ProdutividadeCloneDto a = r.rankingClones().get(1);
+        assertThat(a.estimativa().produtividadeRealKgHa()).isEqualTo(101.0);   // 2 sadios
+        assertThat(a.estimativa().perdaDoencasKgHa()).isEqualTo(404.0);        // 8 doentes
+        assertThat(a.taxaInfeccaoPercentual()).isEqualTo(80.0);
+    }
+
+    @Test
+    @DisplayName("SPEC-003: só a leitura válida mais recente de cada planta entra (re-coleta não duplica) e a cobertura aparece")
+    void recoletaNaoDuplicaECoberturaConsideraPlantasNaoVisitadas() {
+        Ensaio ensaio = new Ensaio("TC-1801", "Ensaio", "CEPEC");
+        Parcela par = new Parcela(ensaio, new Clone("CCN-51", "CCN", "CEPEC"), 1, "20");
+        Planta p1 = criarPlantaComId(1L, par, "P1", 1, SituacaoPlanta.NORMAL);
+        Planta p2 = criarPlantaComId(2L, par, "P2", 2, SituacaoPlanta.NORMAL);
+        Planta p3 = criarPlantaComId(3L, par, "P3", 3, SituacaoPlanta.NORMAL);
+        Planta p4 = criarPlantaComId(4L, par, "P4", 4, SituacaoPlanta.NORMAL);
+
+        LeituraColeta maisRecente = criarLeitura(p1, 8, true, false);
+        LeituraColeta antiga = criarLeitura(p1, 3, true, false);     // "REFAZER FOTO": ordem DESC => recente primeiro
+        LeituraColeta l2 = criarLeitura(p2, 4, true, false);
+
+        mockEnsaio(ensaio, List.of(p1, p2, p3, p4), List.of(maisRecente, antiga, l2));
+
+        RelatorioProdutividadeEnsaioResponse r = ensaioService.gerarRelatorioProdutividade("TC-1801");
+
+        ProdutividadeCloneDto clone = r.rankingClones().get(0);
+        assertThat(clone.totalFrutosContados()).isEqualTo(12);          // 8 + 4, a leitura antiga (3) fica de fora
+        assertThat(clone.plantasAvaliadas()).isEqualTo(2);
+        assertThat(clone.coberturaPercentual()).isEqualTo(50.0);        // 2 de 4 plantas vivas visitadas
+        assertThat(clone.mediaFrutosPorPlantaViva()).isEqualTo(6.0);    // 12 / 2 avaliadas (não 12 / 4)
+        assertThat(clone.totalLeiturasRealizadas()).isEqualTo(3);
+        assertThat(r.totalPlantasAvaliadas()).isEqualTo(2);
+        assertThat(r.coberturaPercentual()).isEqualTo(50.0);
+    }
+
+    @Test
+    @DisplayName("SPEC-003: kg/ha ponderado pela sobrevivência e parâmetros agronômicos respeitados/validados")
+    void estimativaConsideraSobrevivenciaEParametros() {
+        Ensaio ensaio = new Ensaio("TC-1801", "Ensaio", "CEPEC");
+        Parcela par = new Parcela(ensaio, new Clone("CCN-51", "CCN", "CEPEC"), 1, "20");
+        Planta viva = criarPlantaComId(1L, par, "P1", 1, SituacaoPlanta.NORMAL);
+        Planta morta = criarPlantaComId(2L, par, "P2", 2, SituacaoPlanta.NAO_COLETAVEL);
+        LeituraColeta l = criarLeitura(viva, 10, true, false);
+        l.setQtdSadios(10);
+        l.setCampanha("Safra 2026");
+
+        mockEnsaio(ensaio, List.of(viva, morta), List.of(l));
+
+        RelatorioProdutividadeEnsaioResponse r = ensaioService.gerarRelatorioProdutividade("TC-1801", 20.0, 1000, null);
+
+        assertThat(r.parametros().indiceFruto()).isEqualTo(20.0);
+        assertThat(r.parametros().plantasPorHa()).isEqualTo(1000);
+        assertThat(r.campanhasDisponiveis()).containsExactly("Safra 2026");
+        // potencial = 10 / 20 × 1000 = 500 kg/ha; real = 500 × 50% sobrevivência = 250 kg/ha
+        assertThat(r.estimativa().potencialKgHa()).isEqualTo(500.0);
+        assertThat(r.estimativa().produtividadeRealKgHa()).isEqualTo(250.0);
+        assertThat(r.estimativa().produtividadeRealArrobasHa()).isEqualTo(16.67);
+
+        assertThatThrownBy(() -> ensaioService.gerarRelatorioProdutividade("TC-1801", 0.0, 1000, null))
+                .isInstanceOf(RegraNegocioException.class);
+        assertThatThrownBy(() -> ensaioService.gerarRelatorioProdutividade("TC-1801", 22.0, 0, null))
+                .isInstanceOf(RegraNegocioException.class);
+    }
+
+    @Test
+    @DisplayName("SPEC-003: filtro por campanha ignora leituras de outras campanhas")
+    void filtroPorCampanha() {
+        Ensaio ensaio = new Ensaio("TC-1801", "Ensaio", "CEPEC");
+        Parcela par = new Parcela(ensaio, new Clone("CCN-51", "CCN", "CEPEC"), 1, "20");
+        Planta p1 = criarPlantaComId(1L, par, "P1", 1, SituacaoPlanta.NORMAL);
+        LeituraColeta nova = criarLeitura(p1, 9, true, false);
+        nova.setCampanha("Safra 2026");
+        LeituraColeta velha = criarLeitura(p1, 5, true, false);
+        velha.setCampanha("Safra 2025");
+
+        mockEnsaio(ensaio, List.of(p1), List.of(nova, velha));
+
+        RelatorioProdutividadeEnsaioResponse r = ensaioService.gerarRelatorioProdutividade("TC-1801", null, null, "safra 2025");
+
+        assertThat(r.totalFrutosAcumulados()).isEqualTo(5);
+        assertThat(r.totalLeiturasRegistradas()).isEqualTo(2);   // SPEC-003 §2.5: contadores gerais ignoram o filtro
+        assertThat(r.campanhasDisponiveis()).containsExactly("Safra 2025", "Safra 2026");
+    }
+
+    @Test
+    @DisplayName("SPEC-003: campanhas diferentes só na caixa/espaços viram uma única opção e o filtro as agrupa")
+    void campanhasComCaixaDiferenteSaoAgrupadas() {
+        Ensaio ensaio = new Ensaio("TC-1801", "Ensaio", "CEPEC");
+        Parcela par = new Parcela(ensaio, new Clone("CCN-51", "CCN", "CEPEC"), 1, "20");
+        Planta p1 = criarPlantaComId(1L, par, "P1", 1, SituacaoPlanta.NORMAL);
+        Planta p2 = criarPlantaComId(2L, par, "P2", 2, SituacaoPlanta.NORMAL);
+        LeituraColeta a = criarLeitura(p1, 3, true, false);
+        a.setCampanha("Safra");
+        LeituraColeta b = criarLeitura(p2, 4, true, false);
+        b.setCampanha(" safra ");
+
+        mockEnsaio(ensaio, List.of(p1, p2), List.of(a, b));
+
+        RelatorioProdutividadeEnsaioResponse r = ensaioService.gerarRelatorioProdutividade("TC-1801", null, null, "SAFRA");
+
+        assertThat(r.campanhasDisponiveis()).hasSize(1);
+        assertThat(r.totalFrutosAcumulados()).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("SPEC-003: taxa de infecção nunca passa de 100% mesmo com classes somando mais que o total")
+    void taxaDeInfeccaoTemTeto() {
+        Ensaio ensaio = new Ensaio("TC-1801", "Ensaio", "CEPEC");
+        Parcela par = new Parcela(ensaio, new Clone("CCN-51", "CCN", "CEPEC"), 1, "20");
+        Planta p1 = criarPlantaComId(1L, par, "P1", 1, SituacaoPlanta.NORMAL);
+        LeituraColeta l = criarLeitura(p1, 4, true, false);   // IA contou 4, mas as classes dizem 7 doentes
+        l.setQtdVassoura(4); l.setQtdPodridao(3);
+
+        mockEnsaio(ensaio, List.of(p1), List.of(l));
+
+        RelatorioProdutividadeEnsaioResponse r = ensaioService.gerarRelatorioProdutividade("TC-1801");
+
+        assertThat(r.taxaInfeccaoEnsaioPercentual()).isEqualTo(100.0);
+        assertThat(r.rankingClones().get(0).taxaInfeccaoPercentual()).isEqualTo(100.0);
+    }
+
+    @Test
+    @DisplayName("SPEC-003: leitura mais recente 'Não Coletável' zera a planta (não usa a leitura antiga)")
+    void leituraMaisRecenteNaoColetavelZeraAPlanta() {
+        Ensaio ensaio = new Ensaio("TC-1801", "Ensaio", "CEPEC");
+        Parcela par = new Parcela(ensaio, new Clone("CCN-51", "CCN", "CEPEC"), 1, "20");
+        Planta p1 = criarPlantaComId(1L, par, "P1", 1, SituacaoPlanta.NORMAL);
+        LeituraColeta nova = criarLeitura(p1, 0, false, false);
+        LeituraColeta antiga = criarLeitura(p1, 9, true, false);
+
+        mockEnsaio(ensaio, List.of(p1), List.of(nova, antiga));
+
+        ProdutividadeCloneDto clone = ensaioService.gerarRelatorioProdutividade("TC-1801").rankingClones().get(0);
+
+        assertThat(clone.totalFrutosContados()).isZero();
+        assertThat(clone.plantasAvaliadas()).isZero();
+        assertThat(clone.estimativa().produtividadeRealKgHa()).isZero();
+    }
+
+    private void mockEnsaio(Ensaio ensaio, List<Planta> plantas, List<LeituraColeta> leituras) {
+        when(ensaioRepository.findByCodigoIgnoreCase("TC-1801")).thenReturn(Optional.of(ensaio));
+        when(plantaRepository.findByParcelaEnsaioCodigoIgnoreCaseOrderByOrdemRotaAsc("TC-1801")).thenReturn(plantas);
+        when(leituraColetaRepository.findByPlantaParcelaEnsaioCodigoIgnoreCaseOrderByImportadoEmDesc("TC-1801"))
+                .thenReturn(leituras);
     }
 
     @Test

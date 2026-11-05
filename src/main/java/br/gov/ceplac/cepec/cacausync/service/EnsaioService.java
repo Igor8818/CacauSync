@@ -3,6 +3,8 @@ package br.gov.ceplac.cepec.cacausync.service;
 import br.gov.ceplac.cepec.cacausync.domain.entity.*;
 import br.gov.ceplac.cepec.cacausync.dto.CriarEnsaioRequest;
 import br.gov.ceplac.cepec.cacausync.dto.EnsaioResumoResponse;
+import br.gov.ceplac.cepec.cacausync.dto.EstimativaAgronomicaDto;
+import br.gov.ceplac.cepec.cacausync.dto.ParametrosAgronomicosDto;
 import br.gov.ceplac.cepec.cacausync.dto.ProdutividadeCloneDto;
 import br.gov.ceplac.cepec.cacausync.dto.RelatorioProdutividadeEnsaioResponse;
 import br.gov.ceplac.cepec.cacausync.exception.RecursoNaoEncontradoException;
@@ -21,6 +23,9 @@ import java.util.stream.Collectors;
 
 @Service
 public class EnsaioService {
+
+    /** 1 arroba = 15 kg. */
+    private static final double KG_POR_ARROBA = 15.0;
 
     private final EnsaioRepository ensaioRepository;
     private final PlantaRepository plantaRepository;
@@ -81,14 +86,58 @@ public class EnsaioService {
 
     @Transactional(readOnly = true)
     public RelatorioProdutividadeEnsaioResponse gerarRelatorioProdutividade(String codigoEnsaio) {
+        return gerarRelatorioProdutividade(codigoEnsaio, null, null, null);
+    }
+
+    /**
+     * Relatório de produtividade conforme SPEC-003: cada planta conta uma única vez (leitura válida mais recente),
+     * a média usa só plantas vivas avaliadas e a estimativa agronômica parte dos frutos SADIOS.
+     */
+    @Transactional(readOnly = true)
+    public RelatorioProdutividadeEnsaioResponse gerarRelatorioProdutividade(
+            String codigoEnsaio, Double indiceFruto, Integer plantasPorHa, String campanha
+    ) {
+        double indice = indiceFruto != null ? indiceFruto : ParametrosAgronomicosDto.INDICE_FRUTO_PADRAO;
+        int densidade = plantasPorHa != null ? plantasPorHa : ParametrosAgronomicosDto.PLANTAS_POR_HA_PADRAO;
+        if (!(indice > 0 && indice <= 200)) {
+            throw new RegraNegocioException("O índice de fruto deve estar entre 0 (exclusivo) e 200 frutos por kg.");
+        }
+        if (densidade < 1 || densidade > 10000) {
+            throw new RegraNegocioException("A densidade de plantio deve estar entre 1 e 10000 plantas por hectare.");
+        }
+        String filtroCampanha = (campanha == null || campanha.isBlank()) ? null : campanha.trim();
+
         Ensaio ensaio = ensaioRepository.findByCodigoIgnoreCase(codigoEnsaio)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Ensaio genético não encontrado: " + codigoEnsaio));
 
         List<Planta> plantas = plantaRepository.findByParcelaEnsaioCodigoIgnoreCaseOrderByOrdemRotaAsc(ensaio.getCodigo());
-        List<LeituraColeta> leituras = leituraColetaRepository.findByPlantaParcelaEnsaioCodigoIgnoreCaseOrderByImportadoEmDesc(ensaio.getCodigo());
+        List<LeituraColeta> todasLeituras = leituraColetaRepository.findByPlantaParcelaEnsaioCodigoIgnoreCaseOrderByImportadoEmDesc(ensaio.getCodigo());
 
-        Map<Long, List<LeituraColeta>> leiturasPorPlantaId = leituras.stream()
-                .collect(Collectors.groupingBy(l -> l.getPlanta().getId()));
+        Map<String, String> campanhasUnicas = new TreeMap<>();
+        for (LeituraColeta l : todasLeituras) {
+            if (l.getCampanha() != null && !l.getCampanha().isBlank()) {
+                campanhasUnicas.putIfAbsent(l.getCampanha().trim().toLowerCase(Locale.ROOT), l.getCampanha().trim());
+            }
+        }
+        List<String> campanhasDisponiveis = List.copyOf(campanhasUnicas.values());
+
+        List<LeituraColeta> leiturasFiltradas = filtroCampanha == null
+                ? todasLeituras
+                : todasLeituras.stream()
+                        .filter(l -> l.getCampanha() != null && filtroCampanha.equalsIgnoreCase(l.getCampanha().trim()))
+                        .toList();
+
+        // Leitura válida por planta: a mais recente que não foi rejeitada (lista já vem em importadoEm DESC).
+        Map<Long, LeituraColeta> leituraValidaPorPlanta = new HashMap<>();
+        Map<Long, Integer> leiturasNaoRejeitadasPorPlanta = new HashMap<>();
+        for (LeituraColeta l : leiturasFiltradas) {
+            if (l.getStatusValidacao() == StatusValidacao.REJEITADA) {
+                continue;
+            }
+            Long plantaId = l.getPlanta().getId();
+            leituraValidaPorPlanta.putIfAbsent(plantaId, l);
+            leiturasNaoRejeitadasPorPlanta.merge(plantaId, 1, Integer::sum);
+        }
 
         Map<String, List<Planta>> plantasPorClone = plantas.stream()
                 .collect(Collectors.groupingBy(
@@ -98,6 +147,8 @@ public class EnsaioService {
                 ));
 
         List<ProdutividadeCloneDto> ranking = new ArrayList<>();
+        int ensaioVivas = 0, ensaioAvaliadas = 0;
+        int ensaioFrutos = 0, ensaioSadios = 0, ensaioVassoura = 0, ensaioPodridao = 0, ensaioNaoAval = 0;
 
         for (Map.Entry<String, List<Planta>> entry : plantasPorClone.entrySet()) {
             String codigoClone = entry.getKey();
@@ -105,94 +156,67 @@ public class EnsaioService {
             String descricaoClone = plantasDoClone.get(0).getParcela().getClone().getDescricao();
 
             int totalPlantasClone = plantasDoClone.size();
-            int plantasVivas = (int) plantasDoClone.stream()
-                    .filter(p -> p.getSituacao() == SituacaoPlanta.NORMAL)
-                    .count();
-            int plantasNaoColetaveis = totalPlantasClone - plantasVivas;
-
-            double taxaSobrevivencia = totalPlantasClone > 0
-                    ? arredondar((plantasVivas * 100.0) / totalPlantasClone)
-                    : 0.0;
-
+            int plantasVivas = 0;
+            int plantasAvaliadas = 0;
             int totalLeiturasClone = 0;
-            int totalFrutosClone = 0;
-            int totalSadiosClone = 0;
-            int totalVassouraClone = 0;
-            int totalPodridaoClone = 0;
-            int totalNaoAvalClone = 0;
+            int totalFrutosClone = 0, totalSadiosClone = 0, totalVassouraClone = 0, totalPodridaoClone = 0, totalNaoAvalClone = 0;
 
             for (Planta p : plantasDoClone) {
-                List<LeituraColeta> leiturasPlanta = leiturasPorPlantaId.getOrDefault(p.getId(), List.of());
-                for (LeituraColeta l : leiturasPlanta) {
-                    // Leitura rejeitada pelo pesquisador fica fora; ajustada vale o numero corrigido.
-                    if (l.getStatusValidacao() != StatusValidacao.REJEITADA) {
-                        totalLeiturasClone++;
-                    }
-                    if (l.contaNoRelatorio()) {
-                        totalFrutosClone += l.qtdEfetiva();
-                        totalSadiosClone += l.qtdSadiosEfetiva();
-                        totalVassouraClone += l.qtdVassouraEfetiva();
-                        totalPodridaoClone += l.qtdPodridaoEfetiva();
-                        totalNaoAvalClone += l.qtdNaoAvaliavelEfetiva();
-                    }
+                totalLeiturasClone += leiturasNaoRejeitadasPorPlanta.getOrDefault(p.getId(), 0);
+                if (p.getSituacao() != SituacaoPlanta.NORMAL) {
+                    continue;
+                }
+                plantasVivas++;
+                LeituraColeta valida = leituraValidaPorPlanta.get(p.getId());
+                if (valida != null && valida.contaNoRelatorio()) {
+                    plantasAvaliadas++;
+                    totalFrutosClone += valida.qtdEfetiva();
+                    totalSadiosClone += valida.qtdSadiosEfetiva();
+                    totalVassouraClone += valida.qtdVassouraEfetiva();
+                    totalPodridaoClone += valida.qtdPodridaoEfetiva();
+                    totalNaoAvalClone += valida.qtdNaoAvaliavelEfetiva();
                 }
             }
 
-            double mediaFrutosPorPlantaViva = plantasVivas > 0
-                    ? arredondar((double) totalFrutosClone / plantasVivas)
+            double taxaSobrevivencia = percentual(plantasVivas, totalPlantasClone);
+            double mediaFrutosPorPlantaViva = plantasAvaliadas > 0
+                    ? arredondar((double) totalFrutosClone / plantasAvaliadas)
                     : 0.0;
             int doentesClone = totalVassouraClone + totalPodridaoClone;
-            double taxaInfeccaoClone = totalFrutosClone > 0
-                    ? arredondar((doentesClone * 100.0) / totalFrutosClone)
-                    : 0.0;
+            double taxaInfeccaoClone = percentual(doentesClone, totalFrutosClone);
+
+            EstimativaAgronomicaDto estimativa = estimar(
+                    totalSadiosClone, doentesClone, plantasAvaliadas, taxaSobrevivencia, indice, densidade);
 
             ranking.add(new ProdutividadeCloneDto(
-                    codigoClone,
-                    descricaoClone,
-                    totalPlantasClone,
-                    plantasVivas,
-                    plantasNaoColetaveis,
-                    taxaSobrevivencia,
-                    totalLeiturasClone,
-                    totalFrutosClone,
-                    totalSadiosClone,
-                    totalVassouraClone,
-                    totalPodridaoClone,
-                    totalNaoAvalClone,
-                    taxaInfeccaoClone,
-                    mediaFrutosPorPlantaViva
+                    codigoClone, descricaoClone, totalPlantasClone, plantasVivas,
+                    totalPlantasClone - plantasVivas, taxaSobrevivencia, totalLeiturasClone,
+                    totalFrutosClone, totalSadiosClone, totalVassouraClone, totalPodridaoClone, totalNaoAvalClone,
+                    taxaInfeccaoClone, mediaFrutosPorPlantaViva,
+                    plantasAvaliadas, percentual(plantasAvaliadas, plantasVivas), estimativa
             ));
+
+            ensaioVivas += plantasVivas;
+            ensaioAvaliadas += plantasAvaliadas;
+            ensaioFrutos += totalFrutosClone;
+            ensaioSadios += totalSadiosClone;
+            ensaioVassoura += totalVassouraClone;
+            ensaioPodridao += totalPodridaoClone;
+            ensaioNaoAval += totalNaoAvalClone;
         }
 
-        ranking.sort(Comparator.comparingDouble(ProdutividadeCloneDto::mediaFrutosPorPlantaViva).reversed()
-                .thenComparing(Comparator.comparingInt(ProdutividadeCloneDto::totalFrutosContados).reversed()));
+        ranking.sort(Comparator
+                .comparingDouble((ProdutividadeCloneDto c) -> c.estimativa().mediaSadiosPorPlantaAvaliada()).reversed()
+                .thenComparing(Comparator.comparingInt(ProdutividadeCloneDto::totalFrutosSadios).reversed()));
 
-        int totalVivasEnsaio = (int) plantas.stream().filter(p -> p.getSituacao() == SituacaoPlanta.NORMAL).count();
-        int totalFrutosEnsaio = leituras.stream()
-                .filter(LeituraColeta::contaNoRelatorio)
-                .mapToInt(LeituraColeta::qtdEfetiva)
-                .sum();
-        int totalSadiosEnsaio = leituras.stream()
-                .filter(LeituraColeta::contaNoRelatorio)
-                .mapToInt(LeituraColeta::qtdSadiosEfetiva)
-                .sum();
-        int totalVassouraEnsaio = leituras.stream()
-                .filter(LeituraColeta::contaNoRelatorio)
-                .mapToInt(LeituraColeta::qtdVassouraEfetiva)
-                .sum();
-        int totalPodridaoEnsaio = leituras.stream()
-                .filter(LeituraColeta::contaNoRelatorio)
-                .mapToInt(LeituraColeta::qtdPodridaoEfetiva)
-                .sum();
-        int totalNaoAvalEnsaio = leituras.stream()
-                .filter(LeituraColeta::contaNoRelatorio)
-                .mapToInt(LeituraColeta::qtdNaoAvaliavelEfetiva)
-                .sum();
-        int doentesEnsaio = totalVassouraEnsaio + totalPodridaoEnsaio;
-        double taxaInfeccaoEnsaio = totalFrutosEnsaio > 0
-                ? arredondar((doentesEnsaio * 100.0) / totalFrutosEnsaio)
-                : 0.0;
+        int doentesEnsaio = ensaioVassoura + ensaioPodridao;
+        double taxaInfeccaoEnsaio = percentual(doentesEnsaio, ensaioFrutos);
+        double sobrevivenciaEnsaio = percentual(ensaioVivas, plantas.size());
+        EstimativaAgronomicaDto estimativaEnsaio = estimar(
+                ensaioSadios, doentesEnsaio, ensaioAvaliadas, sobrevivenciaEnsaio, indice, densidade);
 
+        // SPEC-003 §2.5: contadores gerais sempre sobre TODAS as leituras do ensaio (o filtro vale só para a produtividade).
+        List<LeituraColeta> leituras = todasLeituras;
         int alertasGps = (int) leituras.stream().filter(l -> Boolean.TRUE.equals(l.getAlertaGps())).count();
         int pendentes = (int) leituras.stream().filter(l -> l.getStatusValidacao() == StatusValidacao.PENDENTE).count();
         int rejeitadas = (int) leituras.stream().filter(l -> l.getStatusValidacao() == StatusValidacao.REJEITADA).count();
@@ -203,22 +227,54 @@ public class EnsaioService {
                 ensaio.getNome(),
                 ensaio.getEstacaoExperimental(),
                 plantas.size(),
-                totalVivasEnsaio,
-                plantas.size() - totalVivasEnsaio,
+                ensaioVivas,
+                plantas.size() - ensaioVivas,
                 leituras.size(),
-                totalFrutosEnsaio,
-                totalSadiosEnsaio,
-                totalVassouraEnsaio,
-                totalPodridaoEnsaio,
-                totalNaoAvalEnsaio,
+                ensaioFrutos,
+                ensaioSadios,
+                ensaioVassoura,
+                ensaioPodridao,
+                ensaioNaoAval,
                 taxaInfeccaoEnsaio,
                 alertasGps,
                 pendentes,
                 validadas,
                 rejeitadas,
                 LocalDateTime.now(),
-                ranking
+                ranking,
+                ensaioAvaliadas,
+                percentual(ensaioAvaliadas, ensaioVivas),
+                estimativaEnsaio,
+                new ParametrosAgronomicosDto(indice, densidade, filtroCampanha),
+                campanhasDisponiveis
         );
+    }
+
+    /** Estimativa indicativa kg/ha e @/ha a partir dos frutos sadios (SPEC-003 §2.3). */
+    private EstimativaAgronomicaDto estimar(
+            int sadios, int doentes, int plantasAvaliadas, double taxaSobrevivenciaPercentual,
+            double indiceFruto, int plantasPorHa
+    ) {
+        if (plantasAvaliadas <= 0) {
+            return EstimativaAgronomicaDto.zerada();
+        }
+        double mediaSadios = (double) sadios / plantasAvaliadas;
+        double potencialKgHa = mediaSadios / indiceFruto * plantasPorHa;
+        double realKgHa = potencialKgHa * taxaSobrevivenciaPercentual / 100.0;
+        double perdaKgHa = ((double) doentes / plantasAvaliadas) / indiceFruto * plantasPorHa
+                * taxaSobrevivenciaPercentual / 100.0;
+        return new EstimativaAgronomicaDto(
+                arredondar(mediaSadios),
+                arredondar(potencialKgHa),
+                arredondar(realKgHa),
+                arredondar(realKgHa / KG_POR_ARROBA),
+                arredondar(perdaKgHa),
+                arredondar(perdaKgHa / KG_POR_ARROBA)
+        );
+    }
+
+    private double percentual(int parte, int total) {
+        return total > 0 ? Math.min(100.0, arredondar((parte * 100.0) / total)) : 0.0;
     }
 
     /**
@@ -274,10 +330,10 @@ public class EnsaioService {
                     .append(l.getQtdFrutos()).append(',')
                     .append(l.getQtdFrutosValidada() != null ? l.getQtdFrutosValidada() : "").append(',')
                     .append(l.qtdEfetiva()).append(',')
-                    .append(l.getQtdSadios()).append(',')
-                    .append(l.getQtdVassoura()).append(',')
-                    .append(l.getQtdPodridao()).append(',')
-                    .append(l.getQtdNaoAvaliavel()).append(',')
+                    .append(l.qtdSadiosEfetiva()).append(',')
+                    .append(l.qtdVassouraEfetiva()).append(',')
+                    .append(l.qtdPodridaoEfetiva()).append(',')
+                    .append(l.qtdNaoAvaliavelEfetiva()).append(',')
                     .append(l.getStatusValidacao().name()).append(',')
                     .append(csvField(l.getValidadoPor())).append(',')
                     .append(l.getValidadoEm() != null ? l.getValidadoEm().toString() : "").append(',')

@@ -54,12 +54,18 @@ public class EnsaioController {
     @GetMapping("/{codigo}/relatorio-clones")
     @Operation(
             summary = "Gerar relatório consolidado de produtividade e sobrevivência por clone",
-            description = "Calcula total de frutos, média de frutos por planta viva (descontando plantas Não Coletáveis) e taxa de sobrevivência."
+            description = "Cada planta conta uma vez (leitura válida mais recente). Média por planta viva avaliada, cobertura da coleta, "
+                    + "frutos sadios x doentes e estimativa indicativa em kg/ha e @/ha (SPEC-003). "
+                    + "Parâmetros opcionais: indiceFruto (frutos sadios por kg de amêndoa seca, padrão 22), "
+                    + "plantasPorHa (padrão 1111) e campanha (filtra as leituras)."
     )
     public ResponseEntity<RelatorioProdutividadeEnsaioResponse> relatorioProdutividade(
-            @PathVariable String codigo
+            @PathVariable String codigo,
+            @RequestParam(value = "indiceFruto", required = false) Double indiceFruto,
+            @RequestParam(value = "plantasPorHa", required = false) Integer plantasPorHa,
+            @RequestParam(value = "campanha", required = false) String campanha
     ) {
-        return ResponseEntity.ok(ensaioService.gerarRelatorioProdutividade(codigo));
+        return ResponseEntity.ok(ensaioService.gerarRelatorioProdutividade(codigo, indiceFruto, plantasPorHa, campanha));
     }
 
     @GetMapping("/{codigo}/leituras")
