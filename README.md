@@ -17,54 +17,63 @@ API RESTful corporativa desenvolvida em **Java 21 + Spring Boot 3.3** para orque
 
 ---
 
-## 🎯 O Problema Real Resolvido
+## 🎯 Fluxo Operacional em 3 Passos (Pesquisador ↔ Trabalhador de Campo)
 
-Em quadras experimentais de melhoramento genético de cacau (como o ensaio competitivo **TC-1801**, contendo ~1.000 plantas e mais de 10.000 avaliações históricas), os pesquisadores e técnicos agrícolas atuam em áreas rurais sem sinal de internet:
+Em quadras experimentais de melhoramento genético de cacau (como o ensaio competitivo **TC-1801**, contendo **940 plantas** e **104 clones**), os pesquisadores e técnicos agrícolas atuam em áreas rurais sem sinal de internet. O **CacauSync** resolve toda a logística entre laboratório e campo em 3 etapas diretas no Painel Web:
 
-1. **Pré-Campo (Planejamento):** O pesquisador exporta da **CacauSync API** a planilha de rota (`GET /api/v1/ensaios/TC-1801/rota-csv`) e carrega no **Modo Rota (FieldBook)** do aplicativo Android.
-2. **Em Campo (Offline + IA):** O aplicativo guia o técnico planta a planta, realiza a contagem automática de frutos via câmera com modelo `.tflite` (ou registra baixa fitossanitária como `"Não Coletável"` para plantas mortas/secas/ausentes) e grava coordenadas GPS (`Lat`/`Lng`).
-3. **Pós-Campo (Sincronização no Laboratório):** De volta ao laboratório com rede local, o pesquisador envia o lote de dados via JSON com caixas normalizadas ou CSV + Fotos para a API. A API valida duplicidades (**idempotência estrita**), atualiza automaticamente o estande de plantas vivas/mortas, audita leituras sem sinal de GPS e consolida o ranking de produtividade por clone (`CCN-51`, `SCP-16005`, `PS-13.19`, `SCP-17202`).
+1. **Passo 1 — Planejamento de Rota (PC $\rightarrow$ Celular em 1 Clique):**
+   * O pesquisador importa a planilha oficial de campo em **Excel (`.xlsx`) ou `.csv`** (ou carrega com 1 clique a planilha completa embutida com as **940 plantas do ensaio `TC-1801`**).
+   * Com o celular conectado no cabo USB, o botão **`📲 Enviar Rota para o Celular no Cabo USB`** injeta automaticamente a planilha na aba **Modo Rota** do aplicativo Android (`files/rota_precarregada.json`), numerada na ordem exata de caminhamento (`#1` a `#940`).
+2. **Passo 2 — Coleta Offline em Campo & Recebimento em 1 Clique (Celular $\rightarrow$ PC):**
+   * O trabalhador percorre a quadra seguindo a ordem da planilha no celular (100% offline), tirando as fotos das árvores com detecção **YOLOv8** ou registrando plantas secas/mortas (`"Não Coletável"`).
+   * Ao retornar ao laboratório, basta conectar o cabo USB e clicar em **`🔌 Puxar Fotos e Coletas do Celular via USB (1 Clique)`** no painel web (ou tocar em `"SINCRONIZAR COM PC (1 CLIQUE)"` no app via USB/Wi-Fi). O servidor extrai automaticamente os registros, as caixas auditadas do YOLO e as fotos em alta resolução com **idempotência estrita**.
+3. **Passo 3 — Conferência Sequencial de Fotos na Ordem da Planilha (`#1 → #N`):**
+   * O painel exibe todas as plantas **ordenadas exatamente pela sequência da planilha (`planta.ordemRota ASC`)**, destacando quais já possuem foto coletada (`📷 Com Foto Auditável`) e quais estão pendentes.
+   * No modal interativo de auditoria, o pesquisador navega foto por foto na sequência da planilha (**`⬅ Anterior da Planilha`**, **`Próxima da Planilha ➡`** e **`✅ Aprovar Foto e Ir para a Próxima ➡`**), podendo reclassificar frutos (`Sadio`, `Vassoura de Bruxa`, `Podridão Parda`, `Não Avaliável`), **redimensionar caixas (`−` Diminuir / `+` Aumentar)**, adicionar frutos manualmente ou **excluir marcações (`🗑 Excluir`)**.
 
 ---
 
 ## 🛠️ Stack Tecnológica & Arquitetura
 
-* **Java 21 + Spring Boot 3.3.5:** Arquitetura limpa em camadas (`Controller` $\rightarrow$ `Service` $\rightarrow$ `Repository` $\rightarrow$ `Entity`), uso de `Java Records` para DTOs imutáveis e tratamento global de exceções no padrão **RFC 7807 (`ProblemDetail`)**.
-* **Banco de Dados Relacional (PostgreSQL 16 + Spring Data JPA + Flyway):**
-  * Hierarquia relacional completa: `Ensaio` $\rightarrow$ `Parcela` $\leftrightarrow$ `Clone` $\rightarrow$ `Planta` $\rightarrow$ `LeituraColeta` $\rightarrow$ `DeteccaoYolo`.
-  * Versionamento de schema automatizado via **Flyway** (`V1__create_schema.sql`, `V2__seed_ensaio_tc1801.sql`, `V3__update_default_users_password.sql`, `V4__fotos_e_validacao_leituras.sql` e `V5__fitossanidade_e_analise_doencas.sql`).
+* **Java 21 + Spring Boot 3.3.5:** Arquitetura limpa em camadas (`Controller` $\rightarrow$ `Service` $\rightarrow$ `Repository` $\rightarrow$ `Entity`), uso de `Java Records` para DTOs imutáveis, leitura nativa de planilhas Excel (**Apache POI `.xlsx`**) e CSV (**RFC 4180**), e tratamento global de exceções no padrão **RFC 7807 (`ProblemDetail`)**.
+* **Ponte Automática USB ADB (`UsbAdbSyncService` & `RotaPlanejamentoService`):**
+  * Integração direta com o Android Debug Bridge (`adb`) no servidor para envio de rotas ao aparelho (`PC -> Celular`), ativação automática de túnel reverso (`adb reverse tcp:8080 tcp:8080`) e extração em 1 clique de JSONs e fotos (`Celular -> PC`).
+* **Banco de Dados Relacional (H2 Persistente em Disco ou PostgreSQL 16 + Flyway):**
+  * Hierarquia relacional completa: `Ensaio` $\rightarrow$ `Parcela` $\leftrightarrow$ `Clone` $\rightarrow$ `Planta` (`ordemRota`) $\rightarrow$ `LeituraColeta` $\rightarrow$ `DeteccaoYolo`.
+  * **Modo Local Zero-Docker (`profile=local`):** Banco H2 em modo de compatibilidade PostgreSQL salvo em disco (`./storage/db/cacausync_local`), permitindo rodar o sistema completo no notebook do pesquisador sem precisar instalar ou abrir o Docker Desktop.
+  * **Modo Containerizado (`default`):** Suporte total a **PostgreSQL 16** com migrations versionadas via **Flyway** (`V1` a `V5`).
 * **Segurança & RBAC (Spring Security 6 + Auth0 JWT):**
   * Autenticação *stateless* via Bearer Token JWT com controle de acesso baseado em papéis (`ROLE_COORDENADOR` e `ROLE_PESQUISADOR`).
 * **Documentação Interativa & Painel Visual:**
   * **Swagger UI (SpringDoc OpenAPI 3)** configurado com botão *Authorize (JWT)*.
-  * **Painel Web do Pesquisador** integrado em `/` (`index.html`) para upload visual de CSV, visualização das fotos com bounding boxes sobrepostas em HTML5 Canvas, auditoria fitossanitária com atalhos de teclado (1-4, Del, Esc), mapa geoespacial SVG de dispersão de doenças e acompanhamento do ranking de produtividade líquida em tempo real.
+  * **Painel Web do Pesquisador** integrado em `/` (`index.html`) focado na operação logística de envio de rota, sincronização em 1 clique, conferência sequencial de fotos com caixas interativas em HTML5 Canvas e exportação consolidada em CSV.
 * **Qualidade de Código (JUnit 5 + Mockito + AssertJ):**
   * **51 testes automatizados** cobrindo cálculo agronômico CEPEC (`SPEC-003`), concordância contratual com o app mobile (`MobileContractTest`), regras de autorização RBAC, parser CSV RFC 4180, sincronização JSON idempotente, validação geométrica de caixas YOLO e emissão de JWT.
-* **Containerização (Docker & Docker Compose):**
-  * Arquivo `docker-compose.yml` na raiz para subir o banco PostgreSQL pronto para uso com um único comando.
 
 ---
 
 ## 🚀 Como Executar o Projeto Localmente
 
-### 1. Subir o Banco de Dados PostgreSQL com Docker Compose
-Na raiz do projeto, execute:
+### Opção A — Execução Rápida Sem Docker (Recomendada para Uso em Desktop/Laboratório)
+Não requer Docker Desktop instalado. Os dados e fotos ficam salvos permanentemente na pasta `./storage/`:
+
+```powershell
+mvn spring-boot:run "-Dspring-boot.run.profiles=local"
+```
+
+### Opção B — Execução com PostgreSQL via Docker Compose
+Se preferir rodar com container PostgreSQL 16 na porta `5432`:
+
 ```bash
 docker compose up -d
-```
-O container `cacausync-postgres` será iniciado na porta `5432` (`cacausync_db`).
-
-### 2. Executar a API Spring Boot
-```bash
 mvn spring-boot:run
 ```
-Ao iniciar, o **Flyway** executará automaticamente as migrations `V1` a `V5`, criando as tabelas e populando o ensaio `TC-1801`, clones, parcelas, plantas e usuários de demonstração.
 
-### 3. Acessar no Navegador
+### Acessar no Navegador
 * **Painel Web do Pesquisador (Dashboard):** [http://localhost:8080](http://localhost:8080)
 * **Documentação Interativa (Swagger UI):** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
 
-**Credenciais de Demonstração (Seed Flyway V2/V3):**
+**Credenciais de Demonstração:**
 | Perfil | E-mail | Senha |
 | :--- | :--- | :--- |
 | **Coordenador Genético** | `coordenador@cepec.gov.br` | `cepec123` |
