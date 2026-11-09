@@ -68,9 +68,11 @@ public class UsbAdbSyncService {
         // Ativa automaticamente o túnel reverso USB (permite que o celular também acesse o PC em 127.0.0.1:8080)
         executarComandoTexto(List.of(adbPath, "-s", serial, "reverse", "tcp:8080", "tcp:8080"), 5);
 
+        String pacoteApp = detectarPacoteInstalado(adbPath, serial);
+
         // Lê o JSON local persistido pelo CacauApp
         byte[] jsonBytes = executarComandoBinario(
-                List.of(adbPath, "-s", serial, "exec-out", "run-as", APP_PACKAGE, "cat", "files/registros_cacau_local.json"),
+                List.of(adbPath, "-s", serial, "exec-out", "run-as", pacoteApp, "cat", "files/registros_cacau_local.json"),
                 10
         );
 
@@ -183,7 +185,7 @@ public class UsbAdbSyncService {
                 String plantId = item.plantId();
                 String uriStr = uriPorPlanta.getOrDefault(plantId, "");
 
-                byte[] fotoBytes = extrairFotoDoCelular(adbPath, serial, plantId, uriStr, arquivosCepecAnalise);
+                byte[] fotoBytes = extrairFotoDoCelular(adbPath, serial, pacoteApp, plantId, uriStr, arquivosCepecAnalise);
                 if (isImagemValida(fotoBytes)) {
                     try {
                         leituraService.anexarFoto(item.leituraId(), fotoBytes);
@@ -212,9 +214,25 @@ public class UsbAdbSyncService {
         );
     }
 
+    private String detectarPacoteInstalado(String adbPath, String serial) {
+        List<String> candidatos = List.of(APP_PACKAGE, "br.gov.ceplac.cepec.cacauapp");
+        for (String c : candidatos) {
+            byte[] b = executarComandoBinario(
+                    List.of(adbPath, "-s", serial, "exec-out", "run-as", c, "cat", "files/registros_cacau_local.json"),
+                    5
+            );
+            String s = new String(b, StandardCharsets.UTF_8).trim();
+            if (s.startsWith("[")) {
+                return c;
+            }
+        }
+        return APP_PACKAGE;
+    }
+
     private byte[] extrairFotoDoCelular(
             String adbPath,
             String serial,
+            String pacote,
             String plantId,
             String uriStr,
             List<String> arquivosCepecAnalise
@@ -223,7 +241,7 @@ public class UsbAdbSyncService {
 
         // 1. Tenta o cache interno otimizado (files/fotos_sync/<safeName>)
         byte[] bytesCache = executarComandoBinario(
-                List.of(adbPath, "-s", serial, "exec-out", "run-as", APP_PACKAGE, "cat", "files/fotos_sync/" + safeName),
+                List.of(adbPath, "-s", serial, "exec-out", "run-as", pacote, "cat", "files/fotos_sync/" + safeName),
                 8
         );
         if (isImagemValida(bytesCache)) {
