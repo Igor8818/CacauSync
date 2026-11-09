@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CacauSync — CEPLAC / CEPEC (Ministério da Agricultura e Pecuária)</title>
+    <title>CacauSync — CEPLAC / CEPEC (Logística de Rota e Conferência de Fotos)</title>
     <style>
         :root {
             --green-deep: #0f3d17; --green-primary: #1e6b2c; --green-hover: #165322;
@@ -65,85 +65,89 @@
         select.ensaio-select { padding: 7px 10px; border-radius: 8px; border: none; font-weight: 700; color: var(--green-deep); font-size: 0.82rem; }
 
         .container { max-width: 1280px; margin: 20px auto; padding: 0 16px 40px; display: grid; gap: 18px; }
-        .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+        .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 12px; }
         .kpi-card { background: var(--card-bg); border-radius: 12px; padding: 14px 16px; border: 1px solid var(--border); border-left: 4px solid var(--green-primary); box-shadow: var(--shadow-sm); }
         .kpi-card.warn { border-left-color: var(--gold-accent); }
         .kpi-card.danger { border-left-color: var(--red); }
         .kpi-card.blue { border-left-color: var(--blue); }
         .kpi-card span { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.4px; }
-        .kpi-card strong { display: block; font-size: 1.6rem; font-weight: 800; margin-top: 2px; }
+        .kpi-card strong { display: block; font-size: 1.55rem; font-weight: 800; margin-top: 2px; }
+
+        .workflow-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 920px) { .workflow-grid { grid-template-columns: 1fr; } }
 
         .panel { background: var(--card-bg); border-radius: 14px; padding: 20px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
-        .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
-        .panel-head h2 { font-size: 1.05rem; color: var(--green-deep); }
-        .hint { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; }
-        .badge-endpoint { font-size: 0.72rem; background: var(--green-light); color: var(--green-deep); padding: 4px 10px; border-radius: 99px; font-weight: 700; font-family: monospace; }
+        .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+        .panel-head h2 { font-size: 1.04rem; color: var(--green-deep); }
+        .hint { font-size: 0.81rem; color: var(--text-muted); margin-bottom: 12px; }
+        .badge-endpoint { font-size: 0.72rem; background: var(--green-light); color: var(--green-deep); padding: 4px 10px; border-radius: 99px; font-weight: 700; }
 
         .sync-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         @media (max-width: 720px) { .sync-grid { grid-template-columns: 1fr; } }
         .field-label { display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 4px; color: var(--text-dark); }
-        input[type="file"] { width: 100%; padding: 9px 12px; border: 1.5px dashed var(--border); border-radius: 8px; font-size: 0.85rem; background: #fafcfa; }
-        .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
-        .btn { border: none; border-radius: 8px; padding: 9px 15px; font-weight: 700; font-size: 0.84rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+        input[type="file"] { width: 100%; padding: 8px 12px; border: 1.5px dashed var(--border); border-radius: 8px; font-size: 0.83rem; background: #fafcfa; }
+        .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+        .btn { border: none; border-radius: 8px; padding: 9px 14px; font-weight: 700; font-size: 0.83rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
         .btn:disabled { opacity: .55; cursor: not-allowed; }
         .btn-primary { background: var(--green-primary); color: #fff; } .btn-primary:hover:not(:disabled) { background: var(--green-hover); }
         .btn-outline { background: #fff; border: 1.5px solid var(--green-primary); color: var(--green-primary); } .btn-outline:hover:not(:disabled) { background: var(--green-light); }
         .btn-danger { background: var(--red); color: #fff; }
         .btn-blue { background: var(--blue); color: #fff; }
-        .status-box { margin-top: 12px; padding: 10px 14px; border-radius: 8px; font-size: 0.84rem; background: #f8faf8; border: 1px dashed var(--border); }
-        .status-box ul { margin: 6px 0 0 18px; font-size: 0.8rem; color: var(--text-muted); }
+        .status-box { margin-top: 12px; padding: 10px 14px; border-radius: 8px; font-size: 0.83rem; background: #f8faf8; border: 1px dashed var(--border); }
+        .status-box ul { margin: 6px 0 0 18px; font-size: 0.79rem; color: var(--text-muted); }
 
         .table-wrap { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
         th { background: #f8faf8; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
         tr:hover td { background: #fafcfa; }
-        .progress-track { width: 100%; background: #e0e6e0; height: 7px; border-radius: 99px; overflow: hidden; min-width: 60px; }
-        .progress-fill { background: var(--green-primary); height: 100%; }
-        .progress-fill.danger { background: var(--red); }
-        .badge-prod { display: inline-block; background: var(--green-light); color: var(--green-deep); padding: 3px 10px; border-radius: 99px; font-weight: 700; font-size: 0.78rem; }
+        .ordem-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 38px; padding: 3px 8px; border-radius: 8px; background: var(--green-deep); color: #fff; font-weight: 800; font-size: 0.78rem; }
         .chip { display: inline-block; padding: 3px 8px; border-radius: 99px; font-weight: 700; font-size: 0.72rem; }
         .chip.PENDENTE { background: var(--amber-bg); color: var(--amber); }
         .chip.VALIDADA { background: var(--green-light); color: var(--green-deep); }
         .chip.AJUSTADA { background: var(--blue-bg); color: var(--blue); }
         .chip.REJEITADA { background: var(--red-bg); color: var(--red); }
+        .chip.AGUARDANDO_COLETA { background: #eceff1; color: #546e7a; }
         .chip-doenca { display: inline-block; padding: 2px 7px; border-radius: 6px; font-weight: 700; font-size: 0.72rem; margin-right: 4px; }
         .chip-sadio { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
         .chip-vassoura { background: #fff3e0; color: #b45309; border: 1px solid #ffe0b2; }
         .chip-podridao { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
-        .chip-nao-aval { background: #eceff1; color: #455a64; border: 1px solid #cfd8dc; }
 
-        .thumb { width: 52px; height: 40px; object-fit: cover; border-radius: 6px; background: #e8ede8; display: block; }
-        .thumb-empty { width: 52px; height: 40px; border-radius: 6px; background: #f1f3f1; color: #9aa79b; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .thumb { width: 58px; height: 44px; object-fit: cover; border-radius: 6px; background: #e8ede8; display: block; cursor: pointer; border: 1.5px solid var(--green-border); }
+        .thumb:hover { transform: scale(1.06); transition: transform 0.12s; }
+        .thumb-empty { width: 58px; height: 44px; border-radius: 6px; background: #f1f3f1; color: #9aa79b; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .toolbar-auditoria { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
         .filters { display: flex; gap: 6px; flex-wrap: wrap; }
-        .filter-btn { background: #fff; border: 1px solid var(--border); border-radius: 99px; padding: 5px 12px; font-size: 0.78rem; font-weight: 700; cursor: pointer; color: var(--text-muted); }
+        .filter-btn { background: #fff; border: 1px solid var(--border); border-radius: 99px; padding: 6px 13px; font-size: 0.78rem; font-weight: 700; cursor: pointer; color: var(--text-muted); }
         .filter-btn.active { background: var(--green-primary); color: #fff; border-color: var(--green-primary); }
+        .search-input { padding: 7px 12px; border: 1.5px solid var(--border); border-radius: 99px; font-size: 0.82rem; min-width: 240px; }
         .pager { display: flex; gap: 10px; align-items: center; justify-content: flex-end; margin-top: 12px; font-size: 0.82rem; color: var(--text-muted); }
 
-        /* ---------- MODAL DE REVISAO INTERATIVO ---------- */
-        .modal { position: fixed; inset: 0; background: rgba(10,25,12,0.72); z-index: 50; display: flex; align-items: flex-start; justify-content: center; padding: 20px 12px; overflow-y: auto; }
-        .modal-box { background: #fff; border-radius: 14px; width: 100%; max-width: 1080px; box-shadow: var(--shadow-lg); }
-        .modal-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--border); }
-        .modal-head h3 { font-size: 1.05rem; color: var(--green-deep); }
-        .modal-close { background: none; border: none; font-size: 1.6rem; cursor: pointer; color: var(--text-muted); line-height: 1; }
-        .modal-body { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; padding: 20px; }
-        @media (max-width: 820px) { .modal-body { grid-template-columns: 1fr; } }
-        
-        .foto-container { position: relative; background: #0d1a0f; border-radius: 10px; overflow: hidden; min-height: 220px; display: flex; align-items: center; justify-content: center; user-select: none; }
+        /* ---------- MODAL DE REVISAO SEQUENCIAL ---------- */
+        .modal { position: fixed; inset: 0; background: rgba(10,25,12,0.75); z-index: 50; display: flex; align-items: flex-start; justify-content: center; padding: 16px 12px; overflow-y: auto; }
+        .modal-box { background: #fff; border-radius: 14px; width: 100%; max-width: 1120px; box-shadow: var(--shadow-lg); }
+        .modal-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap; background: #f8faf8; border-radius: 14px 14px 0 0; }
+        .modal-head h3 { font-size: 1.02rem; color: var(--green-deep); }
+        .modal-nav-seq { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .modal-close { background: none; border: none; font-size: 1.6rem; cursor: pointer; color: var(--text-muted); line-height: 1; padding: 0 4px; }
+        .modal-body { display: grid; grid-template-columns: 1.45fr 1fr; gap: 20px; padding: 18px 20px; }
+        @media (max-width: 840px) { .modal-body { grid-template-columns: 1fr; } }
+
+        .foto-container { position: relative; background: #0d1a0f; border-radius: 10px; overflow: hidden; min-height: 260px; display: flex; align-items: center; justify-content: center; user-select: none; }
         .foto-container img { display: block; width: 100%; height: auto; pointer-events: none; }
         .foto-container canvas { position: absolute; left: 0; top: 0; cursor: crosshair; }
         .foto-vazia { color: #9db39f; font-size: 0.85rem; padding: 40px 20px; text-align: center; }
 
         .editor-instrucoes { font-size: 0.76rem; color: #2e7d32; background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px; padding: 6px 10px; margin-top: 8px; }
-        .caixa-selecionada-painel { background: #263238; color: #fff; border-radius: 8px; padding: 10px; margin-top: 8px; display: grid; gap: 6px; }
+        .caixa-selecionada-painel { background: #263238; color: #fff; border-radius: 8px; padding: 10px; margin-top: 8px; display: grid; gap: 8px; }
         .caixa-selecionada-painel .botoes-classe { display: flex; gap: 6px; flex-wrap: wrap; }
-        .btn-class-pill { border: none; border-radius: 6px; padding: 4px 8px; font-size: 0.74rem; font-weight: 700; cursor: pointer; }
-        
+        .btn-class-pill { border: none; border-radius: 6px; padding: 5px 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+
         .legenda { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
         .legenda span { font-size: 0.74rem; font-weight: 700; padding: 3px 9px; border-radius: 99px; color: #fff; }
         .info-grid { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 0.83rem; margin-bottom: 12px; }
         .info-grid dt { color: var(--text-muted); font-weight: 600; } .info-grid dd { font-weight: 600; word-break: break-all; }
-        
+
         .doencas-inputs-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
         .val-box { border-top: 1px solid var(--border); padding-top: 14px; display: grid; gap: 10px; }
         .val-box input[type=number], .val-box textarea, .val-box select { width: 100%; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.88rem; }
@@ -151,21 +155,6 @@
         .note { font-size: 0.76rem; color: var(--text-muted); background: #f8faf8; border: 1px dashed var(--border); border-radius: 8px; padding: 8px 10px; }
         .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #123b19; color: #fff; padding: 10px 18px; border-radius: 99px; font-size: 0.85rem; z-index: 99; box-shadow: var(--shadow-lg); }
         .toast.err { background: var(--red); }
-
-        /* ---------- PRODUTIVIDADE / PARÂMETROS / MAPA (SPEC-003) ---------- */
-        .kpi-card.gold { border-left-color: var(--gold-accent); }
-        .params-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; background: #f8faf8; border: 1px dashed var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
-        .params-bar label { display: block; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-bottom: 3px; }
-        .params-bar input, .params-bar select { padding: 7px 9px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.85rem; width: 130px; }
-        .stack-bar { display: flex; height: 10px; min-width: 110px; border-radius: 99px; overflow: hidden; background: #e0e6e0; }
-        .stack-bar i { display: block; height: 100%; }
-        .cobertura-note { font-size: 0.78rem; color: var(--text-muted); margin: 6px 0 12px; }
-        .cobertura-note b { color: var(--text-dark); }
-        .aviso-estimativa { font-size: 0.74rem; color: var(--amber); background: var(--amber-bg); border: 1px solid #ffe0b2; border-radius: 8px; padding: 6px 10px; margin-bottom: 10px; }
-        #mapaFocos { width: 100%; height: 340px; background: #f4f8f4; border: 1px solid var(--border); border-radius: 10px; }
-        .mapa-legenda { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.76rem; margin-top: 8px; color: var(--text-muted); }
-        .mapa-legenda span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; background: var(--c); vertical-align: middle; }
-        .val-actions.proxima { grid-template-columns: 1fr; }
         .atalhos { font-size: 0.72rem; color: var(--text-muted); }
         .atalhos kbd { background: #eef2ee; border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; font-family: monospace; }
     </style>
@@ -174,7 +163,7 @@
 
 <div class="gov-bar">
     <div>MINISTÉRIO DA AGRICULTURA E PECUÁRIA — <span>CEPLAC / CEPEC</span></div>
-    <div>SISTEMA CENTRAL DE ENSAIOS GENÉTICOS (CACAUSYNC)</div>
+    <div>SISTEMA CENTRAL DE ROTAS E AUDITORIA DE FOTOS (CACAUSYNC)</div>
 </div>
 
 <!-- ================= LOGIN ================= -->
@@ -192,7 +181,7 @@
         </div>
         <h1>CEPLAC • CEPEC</h1>
         <div class="inst-sub">Centro de Pesquisas do Cacau</div>
-        <p class="app-desc">CacauSync — acesso institucional para sincronização, auditoria fitossanitária e análise de ensaios genéticos</p>
+        <p class="app-desc">CacauSync — planejamento de planilha de rota para o trabalhador e conferência de fotos na ordem da planilha</p>
 
         <form onsubmit="realizarLogin(event)">
             <div class="form-group"><label for="loginEmail">E-mail institucional</label>
@@ -225,167 +214,188 @@
                 </svg>
             </div>
             <div class="dash-title">
-                <h1>CacauSync — CEPEC / CEPLAC</h1>
-                <p>Sincronização offline-first, auditoria fitossanitária com IA e produtividade de clones</p>
+                <h1>CacauSync — Logística de Rota &amp; Conferência de Fotos</h1>
+                <p>1. Envie a planilha de rota para o celular · 2. Receba as fotos tiradas · 3. Confira cada foto na ordem da planilha</p>
             </div>
         </div>
         <div class="header-controls">
             <select id="ensaioSelect" class="ensaio-select" title="Ensaio" onchange="trocarEnsaio()"></select>
             <div class="user-tag">👤 <span id="dashUserDisplay"></span></div>
-            <button class="btn-hdr" onclick="baixarAnaliseAuditada()">📊 Baixar Análise Auditada (CSV)</button>
-            <button class="btn-hdr" onclick="baixarRota()">⬇ Rota (FieldBook CSV)</button>
-            <a class="btn-hdr" href="/swagger-ui.html" target="_blank" rel="noopener">⚡ Swagger</a>
+            <button class="btn-hdr" onclick="baixarAnaliseAuditada()">📊 Exportar Planilha Auditada (CSV)</button>
+            <button class="btn-hdr" onclick="baixarRota()">⬇ Baixar Rota (CSV)</button>
             <button class="btn-hdr logout" onclick="fazerLogout()">Sair</button>
         </div>
     </header>
 
     <div class="container">
-        <!-- KPIs FITOSSANITÁRIOS E PRODUTIVIDADE -->
+        <!-- KPIs ENXUTOS DE ROTA E CONFERÊNCIA -->
         <div class="kpis">
-            <div class="kpi-card"><span>Plantas catalogadas</span><strong id="kpiTotalPlantas">-</strong></div>
-            <div class="kpi-card"><span>Plantas vivas</span><strong id="kpiPlantasVivas">-</strong></div>
-            <div class="kpi-card"><span>Total Frutos (validados)</span><strong id="kpiTotalFrutos">-</strong></div>
+            <div class="kpi-card"><span>Plantas na Planilha</span><strong id="kpiTotalPlantas">-</strong></div>
+            <div class="kpi-card blue"><span>Fotos / Coletas Recebidas</span><strong id="kpiTotalLeituras">-</strong></div>
+            <div class="kpi-card warn"><span>Aguardando Conferência</span><strong id="kpiPendentes">-</strong></div>
+            <div class="kpi-card"><span>Conferidas / Validadas</span><strong id="kpiValidadas">-</strong></div>
+            <div class="kpi-card"><span>Total Frutos</span><strong id="kpiTotalFrutos">-</strong></div>
             <div class="kpi-card blue"><span>🟢 Frutos Sadios</span><strong id="kpiTotalSadios">-</strong></div>
             <div class="kpi-card danger"><span>🟠 Vassoura / 🔴 Podridão</span><strong id="kpiTotalDoentes">-</strong></div>
-            <div class="kpi-card danger"><span>Taxa de Infecção</span><strong id="kpiTaxaInfeccao">-</strong></div>
-            <div class="kpi-card warn"><span>Aguardando validação</span><strong id="kpiPendentes">-</strong></div>
-            <div class="kpi-card"><span>Alertas de GPS</span><strong id="kpiAlertasGps">-</strong></div>
-            <div class="kpi-card blue"><span>Cobertura da coleta</span><strong id="kpiCobertura">-</strong></div>
-            <div class="kpi-card gold"><span>Produtividade estimada (@/ha)</span><strong id="kpiArrobasHa">-</strong></div>
-            <div class="kpi-card danger"><span>Perda por doenças (@/ha)</span><strong id="kpiPerdaArrobasHa">-</strong></div>
         </div>
 
-        <!-- ENVIO AUTOMÁTICO 1-CLIQUE -->
+        <!-- PASSO 1 E PASSO 2 LADO A LADO -->
+        <div class="workflow-grid">
+            <!-- PASSO 1: ENVIAR PLANILHA DE ROTA PARA O CELULAR -->
+            <div class="panel">
+                <div class="panel-head">
+                    <h2>📋 Passo 1 — Enviar Planilha de Rota para o Celular</h2>
+                    <span class="badge-endpoint" id="badgeRotaCount">Rota ativa</span>
+                </div>
+                <p class="hint">
+                    Suba a planilha de rota (<b>.xlsx</b> do Excel ou <b>.csv</b> com <i>Clone, Parcela, Planta, Ordem</i>) e envie direto para a aba <b>"Modo Rota"</b> do celular conectado via USB — sem o trabalhador precisar configurar nada!
+                </p>
+                <div>
+                    <label class="field-label" for="rotaFileInput">Selecionar Planilha de Rota (.xlsx ou .csv):</label>
+                    <input type="file" id="rotaFileInput" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+                </div>
+                <div class="actions">
+                    <button class="btn btn-primary" id="btnImportarRota" onclick="importarEEnviarRota()">
+                        📂 Importar Planilha e Enviar ao Celular
+                    </button>
+                    <button class="btn btn-blue" id="btnEnviarRotaUsb" onclick="enviarRotaAtualUsb()">
+                        📲 Enviar Rota Atual para o Celular (USB)
+                    </button>
+                    <button class="btn btn-outline" id="btnRotaTc1801" onclick="carregarRotaPadraoTc1801()">
+                        🌱 Usar Planilha Completa TC-1801 (940 plantas)
+                    </button>
+                </div>
+                <div id="rotaStatusBox" class="status-box">
+                    Carregando informações da rota atual…
+                </div>
+            </div>
+
+            <!-- PASSO 2: RECEBER FOTOS E COLETAS DO CELULAR -->
+            <div class="panel">
+                <div class="panel-head">
+                    <h2>📲 Passo 2 — Receber Fotos e Coletas do Trabalhador</h2>
+                    <span class="badge-endpoint">USB 1-Clique &amp; Wi-Fi</span>
+                </div>
+                <p class="hint">
+                    Quando o trabalhador voltar do campo, conecte o celular no cabo USB e clique no botão abaixo para puxar todas as fotos e contagens do YOLO — ou toque em <b>"ENVIAR PARA O PC AGORA"</b> no CacauApp via Wi-Fi.
+                </p>
+                <div class="actions" style="margin-top: 14px;">
+                    <button class="btn btn-primary" id="btnSyncUsb" style="font-size: 0.92rem; padding: 12px 18px;" onclick="sincronizarViaUsb()">
+                        🔌 Puxar Fotos e Coletas do Celular via USB (1 Clique)
+                    </button>
+                    <button class="btn btn-outline" onclick="atualizarTudo(); toast('Lista de fotos atualizada!');">
+                        🔄 Atualizar Lista
+                    </button>
+                </div>
+                <div id="syncStatusBox" class="status-box">
+                    Pronto para receber as fotos do celular (cabo USB ou Wi-Fi).
+                </div>
+
+                <details style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 8px;">
+                    <summary style="cursor: pointer; font-size: 0.79rem; color: var(--text-muted); font-weight: 600;">
+                        📁 Opção alternativa: importar CSV + fotos manualmente do computador
+                    </summary>
+                    <div style="margin-top: 10px;">
+                        <div class="sync-grid">
+                            <div><label class="field-label" for="csvFileInput">Planilha CSV exportada</label>
+                                <input type="file" id="csvFileInput" accept=".csv,text/csv" /></div>
+                            <div><label class="field-label" for="fotosInput">Fotos da coleta (várias)</label>
+                                <input type="file" id="fotosInput" accept="image/*" multiple /></div>
+                        </div>
+                        <div class="actions">
+                            <button class="btn btn-primary" id="btnEnviar" onclick="enviarColeta()">📤 Importar arquivos</button>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        <!-- PASSO 3: CONFERÊNCIA DE CADA FOTO NA ORDEM DA PLANILHA -->
         <div class="panel">
             <div class="panel-head">
-                <h2>📲 Receber Coletas do Celular (1 Clique — Automático)</h2>
-                <span class="badge-endpoint">USB Direto &amp; Wi-Fi Auto-Discovery</span>
+                <h2>🔎 Passo 3 — Conferência de Fotos na Ordem da Planilha</h2>
+                <span class="badge-endpoint" id="resumoConferenciaBadge">Sequência #1 → #N</span>
             </div>
             <p class="hint">
-                <b>Zero configuração manual:</b> você não precisa escolher arquivos CSV nem procurar fotos em pastas.
-                Com o celular conectado no cabo USB, clique no botão abaixo para puxar tudo automaticamente — ou, pelo Wi-Fi, basta tocar no botão verde <b>"ENVIAR PARA O PC AGORA"</b> dentro do CacauApp.
+                As plantas abaixo estão ordenadas exatamente pela <b># Ordem na Planilha de Rota</b>. Clique em <b>"Conferir Foto"</b> (ou na miniatura) para abrir a foto e navegar sequencialmente (<b>⬅ Anterior / Próxima ➡</b>) pela planilha.
             </p>
-            <div class="actions" style="margin-top: 10px; margin-bottom: 12px;">
-                <button class="btn btn-primary" id="btnSyncUsb" style="font-size: 0.95rem; padding: 12px 20px;" onclick="sincronizarViaUsb()">
-                    🔌 Puxar Coletas do Celular via Cabo USB (1 Clique)
-                </button>
-                <button class="btn btn-outline" onclick="atualizarTudo(); toast('Painel atualizado!');">
-                    🔄 Atualizar Painel
-                </button>
-                <button class="btn btn-outline" onclick="simularEnvioApp()">
-                    ⚡ Demonstração: coleta com caixas do YOLO
-                </button>
-            </div>
-            <div id="syncStatusBox" class="status-box">Pronto. Conecte o celular no USB e clique em "Puxar Coletas do Celular via Cabo USB", ou envie pelo Wi-Fi direto do CacauApp.</div>
 
-            <details style="margin-top: 14px; border-top: 1px solid var(--borda); padding-top: 10px;">
-                <summary style="cursor: pointer; font-size: 0.82rem; color: var(--texto-sec); font-weight: 600;">
-                    📁 Importação manual avançada (escolher arquivo CSV e fotos avulsas do computador)
-                </summary>
-                <div style="margin-top: 10px;">
-                    <div class="sync-grid">
-                        <div><label class="field-label" for="csvFileInput">1. Planilha CSV do app (ou dados_cacau.csv)</label>
-                            <input type="file" id="csvFileInput" accept=".csv,text/csv" /></div>
-                        <div><label class="field-label" for="fotosInput">2. Fotos da coleta (opcional, várias)</label>
-                            <input type="file" id="fotosInput" accept="image/*" multiple /></div>
-                    </div>
-                    <div class="actions">
-                        <button class="btn btn-primary" id="btnEnviar" onclick="enviarColeta()">📤 Enviar arquivos selecionados</button>
-                        <button class="btn btn-outline" onclick="simularColetaCsv()">⚡ Demonstração: CSV 15 colunas + fotos</button>
-                    </div>
-                </div>
-            </details>
-        </div>
-
-        <!-- AUDITORIA -->
-        <div class="panel">
-            <div class="panel-head">
-                <h2>🔎 Auditoria fitossanitária — confira a foto, caixas YOLO e valide</h2>
+            <div class="toolbar-auditoria">
                 <div class="filters" id="filtros">
-                    <button class="filter-btn active" data-status="">Todas</button>
-                    <button class="filter-btn" data-status="PENDENTE">Pendentes</button>
-                    <button class="filter-btn" data-status="VALIDADA">Validadas</button>
-                    <button class="filter-btn" data-status="AJUSTADA">Ajustadas</button>
-                    <button class="filter-btn" data-status="REJEITADA">Rejeitadas</button>
+                    <button class="filter-btn active" data-modo="FOTOS" data-status="">📸 Fotos Recebidas (Ordem da Planilha)</button>
+                    <button class="filter-btn" data-modo="FOTOS" data-status="PENDENTE">⏳ Aguardando Conferência</button>
+                    <button class="filter-btn" data-modo="FOTOS" data-status="VALIDADA">✅ Conferidas</button>
+                    <button class="filter-btn" data-modo="ROTA_COMPLETA" data-status="">📋 Planilha Completa (Todas as Plantas da Rota)</button>
                 </div>
+                <input type="search" id="buscaInput" class="search-input" placeholder="🔍 Buscar #Ordem, Clone ou Parcela…" oninput="filtrarTabelaLocal()" />
             </div>
+
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Foto</th><th>Planta</th><th>Clone</th><th>Parcela</th><th>Frutos (IA → Final)</th><th>Classes Fitossanitárias</th><th>GPS</th><th>Status</th><th></th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th># Ordem</th>
+                            <th>Foto</th>
+                            <th>Clone</th>
+                            <th>Parcela</th>
+                            <th>Planta</th>
+                            <th>Frutos (IA → Final)</th>
+                            <th>Classes Fitossanitárias</th>
+                            <th>Status</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
                     <tbody id="auditoriaBody"><tr><td colspan="9">Carregando…</td></tr></tbody>
                 </table>
             </div>
-            <div class="pager">
-                <button class="btn btn-outline" id="btnAnt" onclick="mudarPagina(-1)">‹ Anterior</button>
+            <div class="pager" id="pagerBox">
+                <button class="btn btn-outline" id="btnAnt" onclick="mudarPagina(-1)">‹ Página Anterior</button>
                 <span id="pagInfo"></span>
-                <button class="btn btn-outline" id="btnProx" onclick="mudarPagina(1)">Próxima ›</button>
-            </div>
-        </div>
-
-        <!-- RANKING -->
-        <div class="panel">
-            <div class="panel-head">
-                <h2>🏆 Ranking fitossanitário e produtividade por clone</h2>
-                <button class="btn btn-outline" onclick="carregarRelatorio()">🔄 Atualizar</button>
-            </div>
-            <p class="hint">Cada planta conta <b>uma vez</b> (leitura mais recente, sem rejeitadas; ajustadas valem o número corrigido). A média usa só plantas vivas <b>já avaliadas</b> e o ranking ordena pelos frutos <b>sadios</b> por planta — fruto com vassoura ou podridão é perda, não colheita.</p>
-            <div class="params-bar">
-                <div><label for="parIndice">Índice de fruto (frutos sadios/kg seco)</label><input type="number" id="parIndice" min="1" max="200" step="0.5" value="22" /></div>
-                <div><label for="parDensidade">Densidade (plantas/ha)</label><input type="number" id="parDensidade" min="1" max="10000" step="1" value="1111" /></div>
-                <div><label for="parCampanha">Campanha</label><select id="parCampanha"><option value="">Todas</option></select></div>
-                <button class="btn btn-primary" onclick="aplicarParametros()">Aplicar</button>
-                <button class="btn btn-outline" onclick="restaurarParametros()">Padrão</button>
-            </div>
-            <div id="coberturaNote" class="cobertura-note"></div>
-            <div class="aviso-estimativa">⚠ Estimativa <b>indicativa</b>: converte a contagem pontual de frutos sadios em amêndoa seca (1 @ = 15 kg) e pondera pela sobrevivência do clone. Não substitui a pesagem da safra.</div>
-            <div class="table-wrap">
-                <table>
-                    <thead><tr><th>#</th><th>Clone</th><th>Avaliadas/Vivas</th><th>Sobrevivência</th><th>Frutos (total)</th><th>Sadios · Vassoura · Podridão</th><th>Infecção (%)</th><th>Sadios/Planta</th><th>kg/ha</th><th>@/ha</th><th>Perda (@/ha)</th></tr></thead>
-                    <tbody id="tabelaClonesBody"><tr><td colspan="11">Carregando…</td></tr></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- MAPA DE FOCOS -->
-        <div class="panel">
-            <div class="panel-head">
-                <h2>🗺️ Mapa de focos da quadra (GPS das leituras)</h2>
-                <button class="btn btn-outline" onclick="carregarMapa()">🔄 Atualizar</button>
-            </div>
-            <p class="hint">Cada ponto é uma planta avaliada, posicionada pelo GPS do celular. Clique no ponto para abrir a revisão.</p>
-            <svg id="mapaFocos" viewBox="0 0 800 340" preserveAspectRatio="xMidYMid meet"></svg>
-            <div class="mapa-legenda">
-                <span style="--c:#00c853">Sadia</span><span style="--c:#ff9100">Foco de vassoura</span>
-                <span style="--c:#ff1744">Foco de podridão</span><span style="--c:#90a4ae">Não coletável</span>
-                <span id="mapaInfo"></span>
+                <button class="btn btn-outline" id="btnProx" onclick="mudarPagina(1)">Próxima Página ›</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ================= MODAL DE REVISAO COM EDITOR INTERATIVO ================= -->
+<!-- ================= MODAL DE CONFERÊNCIA SEQUENCIAL NA ORDEM DA PLANILHA ================= -->
 <div id="modal" class="modal" hidden onclick="if(event.target===this)fecharModal()">
     <div class="modal-box">
         <div class="modal-head">
-            <h3 id="modalTitulo">Revisão Fitossanitária da Leitura</h3>
-            <button class="modal-close" onclick="fecharModal()" aria-label="Fechar">×</button>
+            <div>
+                <h3 id="modalTitulo">Conferência da Foto</h3>
+                <div id="modalSubtitulo" style="font-size:0.78rem;color:var(--text-muted);font-weight:600"></div>
+            </div>
+            <div class="modal-nav-seq">
+                <button class="btn btn-outline" id="btnModalAnt" onclick="navegarSequenciaModal(-1)" title="Atalho: Seta para Esquerda">
+                    ⬅ Anterior da Planilha
+                </button>
+                <span id="modalPosicaoSeq" style="font-size:0.8rem;font-weight:800;color:var(--green-deep);padding:0 6px;"></span>
+                <button class="btn btn-outline" id="btnModalProx" onclick="navegarSequenciaModal(1)" title="Atalho: Seta para Direita">
+                    Próxima da Planilha ➡
+                </button>
+                <button class="modal-close" onclick="fecharModal()" aria-label="Fechar">×</button>
+            </div>
         </div>
         <div class="modal-body">
             <div>
                 <div class="foto-container" id="fotoWrap"></div>
                 <div class="editor-instrucoes">
-                    💡 <b>Como validar:</b> Clique em uma caixa para mudar a doença ou excluí-la. Clique em qualquer área da foto para adicionar um fruto manualmente.
+                    💡 <b>Interativo:</b> Clique em uma caixa para alterar a doença, redimensionar (<b>− / +</b>) ou excluí-la (<b>🗑</b>). Clique em qualquer ponto vazio da foto para marcar um fruto não detectado.
                 </div>
                 <div id="painelCaixaSelecionada" class="caixa-selecionada-painel" hidden>
-                    <div style="display:flex;justify-content:space-between;align-items:center">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
                         <span id="labelCaixaSel" style="font-weight:700">Fruto Selecionado</span>
-                        <button class="btn btn-danger" style="padding:2px 8px;font-size:0.7rem" onclick="excluirCaixaSelecionada()">🗑 Excluir Caixa</button>
+                        <div style="display:flex;gap:6px;align-items:center">
+                            <button class="btn btn-outline" style="padding:2px 10px;font-size:0.8rem;background:#37474f;color:#fff;border-color:#546e7a" onclick="redimensionarCaixaSelecionada(-0.015)" title="Diminuir caixa">− Diminuir</button>
+                            <button class="btn btn-outline" style="padding:2px 10px;font-size:0.8rem;background:#37474f;color:#fff;border-color:#546e7a" onclick="redimensionarCaixaSelecionada(0.015)" title="Aumentar caixa">+ Aumentar</button>
+                            <button class="btn btn-danger" style="padding:3px 10px;font-size:0.76rem" onclick="excluirCaixaSelecionada()">🗑 Excluir</button>
+                        </div>
                     </div>
                     <div class="botoes-classe">
-                        <button class="btn-class-pill" style="background:var(--cor-sadio);color:#000" onclick="alterarClasseCaixaSel('Sadio')">Sadio</button>
-                        <button class="btn-class-pill" style="background:var(--cor-vassoura);color:#000" onclick="alterarClasseCaixaSel('Vassoura de Bruxa')">Vassoura</button>
-                        <button class="btn-class-pill" style="background:var(--cor-podridao);color:#fff" onclick="alterarClasseCaixaSel('Podridão')">Podridão</button>
-                        <button class="btn-class-pill" style="background:var(--cor-nao-aval);color:#000" onclick="alterarClasseCaixaSel('Não Avaliável')">Não Aval.</button>
+                        <button class="btn-class-pill" style="background:var(--cor-sadio);color:#000" onclick="alterarClasseCaixaSel('Sadio')">🟢 Sadio</button>
+                        <button class="btn-class-pill" style="background:var(--cor-vassoura);color:#000" onclick="alterarClasseCaixaSel('Vassoura de Bruxa')">🟠 Vassoura</button>
+                        <button class="btn-class-pill" style="background:var(--cor-podridao);color:#fff" onclick="alterarClasseCaixaSel('Podridão')">🔴 Podridão</button>
+                        <button class="btn-class-pill" style="background:var(--cor-nao-aval);color:#000" onclick="alterarClasseCaixaSel('Não Avaliável')">⚪ Não Aval.</button>
                     </div>
                 </div>
                 <div class="legenda" id="legenda"></div>
@@ -400,16 +410,19 @@
 
 <script>
     /* =====================================================================
-       Estado e utilitários
+       Estado Global e Utilitários
        ===================================================================== */
     let token = localStorage.getItem('cacausync_jwt') || '';
     let usuario = JSON.parse(localStorage.getItem('cacausync_user') || 'null');
     let ensaio = localStorage.getItem('cacausync_ensaio') || 'TC-1801';
-    let pagina = 0, totalPaginas = 0, filtroStatus = '';
-    const TAMANHO_PAGINA = 10;
+    let pagina = 0, totalPaginas = 0, filtroStatus = '', modoVisualizacao = 'FOTOS';
+    const TAMANHO_PAGINA = 100;
     const fotoUrls = new Map();
-    
-    // Cores padronizadas com o app mobile
+
+    // Lista ordenada das leituras atualmente carregadas na tabela (para navegação sequencial ⬅ / ➡ no modal)
+    let leiturasEmOrdem = [];
+    let rotaCompletaCache = [];
+
     const CORES_CLASSES = {
         'sadio': '#00e676', 'cacau_sadio': '#00e676', 'fruto_maduro': '#00e676', 'fruto_verde': '#00e676', 'cacau': '#00e676', 'fruto': '#00e676',
         'vassoura': '#ff9100', 'vassoura de bruxa': '#ff9100', 'vassoura_bruxa': '#ff9100',
@@ -450,7 +463,7 @@
     }
 
     /* =====================================================================
-       Login / Logout
+       Login / Logout / Inicialização
        ===================================================================== */
     function preencherLogin(email) { $('loginEmail').value = email; $('loginSenha').value = 'cepec123'; $('loginErrorMsg').hidden = true; }
 
@@ -494,7 +507,7 @@
     }
 
     function trocarEnsaio() { ensaio = $('ensaioSelect').value; localStorage.setItem('cacausync_ensaio', ensaio); pagina = 0; atualizarTudo(); }
-    function atualizarTudo() { carregarRelatorio(); carregarAuditoria(); carregarMapa(); }
+    function atualizarTudo() { carregarResumoKpis(); carregarResumoRota(); carregarAuditoria(); }
 
     async function baixarRota() {
         try {
@@ -513,23 +526,89 @@
     }
 
     /* =====================================================================
-       Envio de CSV + Fotos
+       PASSO 1: Planejamento da Planilha de Rota (PC -> Celular)
        ===================================================================== */
-    async function reduzirImagem(file, maxLado = 1600, qualidade = 0.85) {
-        if (!file.type.startsWith('image/')) return file;
+    async function carregarResumoRota() {
         try {
-            const bmp = await createImageBitmap(file);
-            const escala = Math.min(1, maxLado / Math.max(bmp.width, bmp.height));
-            if (escala === 1 && file.size < 1.5 * 1024 * 1024) { bmp.close && bmp.close(); return file; }
-            const c = document.createElement('canvas');
-            c.width = Math.round(bmp.width * escala); c.height = Math.round(bmp.height * escala);
-            c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
-            bmp.close && bmp.close();
-            const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', qualidade));
-            return blob ? new File([blob], file.name, { type: 'image/jpeg' }) : file;
-        } catch (_) { return file; }
+            rotaCompletaCache = await apiJson(`/api/v1/ensaios/${encodeURIComponent(ensaio)}/rota-json`);
+            const total = rotaCompletaCache.length;
+            const coletadas = rotaCompletaCache.filter(x => x.coletado).length;
+            const comFoto = rotaCompletaCache.filter(x => x.temFoto).length;
+            $('badgeRotaCount').textContent = `${total} plantas na planilha`;
+            $('rotaStatusBox').innerHTML = `📋 <b>Rota ativa no ${esc(ensaio)}:</b> <b>${total}</b> planta(s) na sequência da planilha · `
+                + `<b>${coletadas}</b> já coletada(s) (${comFoto} com foto) · <b>${Math.max(0, total - coletadas)}</b> restante(s).`;
+            if (modoVisualizacao === 'ROTA_COMPLETA') {
+                renderizarTabelaRotaCompleta();
+            }
+        } catch (e) {
+            $('rotaStatusBox').textContent = '❌ ' + e.message;
+        }
     }
 
+    async function importarEEnviarRota() {
+        const f = $('rotaFileInput').files[0];
+        if (!f) {
+            toast('Selecione uma planilha (.xlsx ou .csv) primeiro.', true);
+            return;
+        }
+        const btn = $('btnImportarRota'), box = $('rotaStatusBox');
+        btn.disabled = true;
+        box.textContent = `⏳ Lendo planilha "${f.name}", organizando a ordem das plantas e enviando ao celular via USB…`;
+        try {
+            const fd = new FormData();
+            fd.append('arquivo', f, f.name);
+            fd.append('enviarParaUsb', 'true');
+            const r = await apiJson(`/api/v1/ensaios/${encodeURIComponent(ensaio)}/importar-rota`, {
+                method: 'POST',
+                body: fd
+            });
+            box.innerHTML = `✅ <b>${esc(r.mensagem)}</b>`;
+            toast(`Planilha com ${r.totalPlantasRota} plantas carregada!`);
+            atualizarTudo();
+        } catch (e) {
+            box.textContent = '❌ ' + e.message;
+            toast(e.message, true);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function enviarRotaAtualUsb() {
+        const btn = $('btnEnviarRotaUsb'), box = $('rotaStatusBox');
+        btn.disabled = true;
+        box.textContent = '📲 Enviando rota atual diretamente para a aba "Modo Rota" do celular conectado via cabo USB…';
+        try {
+            const r = await apiJson(`/api/v1/ensaios/${encodeURIComponent(ensaio)}/enviar-rota-usb`, { method: 'POST' });
+            box.innerHTML = `✅ <b>${esc(r.mensagem)}</b>`;
+            toast(`Rota (${r.totalPlantasRota} plantas) enviada para o celular!`);
+        } catch (e) {
+            box.textContent = '❌ ' + e.message;
+            toast(e.message, true);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function carregarRotaPadraoTc1801() {
+        const btn = $('btnRotaTc1801'), box = $('rotaStatusBox');
+        btn.disabled = true;
+        box.textContent = '🌱 Carregando planilha completa do TC-1801 (940 plantas na ordem oficial) e enviando para o celular…';
+        try {
+            const r = await apiJson(`/api/v1/ensaios/${encodeURIComponent(ensaio)}/carregar-rota-tc1801?enviarParaUsb=true`, { method: 'POST' });
+            box.innerHTML = `✅ <b>${esc(r.mensagem)}</b>`;
+            toast(`Planilha TC-1801 (${r.totalPlantasRota} plantas) carregada!`);
+            atualizarTudo();
+        } catch (e) {
+            box.textContent = '❌ ' + e.message;
+            toast(e.message, true);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    /* =====================================================================
+       PASSO 2: Receber Fotos e Coletas do Celular (USB 1-Clique ou CSV)
+       ===================================================================== */
     async function sincronizarViaUsb() {
         const box = $('syncStatusBox'), btn = $('btnSyncUsb');
         btn.disabled = true;
@@ -561,6 +640,21 @@
         }
     }
 
+    async function reduzirImagem(file, maxLado = 1600, qualidade = 0.85) {
+        if (!file.type.startsWith('image/')) return file;
+        try {
+            const bmp = await createImageBitmap(file);
+            const escala = Math.min(1, maxLado / Math.max(bmp.width, bmp.height));
+            if (escala === 1 && file.size < 1.5 * 1024 * 1024) { bmp.close && bmp.close(); return file; }
+            const c = document.createElement('canvas');
+            c.width = Math.round(bmp.width * escala); c.height = Math.round(bmp.height * escala);
+            c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+            bmp.close && bmp.close();
+            const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', qualidade));
+            return blob ? new File([blob], file.name, { type: 'image/jpeg' }) : file;
+        } catch (_) { return file; }
+    }
+
     async function enviarColeta() {
         const csv = $('csvFileInput').files[0];
         if (!csv) { toast('Escolha o CSV exportado pelo app.', true); return; }
@@ -589,289 +683,175 @@
                 anexadas += r.fotosAnexadas;
                 avisos = avisos.concat(r.avisos.filter(a => !a.includes('foto(s) não anexada')));
             }
-            const semPar = fotos.length - anexadas;
             box.innerHTML = `✅ <b>${esc(primeiro.totalLinhasProcessadas)}</b> linhas lidas · <b>${esc(primeiro.leiturasNovasInseridas)}</b> novas · `
-                + `<b>${esc(primeiro.leiturasDuplicadasIgnoradas)}</b> já existiam · <b>${esc(primeiro.plantasMarcadasNaoColetaveis)}</b> não coletáveis · `
-                + `<b>${esc(anexadas)}</b> foto(s) anexada(s)` + (semPar > 0 ? ` · ⚠ <b>${esc(semPar)}</b> sem par no CSV` : '')
-                + (avisos.length ? `<ul>${avisos.slice(0, 6).map(a => `<li>${esc(a)}</li>`).join('')}</ul>` : '');
+                + `<b>${esc(anexadas)}</b> foto(s) anexada(s)`;
             atualizarTudo();
         } catch (e) { box.textContent = '❌ ' + e.message; }
         finally { btn.disabled = false; }
     }
 
-    function gerarFotoDemo(caixas, w = 800, h = 600) {
-        const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
-        const bg = g.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, '#5c8f46'); bg.addColorStop(1, '#2f5a2a');
-        g.fillStyle = bg; g.fillRect(0, 0, w, h);
-        g.fillStyle = 'rgba(30,70,30,.5)'; for (let i = 0; i < 14; i++) { g.beginPath(); g.ellipse(Math.random() * w, Math.random() * h, 80, 22, Math.random() * 3, 0, 7); g.fill(); }
-        
-        caixas.forEach(b => {
-            const bx = b.x * w, by = b.y * h, bw = b.largura * w, bh = b.altura * h;
-            g.fillStyle = b.classe.includes('vassoura') ? '#ff9100' : (b.classe.includes('podr') ? '#ff1744' : '#d9a441');
-            g.strokeStyle = '#222'; g.lineWidth = 2;
-            g.beginPath(); g.ellipse(bx + bw / 2, by + bh / 2, bw / 2, bh / 2, 0, 0, 7); g.fill(); g.stroke();
-        });
-        return new Promise(r => c.toBlob(b => r(b), 'image/jpeg', 0.85));
-    }
-
-    async function simularColetaCsv() {
-        const t = new Date(), hh = String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0');
-        const dia = String(t.getDate()).padStart(2, '0') + '/' + String(t.getMonth() + 1).padStart(2, '0');
-        const base = Date.now();
-        
-        const caixasPlanta1 = [
-            { classe: 'Sadio', confianca: 0.94, x: 0.12, y: 0.20, largura: 0.15, altura: 0.30 },
-            { classe: 'Sadio', confianca: 0.91, x: 0.35, y: 0.18, largura: 0.14, altura: 0.28 },
-            { classe: 'Vassoura de Bruxa', confianca: 0.86, x: 0.65, y: 0.35, largura: 0.13, altura: 0.26 }
-        ];
-
-        const caixasPlanta2 = [
-            { classe: 'Sadio', confianca: 0.92, x: 0.20, y: 0.25, largura: 0.16, altura: 0.32 },
-            { classe: 'Podridão', confianca: 0.85, x: 0.55, y: 0.30, largura: 0.15, altura: 0.29 }
-        ];
-
-        const jsonC1 = JSON.stringify(caixasPlanta1).replace(/"/g, '""');
-        const jsonC2 = JSON.stringify(caixasPlanta2).replace(/"/g, '""');
-
-        const linhas = [
-            `"${ensaio}","CCN-51_Parcela20_Planta1","CCN-51","20","1","3","${dia} ${hh}",-14.7892,-39.2781,3,2,1,0,0,"${jsonC1}"`,
-            `"${ensaio}","CCN-51_Parcela20_Planta2","CCN-51","20","2","2","${dia} ${hh}",-14.7893,-39.2782,2,1,0,1,0,"${jsonC2}"`,
-            `"${ensaio}","SCP-16005_Parcela1_Planta1","SCP-16005","1","1","4","${dia} ${hh}",-14.7885,-39.2775,4,4,0,0,0,""`,
-            `"${ensaio}","PS-13.19_Parcela13_Planta1","PS-13.19","13","1","2","${dia} ${hh}",-14.7889,-39.2779,2,1,1,0,0,""`,
-            `"${ensaio}","SCP-17202_Parcela2_Planta5","SCP-17202","2","5","Não Coletável","${dia} ${hh}",0.0,0.0,0,0,0,0,0,""`
-        ];
-
-        const csv = 'Campanha,ID_Gerado,Clone,Parcela,Planta,Resultado,Data,Lat,Lng,Total_Frutos,Sadios,Vassoura,Podridao,Nao_Avaliavel,Deteccoes_YOLO\n'
-            + linhas.join('\n');
-        const csvFile = new File([csv], `Coleta_Custom_Demo_${base}.csv`, { type: 'text/csv' });
-        
-        const fotos = [
-            new File([await gerarFotoDemo(caixasPlanta1)], `CCN-51_Parcela20_Planta1_${base}.jpg`, { type: 'image/jpeg' }),
-            new File([await gerarFotoDemo(caixasPlanta2)], `CCN-51_Parcela20_Planta2_${base + 1000}.jpg`, { type: 'image/jpeg' }),
-            new File([await gerarFotoDemo([])], `SCP-16005_Parcela1_Planta1_${base + 2000}.jpg`, { type: 'image/jpeg' }),
-            new File([await gerarFotoDemo([])], `PS-13.19_Parcela13_Planta1_${base + 3000}.jpg`, { type: 'image/jpeg' })
-        ];
-
-        await enviarCsvComFotos(csvFile, fotos);
-    }
-
-    async function simularEnvioApp() {
-        const box = $('syncStatusBox');
-        const n = Date.now() % 100000;
-        const caixas = [
-            { classe: 'Sadio', confianca: 0.94, x: 0.12, y: 0.22, largura: 0.15, altura: 0.30 },
-            { classe: 'Sadio', confianca: 0.89, x: 0.38, y: 0.18, largura: 0.14, altura: 0.28 },
-            { classe: 'Vassoura de Bruxa', confianca: 0.83, x: 0.62, y: 0.38, largura: 0.13, altura: 0.26 },
-            { classe: 'Podridão', confianca: 0.76, x: 0.80, y: 0.20, largura: 0.13, altura: 0.27 }
-        ];
-        try {
-            box.textContent = '⏳ Enviando JSON do aplicativo com caixas do YOLO…';
-            const plantId = `CCN-51_P20_Pl3_demo${n}`;
-            const r = await apiJson('/api/v1/coletas/sync-json', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    codigoEnsaio: ensaio,
-                    leituras: [{
-                        campanha: ensaio,
-                        plantId: plantId,
-                        clone: 'CCN-51',
-                        parcela: '20',
-                        planta: 3,
-                        resultado: '4',
-                        data: new Date().toLocaleString('pt-BR'),
-                        lat: -14.789,
-                        lng: -39.278,
-                        sadios: 2,
-                        vassoura: 1,
-                        podridao: 1,
-                        naoAvaliavel: 0,
-                        deteccoes: caixas
-                    }]
-                })
-            });
-            
-            const leituraId = (r.leituras && r.leituras.length > 0) ? r.leituras[0].leituraId : null;
-            if (leituraId) {
-                const fd = new FormData();
-                fd.append('foto', new File([await gerarFotoDemo(caixas)], 'demo_yolo.jpg', { type: 'image/jpeg' }));
-                await api(`/api/v1/leituras/${leituraId}/foto`, { method: 'POST', body: fd });
-            }
-
-            box.textContent = `✅ Demonstração enviada com sucesso! Abra "Revisar" na tabela para ver e editar as caixas na foto.`;
-            atualizarTudo();
-        } catch (e) { box.textContent = '❌ ' + e.message; }
-    }
-
     /* =====================================================================
-       Auditoria e Relatório
+       PASSO 3: KPIs e Conferência de Fotos na Ordem da Planilha
        ===================================================================== */
-    document.querySelectorAll('#filtros .filter-btn').forEach(b => b.addEventListener('click', () => {
-        document.querySelectorAll('#filtros .filter-btn').forEach(x => x.classList.remove('active'));
-        b.classList.add('active'); filtroStatus = b.dataset.status; pagina = 0; carregarAuditoria();
-    }));
-    function mudarPagina(d) { pagina = Math.max(0, Math.min(totalPaginas - 1, pagina + d)); carregarAuditoria(); }
-
-    async function carregarAuditoria() {
-        const corpo = $('auditoriaBody');
+    async function carregarResumoKpis() {
         try {
-            const q = `page=${pagina}&size=${TAMANHO_PAGINA}` + (filtroStatus ? `&status=${filtroStatus}` : '');
-            const p = await apiJson(`/api/v1/ensaios/${encodeURIComponent(ensaio)}/leituras?${q}`);
-            totalPaginas = p.totalPages;
-            $('pagInfo').textContent = p.totalElements ? `Página ${p.number + 1} de ${p.totalPages} · ${p.totalElements} leitura(s)` : '';
-            $('btnAnt').disabled = p.number <= 0; $('btnProx').disabled = p.number >= p.totalPages - 1;
-            if (!p.content.length) { corpo.innerHTML = '<tr><td colspan="9">Nenhuma leitura neste filtro.</td></tr>'; return; }
-            corpo.innerHTML = p.content.map(l => {
-                const final = l.coletavel ? l.qtdEfetiva : 'Não coletável';
-                const mudou = l.statusValidacao === 'AJUSTADA' ? ` → <b>${esc(l.qtdEfetiva)}</b>` : '';
-                const gps = l.alertaGps ? '<span class="chip PENDENTE">sem GPS</span>' : `${esc(l.latitude.toFixed(4))}, ${esc(l.longitude.toFixed(4))}`;
-                
-                const classesBadges = l.coletavel ? `
-                    <span class="chip-doenca chip-sadio" title="Sadios">🟢 ${l.qtdSadios || 0}</span>
-                    <span class="chip-doenca chip-vassoura" title="Vassoura">🟠 ${l.qtdVassoura || 0}</span>
-                    <span class="chip-doenca chip-podridao" title="Podridão">🔴 ${l.qtdPodridao || 0}</span>
-                ` : '—';
-
-                return `<tr>
-                    <td>${l.temFoto ? `<img class="thumb" data-foto="${esc(l.id)}" alt="foto" />` : '<div class="thumb-empty">sem foto</div>'}</td>
-                    <td title="${esc(l.plantCode)}">${esc(l.plantCode.length > 24 ? l.plantCode.slice(0, 24) + '…' : l.plantCode)}</td>
-                    <td><b>${esc(l.codigoClone)}</b></td><td>${esc(l.numeroParcela)}</td>
-                    <td>${l.coletavel ? esc(l.qtdFrutos) : '—'}${l.coletavel ? mudou : ` <span class="chip REJEITADA">${esc(final)}</span>`}</td>
-                    <td>${classesBadges}</td>
-                    <td>${gps}</td><td><span class="chip ${esc(l.statusValidacao)}">${esc(l.statusValidacao)}</span></td>
-                    <td><button class="btn btn-primary" onclick="abrirRevisao(${Number(l.id)})">Revisar</button></td></tr>`;
-            }).join('');
-            corpo.querySelectorAll('img[data-foto]').forEach(img => carregarFoto(img.dataset.foto).then(u => { if (u) img.src = u; }));
-        } catch (e) { corpo.innerHTML = `<tr><td colspan="9">❌ ${esc(e.message)}</td></tr>`; }
-    }
-
-    async function carregarFoto(id, forcar = false) {
-        if (!forcar && fotoUrls.has(id)) return fotoUrls.get(id);
-        try {
-            const blob = await (await api(`/api/v1/leituras/${id}/foto`)).blob();
-            if (fotoUrls.has(id)) URL.revokeObjectURL(fotoUrls.get(id));
-            const u = URL.createObjectURL(blob); fotoUrls.set(id, u); return u;
-        } catch (_) { return null; }
-    }
-
-    /* =====================================================================
-       Parâmetros agronômicos (SPEC-003)
-       ===================================================================== */
-    const PARAM_PADRAO = { indice: 22, densidade: 1111, campanha: '' };
-    let params = JSON.parse(localStorage.getItem('cacausync_params') || 'null') || { ...PARAM_PADRAO };
-
-    const fmt = (n, casas = 1) => Number(n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas });
-
-    function sincronizarCamposParametros() {
-        $('parIndice').value = params.indice;
-        $('parDensidade').value = params.densidade;
-    }
-
-    function aplicarParametros() {
-        const indice = parseFloat($('parIndice').value), densidade = parseInt($('parDensidade').value, 10);
-        if (!(indice > 0 && indice <= 200)) { toast('O índice de fruto deve estar entre 1 e 200.', true); return; }
-        if (!(densidade >= 1 && densidade <= 10000)) { toast('A densidade deve estar entre 1 e 10000 plantas/ha.', true); return; }
-        params = { indice, densidade, campanha: $('parCampanha').value };
-        localStorage.setItem('cacausync_params', JSON.stringify(params));
-        carregarRelatorio();
-    }
-
-    function restaurarParametros() {
-        params = { ...PARAM_PADRAO };
-        localStorage.setItem('cacausync_params', JSON.stringify(params));
-        sincronizarCamposParametros();
-        carregarRelatorio();
-    }
-
-    function barraClasses(s, v, p, na) {
-        const t = s + v + p + na;
-        if (!t) return '<div class="stack-bar"></div>';
-        const w = x => (x * 100 / t).toFixed(1);
-        return `<div class="stack-bar" title="Sadios ${s} · Vassoura ${v} · Podridão ${p} · Não aval. ${na}">`
-            + `<i style="width:${w(s)}%;background:#00c853"></i><i style="width:${w(v)}%;background:#ff9100"></i>`
-            + `<i style="width:${w(p)}%;background:#ff1744"></i><i style="width:${w(na)}%;background:#90a4ae"></i></div>`;
-    }
-
-    async function carregarRelatorio() {
-        try {
-            const q = new URLSearchParams({ indiceFruto: params.indice, plantasPorHa: params.densidade });
-            if (params.campanha) q.set('campanha', params.campanha);
-            const r = await apiJson(`/api/v1/ensaios/${encodeURIComponent(ensaio)}/relatorio-clones?${q}`);
+            const r = await apiJson(`/api/v1/ensaios/${encodeURIComponent(ensaio)}/relatorio-clones`);
             $('kpiTotalPlantas').textContent = r.totalPlantasEnsaio;
-            $('kpiPlantasVivas').textContent = r.totalPlantasVivas;
+            $('kpiTotalLeituras').textContent = r.totalLeiturasRegistradas;
+            $('kpiPendentes').textContent = r.leiturasPendentesValidacao;
+            $('kpiValidadas').textContent = r.leiturasValidadas;
             $('kpiTotalFrutos').textContent = r.totalFrutosAcumulados;
             $('kpiTotalSadios').textContent = r.totalFrutosSadios;
             $('kpiTotalDoentes').textContent = (r.totalFrutosVassoura + r.totalFrutosPodridao);
-            $('kpiTaxaInfeccao').textContent = r.taxaInfeccaoEnsaioPercentual + '%';
-            $('kpiPendentes').textContent = r.leiturasPendentesValidacao;
-            $('kpiAlertasGps').textContent = r.leiturasComAlertaGps;
-            $('kpiCobertura').textContent = fmt(r.coberturaPercentual) + '%';
-            $('kpiArrobasHa').textContent = fmt(r.estimativa.produtividadeRealArrobasHa);
-            $('kpiPerdaArrobasHa').textContent = fmt(r.estimativa.perdaDoencasArrobasHa);
-
-            // Campanhas disponíveis (mantém a seleção atual)
-            const sel = $('parCampanha');
-            sel.innerHTML = '<option value="">Todas</option>' + r.campanhasDisponiveis
-                .map(c => `<option value="${esc(c)}" ${c.toLowerCase() === (params.campanha || '').toLowerCase() ? 'selected' : ''}>${esc(c)}</option>`).join('');
-            sincronizarCamposParametros();
-
-            const parcial = r.coberturaPercentual < 100;
-            $('coberturaNote').innerHTML = `<b>${esc(r.totalPlantasAvaliadas)}</b> de <b>${esc(r.totalPlantasVivas)}</b> plantas vivas avaliadas (<b>${esc(fmt(r.coberturaPercentual))}%</b>)`
-                + ` · índice de fruto <b>${esc(r.parametros.indiceFruto)}</b> · <b>${esc(r.parametros.plantasPorHa)}</b> plantas/ha`
-                + (r.parametros.campanha ? ` · campanha <b>${esc(r.parametros.campanha)}</b>` : '')
-                + (parcial ? ' · <span class="chip PENDENTE">estimativa parcial: faltam plantas a visitar</span>' : '');
-
-            $('tabelaClonesBody').innerHTML = r.rankingClones.map((c, i) => `<tr>
-                <td><b>#${i + 1}</b></td>
-                <td><b style="color:var(--green-deep)">${esc(c.codigoClone)}</b></td>
-                <td>${esc(c.plantasAvaliadas)} / ${esc(c.plantasVivasColetaveis)} <small style="color:var(--text-muted)">(${esc(fmt(c.coberturaPercentual, 0))}%)</small></td>
-                <td><div style="display:flex;align-items:center;gap:6px"><div class="progress-track"><div class="progress-fill" style="width:${Number(c.taxaSobrevivenciaPercentual)}%"></div></div><b>${esc(c.taxaSobrevivenciaPercentual)}%</b></div></td>
-                <td><b>${esc(c.totalFrutosContados)}</b></td>
-                <td>${barraClasses(c.totalFrutosSadios, c.totalFrutosVassoura, c.totalFrutosPodridao, c.totalFrutosNaoAvaliavel)}
-                    <small><span style="color:#1b5e20;font-weight:700">${esc(c.totalFrutosSadios)}</span> · <span style="color:#b45309;font-weight:700">${esc(c.totalFrutosVassoura)}</span> · <span style="color:#c62828;font-weight:700">${esc(c.totalFrutosPodridao)}</span></small></td>
-                <td><div style="display:flex;align-items:center;gap:6px"><div class="progress-track"><div class="progress-fill danger" style="width:${Math.min(100, Number(c.taxaInfeccaoPercentual))}%"></div></div><b>${esc(c.taxaInfeccaoPercentual)}%</b></div></td>
-                <td><span class="badge-prod">${esc(fmt(c.estimativa.mediaSadiosPorPlantaAvaliada, 2))}</span></td>
-                <td>${esc(fmt(c.estimativa.produtividadeRealKgHa))}</td>
-                <td><b>${esc(fmt(c.estimativa.produtividadeRealArrobasHa))}</b></td>
-                <td style="color:#c62828">${esc(fmt(c.estimativa.perdaDoencasArrobasHa))}</td></tr>`).join('');
-        } catch (e) { $('tabelaClonesBody').innerHTML = `<tr><td colspan="11">❌ ${esc(e.message)}</td></tr>`; }
+        } catch (_) {}
     }
 
-    /* =====================================================================
-       Mapa de focos (GPS das leituras)
-       ===================================================================== */
-    async function carregarMapa() {
-        const svg = $('mapaFocos');
+    document.querySelectorAll('#filtros .filter-btn').forEach(b => b.addEventListener('click', () => {
+        document.querySelectorAll('#filtros .filter-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        modoVisualizacao = b.dataset.modo || 'FOTOS';
+        filtroStatus = b.dataset.status || '';
+        pagina = 0;
+        if (modoVisualizacao === 'ROTA_COMPLETA') {
+            $('pagerBox').hidden = true;
+            renderizarTabelaRotaCompleta();
+        } else {
+            $('pagerBox').hidden = false;
+            carregarAuditoria();
+        }
+    }));
+
+    function mudarPagina(d) { pagina = Math.max(0, Math.min(totalPaginas - 1, pagina + d)); carregarAuditoria(); }
+
+    async function carregarAuditoria() {
+        if (modoVisualizacao === 'ROTA_COMPLETA') {
+            renderizarTabelaRotaCompleta();
+            return;
+        }
+        const corpo = $('auditoriaBody');
         try {
-            const p = await apiJson(`/api/v1/ensaios/${encodeURIComponent(ensaio)}/leituras?page=0&size=1000`);
-            const porPlanta = new Map();
-            let semGps = 0;
-            for (const l of p.content) {                       // vem da mais recente para a mais antiga
-                if (l.statusValidacao === 'REJEITADA' || porPlanta.has(l.plantCode)) continue;
-                if (!l.latitude && !l.longitude) { semGps++; continue; }
-                porPlanta.set(l.plantCode, l);
-            }
-            const pts = [...porPlanta.values()];
-            $('mapaInfo').textContent = `${pts.length} planta(s) com GPS` + (semGps ? ` · ${semGps} sem GPS` : '');
-            if (!pts.length) {
-                svg.innerHTML = '<text x="400" y="170" text-anchor="middle" fill="#789" font-size="14">Sem leituras com GPS neste ensaio.</text>';
-                return;
-            }
-            const lats = pts.map(l => l.latitude), lngs = pts.map(l => l.longitude);
-            const minLat = Math.min(...lats), maxLat = Math.max(...lats), minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
-            const cosLat = Math.cos(((minLat + maxLat) / 2) * Math.PI / 180);
-            const spanX = Math.max((maxLng - minLng) * cosLat, 1e-6), spanY = Math.max(maxLat - minLat, 1e-6);
-            const escala = Math.min(740 / spanX, 300 / spanY);
-            const offX = (800 - spanX * escala) / 2, offY = (340 - spanY * escala) / 2;
-            svg.innerHTML = pts.map(l => {
-                const x = offX + (l.longitude - minLng) * cosLat * escala;
-                const y = 340 - offY - (l.latitude - minLat) * escala;
-                const v = l.qtdVassoura || 0, pod = l.qtdPodridao || 0;
-                const cor = !l.coletavel ? '#90a4ae' : (v + pod === 0 ? '#00c853' : (pod >= v ? '#ff1744' : '#ff9100'));
-                return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="7" fill="${cor}" stroke="#fff" stroke-width="1.5" style="cursor:pointer" onclick="abrirRevisao(${Number(l.id)})">`
-                    + `<title>${esc(l.plantCode)} · ${l.coletavel ? esc(l.qtdEfetiva) + ' fruto(s) · vassoura ' + esc(v) + ' · podridão ' + esc(pod) : 'não coletável'}</title></circle>`;
-            }).join('');
-        } catch (e) { svg.innerHTML = `<text x="400" y="170" text-anchor="middle" fill="#c62828" font-size="14">${esc(e.message)}</text>`; }
+            // Ordenado pela sequência exata da planilha de rota (planta.ordemRota ASC, id ASC)
+            const q = `page=${pagina}&size=${TAMANHO_PAGINA}&sort=planta.ordemRota,asc&sort=id,asc`
+                + (filtroStatus ? `&status=${filtroStatus}` : '');
+            const p = await apiJson(`/api/v1/ensaios/${encodeURIComponent(ensaio)}/leituras?${q}`);
+            totalPaginas = p.totalPages;
+            $('pagInfo').textContent = p.totalElements ? `Página ${p.number + 1} de ${p.totalPages} · ${p.totalElements} planta(s) coletada(s)` : '';
+            $('btnAnt').disabled = p.number <= 0;
+            $('btnProx').disabled = p.number >= p.totalPages - 1;
+
+            leiturasEmOrdem = p.content || [];
+            $('resumoConferenciaBadge').textContent = `${leiturasEmOrdem.length} foto(s)/coleta(s) na sequência da planilha`;
+
+            renderizarLinhasAuditoria(leiturasEmOrdem);
+        } catch (e) {
+            corpo.innerHTML = `<tr><td colspan="9">❌ ${esc(e.message)}</td></tr>`;
+        }
+    }
+
+    function renderizarLinhasAuditoria(lista) {
+        const corpo = $('auditoriaBody');
+        const termo = ($('buscaInput').value || '').trim().toLowerCase();
+        const filtrada = !termo ? lista : lista.filter(l =>
+            String(l.ordemRota || '').includes(termo) ||
+            (l.codigoClone || '').toLowerCase().includes(termo) ||
+            (l.numeroParcela || '').toLowerCase().includes(termo) ||
+            (l.plantCode || '').toLowerCase().includes(termo)
+        );
+
+        if (!filtrada.length) {
+            corpo.innerHTML = '<tr><td colspan="9">Nenhuma leitura encontrada para este filtro.</td></tr>';
+            return;
+        }
+
+        corpo.innerHTML = filtrada.map((l, idx) => {
+            const ordemTxt = l.ordemRota != null ? `#${l.ordemRota}` : `#${idx + 1}`;
+            const final = l.coletavel ? l.qtdEfetiva : 'Não coletável';
+            const mudou = l.statusValidacao === 'AJUSTADA' ? ` → <b>${esc(l.qtdEfetiva)}</b>` : '';
+            const classesBadges = l.coletavel ? `
+                <span class="chip-doenca chip-sadio" title="Sadios">🟢 ${l.qtdSadios || 0}</span>
+                <span class="chip-doenca chip-vassoura" title="Vassoura">🟠 ${l.qtdVassoura || 0}</span>
+                <span class="chip-doenca chip-podridao" title="Podridão">🔴 ${l.qtdPodridao || 0}</span>
+            ` : '—';
+
+            return `<tr>
+                <td><span class="ordem-badge" title="Posição na planilha de rota">${esc(ordemTxt)}</span></td>
+                <td>${l.temFoto
+                    ? `<img class="thumb" data-foto="${esc(l.id)}" alt="foto" onclick="abrirRevisao(${Number(l.id)})" title="Clique para ampliar e conferir" />`
+                    : '<div class="thumb-empty">sem foto</div>'}</td>
+                <td><b style="color:var(--green-deep);font-size:0.9rem">${esc(l.codigoClone)}</b></td>
+                <td>Parcela <b>${esc(l.numeroParcela)}</b></td>
+                <td>Planta <b>${esc(l.numeroPlanta)}</b></td>
+                <td>${l.coletavel ? `<b>${esc(l.qtdFrutos)}</b>` : '—'}${l.coletavel ? mudou : ` <span class="chip REJEITADA">${esc(final)}</span>`}</td>
+                <td>${classesBadges}</td>
+                <td><span class="chip ${esc(l.statusValidacao)}">${esc(l.statusValidacao)}</span></td>
+                <td><button class="btn btn-primary" onclick="abrirRevisao(${Number(l.id)})">🔍 Conferir Foto</button></td>
+            </tr>`;
+        }).join('');
+
+        corpo.querySelectorAll('img[data-foto]').forEach(img =>
+            carregarFoto(img.dataset.foto).then(u => { if (u) img.src = u; })
+        );
+    }
+
+    function renderizarTabelaRotaCompleta() {
+        const corpo = $('auditoriaBody');
+        const termo = ($('buscaInput').value || '').trim().toLowerCase();
+        const filtrada = !termo ? rotaCompletaCache : rotaCompletaCache.filter(item =>
+            String(item.ordem || '').includes(termo) ||
+            (item.clone || '').toLowerCase().includes(termo) ||
+            (item.parcela || '').toLowerCase().includes(termo) ||
+            (item.plantId || '').toLowerCase().includes(termo)
+        );
+
+        $('resumoConferenciaBadge').textContent = `${rotaCompletaCache.length} plantas na planilha completa`;
+
+        if (!filtrada.length) {
+            corpo.innerHTML = '<tr><td colspan="9">Nenhuma planta na rota para este filtro.</td></tr>';
+            return;
+        }
+
+        // Limita renderização imediata a 300 linhas para fluidez total do navegador
+        const exibidas = filtrada.slice(0, 300);
+        corpo.innerHTML = exibidas.map(item => {
+            const temLeitura = item.leituraId != null;
+            return `<tr>
+                <td><span class="ordem-badge">#${esc(item.ordem)}</span></td>
+                <td>${item.temFoto && temLeitura
+                    ? `<img class="thumb" data-foto="${esc(item.leituraId)}" alt="foto" onclick="abrirRevisao(${Number(item.leituraId)})" />`
+                    : `<div class="thumb-empty">${temLeitura ? 'sem foto' : 'pendente'}</div>`}</td>
+                <td><b style="color:var(--green-deep)">${esc(item.clone)}</b></td>
+                <td>Parcela <b>${esc(item.parcela)}</b></td>
+                <td>Planta <b>${esc(item.planta)}</b></td>
+                <td>${item.coletado ? `<b>${esc(item.qtdFrutos)}</b>` : '<span style="color:var(--text-muted)">Ainda não coletada</span>'}</td>
+                <td>${item.situacao === 'NAO_COLETAVEL' ? '<span class="chip REJEITADA">Planta Morta/Ausente</span>' : '—'}</td>
+                <td><span class="chip ${esc(item.statusValidacao)}">${esc(item.statusValidacao.replace('_', ' '))}</span></td>
+                <td>${temLeitura
+                    ? `<button class="btn btn-primary" onclick="abrirRevisao(${Number(item.leituraId)})">🔍 Conferir Foto</button>`
+                    : `<span style="font-size:0.76rem;color:var(--text-muted)">Aguardando foto</span>`}</td>
+            </tr>`;
+        }).join('');
+
+        corpo.querySelectorAll('img[data-foto]').forEach(img =>
+            carregarFoto(img.dataset.foto).then(u => { if (u) img.src = u; })
+        );
+    }
+
+    function filtrarTabelaLocal() {
+        if (modoVisualizacao === 'ROTA_COMPLETA') {
+            renderizarTabelaRotaCompleta();
+        } else {
+            renderizarLinhasAuditoria(leiturasEmOrdem);
+        }
+    }
+
+    async function carregarFoto(id, forcar = false) {
+        const key = String(id);
+        if (!forcar && fotoUrls.has(key)) return fotoUrls.get(key);
+        try {
+            const blob = await (await api(`/api/v1/leituras/${id}/foto`)).blob();
+            if (fotoUrls.has(key)) URL.revokeObjectURL(fotoUrls.get(key));
+            const u = URL.createObjectURL(blob); fotoUrls.set(key, u); return u;
+        } catch (_) { return null; }
     }
 
     function somarClasses() {
@@ -880,12 +860,27 @@
         if (soma > 0) $('valQtd').value = soma;
     }
 
-    async function abrirProximaPendente() {
-        try {
-            const p = await apiJson(`/api/v1/ensaios/${encodeURIComponent(ensaio)}/leituras?status=PENDENTE&page=0&size=1&sort=importadoEm,asc`);
-            if (p.content.length) { await abrirRevisao(p.content[0].id); }
-            else { toast('Nenhuma leitura pendente. Tudo revisado! 🎉'); fecharModal(); }
-        } catch (e) { toast(e.message, true); }
+    /* =====================================================================
+       Navegação Sequencial na Ordem da Planilha (⬅ Anterior / Próxima ➡)
+       ===================================================================== */
+    function obterListaIdsSequencia() {
+        if (modoVisualizacao === 'ROTA_COMPLETA') {
+            return rotaCompletaCache.filter(x => x.leituraId != null).map(x => Number(x.leituraId));
+        }
+        return leiturasEmOrdem.map(x => Number(x.id));
+    }
+
+    async function navegarSequenciaModal(delta) {
+        if (!leituraAberta) return;
+        const ids = obterListaIdsSequencia();
+        const idxAtual = ids.indexOf(Number(leituraAberta.id));
+        if (idxAtual === -1) return;
+        const novoIdx = idxAtual + delta;
+        if (novoIdx >= 0 && novoIdx < ids.length) {
+            await abrirRevisao(ids[novoIdx]);
+        } else {
+            toast(delta > 0 ? 'Você chegou à última foto da sequência da planilha! 🎉' : 'Esta já é a primeira foto da planilha.');
+        }
     }
 
     document.addEventListener('keydown', e => {
@@ -893,8 +888,20 @@
         if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || e.ctrlKey || e.metaKey || e.altKey) return;
         const classes = { '1': 'Sadio', '2': 'Vassoura de Bruxa', '3': 'Podridão', '4': 'Não Avaliável' };
         if (classes[e.key] && indiceCaixaSelecionada >= 0) { alterarClasseCaixaSel(classes[e.key]); e.preventDefault(); }
+        else if ((e.key === '+' || e.key === '=') && indiceCaixaSelecionada >= 0) { redimensionarCaixaSelecionada(0.015); e.preventDefault(); }
+        else if (e.key === '-' && indiceCaixaSelecionada >= 0) { redimensionarCaixaSelecionada(-0.015); e.preventDefault(); }
         else if ((e.key === 'Delete' || e.key === 'Backspace') && indiceCaixaSelecionada >= 0) { excluirCaixaSelecionada(); e.preventDefault(); }
-        else if (e.key === 'Escape') { if (indiceCaixaSelecionada >= 0) { indiceCaixaSelecionada = -1; $('painelCaixaSelecionada').hidden = true; desenharCaixas(); } else fecharModal(); }
+        else if (e.key === 'ArrowLeft') { navegarSequenciaModal(-1); e.preventDefault(); }
+        else if (e.key === 'ArrowRight') { navegarSequenciaModal(1); e.preventDefault(); }
+        else if (e.key === 'Escape') {
+            if (indiceCaixaSelecionada >= 0) {
+                indiceCaixaSelecionada = -1;
+                $('painelCaixaSelecionada').hidden = true;
+                desenharCaixas();
+            } else {
+                fecharModal();
+            }
+        }
     });
 
     /* =====================================================================
@@ -909,7 +916,7 @@
         if (!img || !cv) return;
         cv.width = img.clientWidth; cv.height = img.clientHeight;
         const g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height);
-        
+
         deteccoesAbertas.forEach((d, idx) => {
             const x = d.x * cv.width, y = d.y * cv.height, w = d.largura * cv.width, h = d.altura * cv.height;
             const cor = corPorClasse(d.classe);
@@ -918,7 +925,7 @@
             g.lineWidth = isSel ? 4 : 2.5;
             g.strokeStyle = isSel ? '#ffffff' : cor;
             g.strokeRect(x, y, w, h);
-            
+
             if (isSel) {
                 g.lineWidth = 2;
                 g.strokeStyle = cor;
@@ -944,13 +951,19 @@
         const clickX = (e.clientX - rect.left) / cv.width;
         const clickY = (e.clientY - rect.top) / cv.height;
 
-        // Verifica se clicou em uma caixa existente
+        // Seleciona a caixa cujo centro está mais próximo do clique (desempate preciso para cachos densos)
         let encontrado = -1;
-        for (let i = deteccoesAbertas.length - 1; i >= 0; i--) {
+        let menorDist = Infinity;
+        for (let i = 0; i < deteccoesAbertas.length; i++) {
             const d = deteccoesAbertas[i];
             if (clickX >= d.x && clickX <= (d.x + d.largura) && clickY >= d.y && clickY <= (d.y + d.altura)) {
-                encontrado = i;
-                break;
+                const cx = d.x + d.largura / 2;
+                const cy = d.y + d.altura / 2;
+                const dist = Math.hypot(clickX - cx, clickY - cy);
+                if (dist < menorDist) {
+                    menorDist = dist;
+                    encontrado = i;
+                }
             }
         }
 
@@ -963,8 +976,7 @@
                 indiceCaixaSelecionada = -1;
                 $('painelCaixaSelecionada').hidden = true;
             } else {
-                // Adiciona nova caixa manual
-                const boxW = 0.12, boxH = 0.22;
+                const boxW = 0.12, boxH = 0.18;
                 const nova = {
                     classe: 'Sadio',
                     confianca: 1.0,
@@ -990,6 +1002,21 @@
         }
     }
 
+    function redimensionarCaixaSelecionada(delta) {
+        if (indiceCaixaSelecionada >= 0 && indiceCaixaSelecionada < deteccoesAbertas.length) {
+            const d = deteccoesAbertas[indiceCaixaSelecionada];
+            const cx = d.x + d.largura / 2;
+            const cy = d.y + d.altura / 2;
+            const novaW = Math.max(0.03, Math.min(0.60, d.largura + delta));
+            const novaH = Math.max(0.03, Math.min(0.60, d.altura + delta));
+            d.largura = novaW;
+            d.altura = novaH;
+            d.x = Math.max(0, Math.min(1 - novaW, cx - novaW / 2));
+            d.y = Math.max(0, Math.min(1 - novaH, cy - novaH / 2));
+            desenharCaixas();
+        }
+    }
+
     function excluirCaixaSelecionada() {
         if (indiceCaixaSelecionada >= 0 && indiceCaixaSelecionada < deteccoesAbertas.length) {
             deteccoesAbertas.splice(indiceCaixaSelecionada, 1);
@@ -1008,9 +1035,8 @@
             else if (cl.includes('nao') || cl.includes('não')) na++;
             else s++;
         });
-        
-        // Se há caixas desenhadas, reflete automaticamente nos inputs
-        if (deteccoesAbertas.length > 0) {
+
+        if (deteccoesAbertas.length > 0 && $('valQtd')) {
             $('valQtd').value = deteccoesAbertas.length;
             $('valSadios').value = s;
             $('valVassoura').value = v;
@@ -1022,12 +1048,12 @@
         deteccoesAbertas.forEach(d => contagem[d.classe] = (contagem[d.classe] || 0) + 1);
         $('legenda').innerHTML = deteccoesAbertas.length
             ? Object.entries(contagem).map(([c, n]) => `<span style="background:${corPorClasse(c)};color:${(corPorClasse(c)==='#00e676'||corPorClasse(c)==='#ff9100')?'#000':'#fff'}">${esc(c)} × ${n}</span>`).join('')
-            : '<div class="note" style="width:100%">Esta leitura não possui caixas registradas da IA. Você pode clicar na foto para adicionar frutos ou ajustar os números abaixo.</div>';
+            : '<div class="note" style="width:100%">Nenhuma caixa marcada na foto. Clique sobre os frutos na imagem para marcá-los ou ajuste os números abaixo.</div>';
     }
 
     async function abrirRevisao(id) {
         $('modal').hidden = false; document.body.style.overflow = 'hidden';
-        $('fotoWrap').innerHTML = '<div class="foto-vazia">Carregando foto e metadados…</div>';
+        $('fotoWrap').innerHTML = '<div class="foto-vazia">Carregando foto da planta…</div>';
         $('painelCaixaSelecionada').hidden = true;
         $('legenda').innerHTML = ''; $('infoGrid').innerHTML = ''; $('valBox').innerHTML = '';
         indiceCaixaSelecionada = -1;
@@ -1038,7 +1064,15 @@
     async function renderModal() {
         const l = leituraAberta;
         deteccoesAbertas = l.deteccoes ? JSON.parse(JSON.stringify(l.deteccoes)) : [];
-        $('modalTitulo').textContent = `Leitura #${l.id} — ${l.codigoClone} · Parcela ${l.numeroParcela} · Planta ${l.numeroPlanta}`;
+        const ordemLabel = l.ordemRota != null ? `Planta #${l.ordemRota} na Planilha` : `Leitura #${l.id}`;
+        $('modalTitulo').textContent = `${ordemLabel} — Clone ${l.codigoClone} · Parcela ${l.numeroParcela} · Planta ${l.numeroPlanta}`;
+        $('modalSubtitulo').textContent = `Código: ${l.plantCode} · Coletada em ${l.dataColeta}`;
+
+        const ids = obterListaIdsSequencia();
+        const idxSeq = ids.indexOf(Number(l.id));
+        $('modalPosicaoSeq').textContent = idxSeq >= 0 ? `Foto ${idxSeq + 1} de ${ids.length}` : '';
+        $('btnModalAnt').disabled = idxSeq <= 0;
+        $('btnModalProx').disabled = idxSeq === -1 || idxSeq >= ids.length - 1;
 
         if (l.temFoto) {
             const url = await carregarFoto(l.id, true);
@@ -1050,26 +1084,20 @@
                 cv.onclick = onCanvasClick;
             }
         } else {
-            $('fotoWrap').innerHTML = '<div class="foto-vazia">Esta leitura ainda não tem foto.<br>Você pode anexar uma foto abaixo para auditar.</div>';
+            $('fotoWrap').innerHTML = '<div class="foto-vazia">Esta planta não possui foto anexada.<br>Você pode anexar uma foto abaixo se desejar.</div>';
         }
 
-        const gps = (l.latitude === 0 && l.longitude === 0) ? '<span class="chip PENDENTE">sem sinal de GPS</span>'
-            : `<a href="https://www.google.com/maps?q=${encodeURIComponent(l.latitude + ',' + l.longitude)}" target="_blank" rel="noopener">${esc(l.latitude.toFixed(5))}, ${esc(l.longitude.toFixed(5))}</a>`;
-        
         $('infoGrid').innerHTML = `
-            <dt>Ensaio</dt><dd>${esc(l.codigoEnsaio)}</dd>
-            <dt>Campanha</dt><dd>${esc(l.campanha)}</dd>
-            <dt>Planta</dt><dd>${esc(l.plantCode)}</dd>
-            <dt>Data Coleta</dt><dd>${esc(l.dataColeta)}</dd>
-            <dt>Enviado por</dt><dd>${esc(l.pesquisadorEmail)}</dd>
-            <dt>GPS</dt><dd>${gps}</dd>
-            <dt>Diagnóstico IA</dt><dd>${l.coletavel ? esc(l.qtdFrutos) + ' fruto(s)' : esc(l.diagnosticoBruto)}</dd>
-            <dt>Status Atual</dt><dd><span class="chip ${esc(l.statusValidacao)}">${esc(l.statusValidacao)}</span>
-                ${l.validadoPor ? `<br><small>validado por ${esc(l.validadoPor)}</small>` : ''}</dd>
-            ${l.observacaoValidacao ? `<dt>Observação</dt><dd>${esc(l.observacaoValidacao)}</dd>` : ''}`;
+            <dt>Ordem na Planilha</dt><dd><b>#${esc(l.ordemRota ?? '-')}</b></dd>
+            <dt>Clone / Variedade</dt><dd><b style="color:var(--green-deep)">${esc(l.codigoClone)}</b></dd>
+            <dt>Parcela / Planta</dt><dd>Parcela <b>${esc(l.numeroParcela)}</b> · Planta <b>${esc(l.numeroPlanta)}</b></dd>
+            <dt>Data da Foto</dt><dd>${esc(l.dataColeta)}</dd>
+            <dt>Contagem Inicial</dt><dd>${l.coletavel ? esc(l.qtdFrutos) + ' fruto(s)' : esc(l.diagnosticoBruto)}</dd>
+            <dt>Status da Conferência</dt><dd><span class="chip ${esc(l.statusValidacao)}">${esc(l.statusValidacao)}</span>
+                ${l.validadoPor ? `<br><small>conferido por ${esc(l.validadoPor)}</small>` : ''}</dd>`;
 
         $('valBox').innerHTML = `
-            <div style="font-weight:700;font-size:0.88rem;color:var(--green-deep)">Classificação Fitossanitária Validada</div>
+            <div style="font-weight:700;font-size:0.88rem;color:var(--green-deep)">Conferência de Frutos da Planta</div>
             <div class="doencas-inputs-grid">
                 <div><label class="field-label" for="valSadios">🟢 Sadios</label>
                     <input type="number" id="valSadios" oninput="somarClasses()" min="0" value="${esc(sadiosIniciais(l))}" /></div>
@@ -1080,26 +1108,26 @@
                 <div><label class="field-label" for="valNaoAval">⚪ Não Aval.</label>
                     <input type="number" id="valNaoAval" oninput="somarClasses()" min="0" value="${esc(l.qtdNaoAvaliavel || 0)}" /></div>
             </div>
-            <div><label class="field-label" for="valQtd">Total de Frutos Validados</label>
+            <div><label class="field-label" for="valQtd">Total Final de Frutos</label>
                 <input type="number" id="valQtd" min="0" value="${esc(l.qtdEfetiva)}" /></div>
-            <div><label class="field-label" for="valObs">Observação do Pesquisador (opcional)</label>
-                <textarea id="valObs" rows="2" maxlength="500" placeholder="Ex.: fruto sadio com mancha natural, sem vassoura">${esc(l.observacaoValidacao || '')}</textarea></div>
+            <div><label class="field-label" for="valObs">Observação da Conferência (opcional)</label>
+                <textarea id="valObs" rows="2" maxlength="500" placeholder="Ex.: contagem conferida na foto">${esc(l.observacaoValidacao || '')}</textarea></div>
             <div class="val-actions">
-                <button class="btn btn-primary" onclick="validar('VALIDADA')">✅ Confirmar IA</button>
-                <button class="btn btn-blue" onclick="validar('AJUSTADA')">✏️ Salvar Validação</button>
-                <button class="btn btn-danger" onclick="validar('REJEITADA')">⛔ Rejeitar</button>
-                <button class="btn btn-outline" onclick="validar('PENDENTE')">↩ Desfazer</button>
+                <button class="btn btn-primary" style="grid-column: span 2; justify-content: center; padding: 12px;" onclick="validar('VALIDADA', true)">
+                    ✅ Aprovar Foto e Ir para a Próxima da Planilha ➡
+                </button>
             </div>
             <div class="val-actions">
-                <button class="btn btn-primary" onclick="validar('VALIDADA', true)">✅ Confirmar IA e próxima ▶</button>
-                <button class="btn btn-blue" onclick="validar('AJUSTADA', true)">✏️ Salvar e próxima ▶</button>
+                <button class="btn btn-blue" onclick="validar('AJUSTADA', true)">✏️ Salvar Ajuste e Próxima ➡</button>
+                <button class="btn btn-outline" onclick="validar('VALIDADA', false)">💾 Apenas Salvar Aqui</button>
+                <button class="btn btn-danger" onclick="validar('REJEITADA', true)">⛔ Rejeitar Foto</button>
+                <button class="btn btn-outline" onclick="validar('PENDENTE', false)">↩ Voltar p/ Pendente</button>
             </div>
-            <div class="atalhos">Atalhos com uma caixa selecionada: <kbd>1</kbd> Sadio · <kbd>2</kbd> Vassoura · <kbd>3</kbd> Podridão · <kbd>4</kbd> Não aval. · <kbd>Del</kbd> excluir · <kbd>Esc</kbd> fechar</div>
-            ${l.coletavel ? '' : '<div class="note">Esta leitura estava marcada como Não Coletável. Ao salvar com frutos > 0, ela volta a contar como planta viva no ensaio.</div>'}
+            <div class="atalhos">Atalhos: <kbd>⬅</kbd> <kbd>➡</kbd> navegar planilha · Com caixa selecionada: <kbd>1..4</kbd> classe · <kbd>-</kbd> <kbd>+</kbd> tamanho · <kbd>Del</kbd> excluir</div>
             <div><label class="field-label" for="novaFoto">${l.temFoto ? 'Substituir foto' : 'Anexar foto'}</label>
                 <input type="file" id="novaFoto" accept="image/jpeg,image/png" />
                 <button class="btn btn-outline" style="margin-top:6px" onclick="enviarNovaFoto()">📎 Enviar foto</button></div>`;
-        
+
         desenharCaixas();
     }
 
@@ -1111,20 +1139,20 @@
 
     async function validar(status, irParaProxima = false) {
         if (validando || !leituraAberta) return;
+        const idAtual = Number(leituraAberta.id);
+        const idsSequencia = obterListaIdsSequencia();
+        const idxNaSequencia = idsSequencia.indexOf(idAtual);
+
         const corpo = {
             status,
             observacao: $('valObs').value.trim(),
         };
-        // Rejeitar/Desfazer não mexem nas classes e caixas originais do app (SPEC-003 §2.6).
         if (status === 'VALIDADA' || status === 'AJUSTADA') {
             corpo.qtdSadios = parseInt($('valSadios').value, 10) || 0;
             corpo.qtdVassoura = parseInt($('valVassoura').value, 10) || 0;
             corpo.qtdPodridao = parseInt($('valPodridao').value, 10) || 0;
             corpo.qtdNaoAvaliavel = parseInt($('valNaoAval').value, 10) || 0;
             corpo.deteccoes = deteccoesAbertas;
-        }
-
-        if (status === 'AJUSTADA' || status === 'VALIDADA') {
             const v = parseInt($('valQtd').value, 10);
             if (Number.isNaN(v) || v < 0) { toast('Informe a contagem correta de frutos.', true); return; }
             corpo.qtdFrutosValidada = v;
@@ -1132,14 +1160,23 @@
 
         validando = true;
         try {
-            leituraAberta = await apiJson(`/api/v1/leituras/${leituraAberta.id}/validacao`, {
+            leituraAberta = await apiJson(`/api/v1/leituras/${idAtual}/validacao`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(corpo)
             });
-            toast('Validação registrada com sucesso!');
+            toast('Conferência salva!');
             atualizarTudo();
-            if (irParaProxima) { await abrirProximaPendente(); } else { renderModal(); }
+            if (irParaProxima) {
+                if (idxNaSequencia >= 0 && idxNaSequencia + 1 < idsSequencia.length) {
+                    await abrirRevisao(idsSequencia[idxNaSequencia + 1]);
+                } else {
+                    toast('Última foto da sequência conferida! 🎉');
+                    fecharModal();
+                }
+            } else {
+                renderModal();
+            }
         } catch (e) { toast(e.message, true); }
         finally { validando = false; }
     }
@@ -1156,10 +1193,7 @@
 
     function fecharModal() { $('modal').hidden = true; document.body.style.overflow = ''; leituraAberta = null; }
 
-    /* =====================================================================
-       Inicialização
-       ===================================================================== */
-    if (token && usuario) { sincronizarCamposParametros(); mostrarDashboard(); }
+    if (token && usuario) { mostrarDashboard(); }
 </script>
 </body>
 </html>

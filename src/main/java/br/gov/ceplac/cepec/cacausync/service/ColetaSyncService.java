@@ -272,14 +272,15 @@ public class ColetaSyncService {
                                     "Programa Genético CEPEC"
                             )));
 
-                    String numParcela = (item.numeroParcela() == null || item.numeroParcela().isBlank()) ? "1" : item.numeroParcela();
+                    String numParcela = (item.numeroParcela() == null || item.numeroParcela().isBlank()) ? "1" : item.numeroParcela().trim();
                     Parcela parcela = parcelaRepository.findByEnsaioAndNumeroParcela(ensaio, numParcela)
                             .orElseGet(() -> parcelaRepository.save(new Parcela(ensaio, clone, 1, numParcela)));
 
                     return plantaRepository.findByParcelaAndNumeroPlanta(parcela, item.numeroPlanta())
                             .orElseGet(() -> {
                                 SituacaoPlanta sit = item.coletavel() ? SituacaoPlanta.NORMAL : SituacaoPlanta.NAO_COLETAVEL;
-                                Planta nova = new Planta(parcela, item.plantId(), item.numeroPlanta(), item.numeroPlanta(), sit);
+                                int proximaOrdem = plantaRepository.findByParcelaEnsaioCodigoIgnoreCaseOrderByOrdemRotaAsc(ensaio.getCodigo()).size() + 1;
+                                Planta nova = new Planta(parcela, item.plantId(), item.numeroPlanta(), proximaOrdem, sit);
                                 return plantaRepository.save(nova);
                             });
                 });

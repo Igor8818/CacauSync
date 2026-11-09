@@ -49,7 +49,8 @@ public class LeituraMapper {
                 l.getObservacaoValidacao(),
                 l.getValidadoPor(),
                 l.getValidadoEm(),
-                lerDeteccoes(l.getDeteccoesJson())
+                lerDeteccoes(l.getDeteccoesJson()),
+                l.getPlanta() != null ? l.getPlanta().getOrdemRota() : null
         );
     }
 

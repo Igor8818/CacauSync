@@ -40,9 +40,13 @@ public class SecurityConfig {
                         .requestMatchers("/", "/index.html", "/favicon.ico", "/assets/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
-                        // Somente coordenador cria usuarios e ensaios.
+                        // Somente coordenador cria usuarios e cadastra novos ensaios.
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/registrar").hasAuthority("ROLE_COORDENADOR")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/ensaios/**").hasAuthority("ROLE_COORDENADOR")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/ensaios").hasAuthority("ROLE_COORDENADOR")
+                        // Importar rota, enviar para USB e carregar rotas podem ser feitos por pesquisadores e coordenadores
+                        .requestMatchers(HttpMethod.POST, "/api/v1/ensaios/*/importar-rota").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/ensaios/*/enviar-rota-usb").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/ensaios/*/carregar-rota-tc1801").authenticated()
                         // Todo o resto (dados, fotos, relatorios, rota) exige estar logado.
                         .anyRequest().authenticated()
                 )

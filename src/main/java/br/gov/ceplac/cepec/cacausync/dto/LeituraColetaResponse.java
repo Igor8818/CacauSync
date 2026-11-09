@@ -33,5 +33,6 @@ public record LeituraColetaResponse(
     String observacaoValidacao,
     String validadoPor,
     LocalDateTime validadoEm,
-    List<DeteccaoDto> deteccoes
+    List<DeteccaoDto> deteccoes,
+    Integer ordemRota
 ) {}

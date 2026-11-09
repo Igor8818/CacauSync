@@ -1,6 +1,7 @@
 package br.gov.ceplac.cepec.cacausync.service;
 
 import br.gov.ceplac.cepec.cacausync.dto.DeteccaoDto;
+import br.gov.ceplac.cepec.cacausync.dto.ItemRotaDto;
 import br.gov.ceplac.cepec.cacausync.dto.LeituraSincronizadaDto;
 import br.gov.ceplac.cepec.cacausync.dto.ResultadoImportacaoCsvResponse;
 import br.gov.ceplac.cepec.cacausync.dto.SyncJsonRequest;
@@ -15,8 +16,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -212,6 +215,58 @@ public class UsbAdbSyncService {
                 avisos,
                 baseResp.leituras()
         );
+    }
+
+    /**
+     * Envia a planilha de rota diretamente para a aba "Modo Rota" do CacauApp no celular conectado via USB,
+     * sem que o trabalhador precise selecionar arquivos CSV nem mapear colunas manualmente.
+     */
+    public String enviarRotaParaCelularViaUsb(String codigoEnsaio, List<ItemRotaDto> itensRota) {
+        if (itensRota == null || itensRota.isEmpty()) {
+            throw new RegraNegocioException("A rota do ensaio " + codigoEnsaio + " está vazia.");
+        }
+
+        String adbPath = localizarAdbExecutavel();
+        String serial = detectarDispositivoConectado(adbPath);
+
+        // Ativa túnel reverso USB por garantia
+        executarComandoTexto(List.of(adbPath, "-s", serial, "reverse", "tcp:8080", "tcp:8080"), 5);
+
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("codigoEnsaio", codigoEnsaio);
+        payload.put("atualizadoEm", System.currentTimeMillis());
+        payload.put("itens", itensRota);
+
+        File tempFile = null;
+        try {
+            byte[] jsonBytes = objectMapper.writeValueAsBytes(payload);
+            tempFile = File.createTempFile("cacau_rota_", ".json");
+            Files.write(tempFile.toPath(), jsonBytes);
+
+            String remoteTmp = "/data/local/tmp/rota_precarregada.json";
+            executarComandoTexto(List.of(adbPath, "-s", serial, "push", tempFile.getAbsolutePath(), remoteTmp), 10);
+            executarComandoTexto(List.of(adbPath, "-s", serial, "shell", "run-as", APP_PACKAGE, "mkdir", "-p", "files"), 5);
+            executarComandoTexto(List.of(adbPath, "-s", serial, "shell", "run-as", APP_PACKAGE, "cp", remoteTmp, "files/rota_precarregada.json"), 8);
+
+            // Verifica se o arquivo chegou com sucesso no armazenamento interno do CacauApp
+            byte[] verificado = executarComandoBinario(
+                    List.of(adbPath, "-s", serial, "exec-out", "run-as", APP_PACKAGE, "cat", "files/rota_precarregada.json"),
+                    5
+            );
+            String textoVerificado = new String(verificado, StandardCharsets.UTF_8).trim();
+            if (!textoVerificado.startsWith("{") && !textoVerificado.startsWith("[")) {
+                throw new RegraNegocioException("Não foi possível gravar a rota no CacauApp instalado no aparelho (" + serial + "). Verifique se o CacauApp está instalado.");
+            }
+            return serial;
+        } catch (RegraNegocioException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RegraNegocioException("Falha ao enviar rota via cabo USB: " + e.getMessage());
+        } finally {
+            if (tempFile != null && tempFile.exists()) {
+                tempFile.delete();
+            }
+        }
     }
 
     private String detectarPacoteInstalado(String adbPath, String serial) {
