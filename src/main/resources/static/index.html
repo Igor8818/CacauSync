@@ -255,25 +255,46 @@
             <div class="kpi-card danger"><span>Perda por doenças (@/ha)</span><strong id="kpiPerdaArrobasHa">-</strong></div>
         </div>
 
-        <!-- ENVIO -->
+        <!-- ENVIO AUTOMÁTICO 1-CLIQUE -->
         <div class="panel">
             <div class="panel-head">
-                <h2>📲 Enviar coleta do celular (CSV + fotos)</h2>
-                <span class="badge-endpoint">POST /api/v1/coletas/importar-csv</span>
+                <h2>📲 Receber Coletas do Celular (1 Clique — Automático)</h2>
+                <span class="badge-endpoint">USB Direto &amp; Wi-Fi Auto-Discovery</span>
             </div>
-            <p class="hint">No celular ou computador, selecione a planilha CSV exportada pelo app e as fotos correspondentes da pasta <b>Pictures/CEPEC_Analise</b>. As fotos são casadas pelo nome com as linhas e diminuídas no aparelho antes do envio.</p>
-            <div class="sync-grid">
-                <div><label class="field-label" for="csvFileInput">1. Planilha CSV do app (ou dados_cacau.csv)</label>
-                    <input type="file" id="csvFileInput" accept=".csv,text/csv" /></div>
-                <div><label class="field-label" for="fotosInput">2. Fotos da coleta (opcional, várias)</label>
-                    <input type="file" id="fotosInput" accept="image/*" multiple /></div>
+            <p class="hint">
+                <b>Zero configuração manual:</b> você não precisa escolher arquivos CSV nem procurar fotos em pastas.
+                Com o celular conectado no cabo USB, clique no botão abaixo para puxar tudo automaticamente — ou, pelo Wi-Fi, basta tocar no botão verde <b>"ENVIAR PARA O PC AGORA"</b> dentro do CacauApp.
+            </p>
+            <div class="actions" style="margin-top: 10px; margin-bottom: 12px;">
+                <button class="btn btn-primary" id="btnSyncUsb" style="font-size: 0.95rem; padding: 12px 20px;" onclick="sincronizarViaUsb()">
+                    🔌 Puxar Coletas do Celular via Cabo USB (1 Clique)
+                </button>
+                <button class="btn btn-outline" onclick="atualizarTudo(); toast('Painel atualizado!');">
+                    🔄 Atualizar Painel
+                </button>
+                <button class="btn btn-outline" onclick="simularEnvioApp()">
+                    ⚡ Demonstração: coleta com caixas do YOLO
+                </button>
             </div>
-            <div class="actions">
-                <button class="btn btn-primary" id="btnEnviar" onclick="enviarColeta()">📤 Enviar para o laboratório</button>
-                <button class="btn btn-outline" onclick="simularColetaCsv()">⚡ Demonstração: CSV 15 colunas + fotos</button>
-                <button class="btn btn-outline" onclick="simularEnvioApp()">⚡ Demonstração: envio do app com caixas do YOLO</button>
-            </div>
-            <div id="syncStatusBox" class="status-box">Pronto. Reenviar o mesmo CSV é seguro: nada é duplicado, apenas novas fotos são anexadas.</div>
+            <div id="syncStatusBox" class="status-box">Pronto. Conecte o celular no USB e clique em "Puxar Coletas do Celular via Cabo USB", ou envie pelo Wi-Fi direto do CacauApp.</div>
+
+            <details style="margin-top: 14px; border-top: 1px solid var(--borda); padding-top: 10px;">
+                <summary style="cursor: pointer; font-size: 0.82rem; color: var(--texto-sec); font-weight: 600;">
+                    📁 Importação manual avançada (escolher arquivo CSV e fotos avulsas do computador)
+                </summary>
+                <div style="margin-top: 10px;">
+                    <div class="sync-grid">
+                        <div><label class="field-label" for="csvFileInput">1. Planilha CSV do app (ou dados_cacau.csv)</label>
+                            <input type="file" id="csvFileInput" accept=".csv,text/csv" /></div>
+                        <div><label class="field-label" for="fotosInput">2. Fotos da coleta (opcional, várias)</label>
+                            <input type="file" id="fotosInput" accept="image/*" multiple /></div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-primary" id="btnEnviar" onclick="enviarColeta()">📤 Enviar arquivos selecionados</button>
+                        <button class="btn btn-outline" onclick="simularColetaCsv()">⚡ Demonstração: CSV 15 colunas + fotos</button>
+                    </div>
+                </div>
+            </details>
         </div>
 
         <!-- AUDITORIA -->
@@ -507,6 +528,37 @@
             const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', qualidade));
             return blob ? new File([blob], file.name, { type: 'image/jpeg' }) : file;
         } catch (_) { return file; }
+    }
+
+    async function sincronizarViaUsb() {
+        const box = $('syncStatusBox'), btn = $('btnSyncUsb');
+        btn.disabled = true;
+        box.textContent = '🔌 Conectando ao celular via cabo USB e puxando coletas + fotos + caixas YOLO…';
+        try {
+            const r = await apiJson(`/api/v1/coletas/sincronizar-usb?codigoEnsaio=${encodeURIComponent(ensaio)}`, { method: 'POST' });
+            if (r.codigoEnsaio && r.codigoEnsaio !== ensaio) {
+                ensaio = r.codigoEnsaio;
+                localStorage.setItem('cacausync_ensaio', ensaio);
+                try {
+                    const ensaios = await apiJson('/api/v1/ensaios');
+                    $('ensaioSelect').innerHTML = ensaios.map(e => `<option value="${esc(e.codigo)}" ${e.codigo === ensaio ? 'selected' : ''}>${esc(e.codigo)}</option>`).join('');
+                } catch (_) {}
+            }
+            const avisos = r.avisos || [];
+            box.innerHTML = `✅ <b>Sincronizado via ${esc(r.nomeArquivo || 'Cabo USB')}!</b> · `
+                + `<b>${esc(r.totalLinhasProcessadas)}</b> planta(s) lida(s) · `
+                + `<b>${esc(r.leiturasNovasInseridas)}</b> nova(s) · `
+                + `<b>${esc(r.leiturasDuplicadasIgnoradas)}</b> atualizada(s)/existente(s) · `
+                + `<b>${esc(r.fotosAnexadas)}</b> foto(s) puxada(s) com caixas YOLO`
+                + (avisos.length ? `<ul>${avisos.slice(0, 6).map(a => `<li>${esc(a)}</li>`).join('')}</ul>` : '');
+            toast(`Coletas puxadas do celular com sucesso (${r.totalLinhasProcessadas} plantas)!`);
+            atualizarTudo();
+        } catch (e) {
+            box.textContent = '❌ ' + e.message;
+            toast(e.message, true);
+        } finally {
+            btn.disabled = false;
+        }
     }
 
     async function enviarColeta() {

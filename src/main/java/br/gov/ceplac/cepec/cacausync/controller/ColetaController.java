@@ -6,6 +6,7 @@ import br.gov.ceplac.cepec.cacausync.dto.ResultadoImportacaoCsvResponse;
 import br.gov.ceplac.cepec.cacausync.dto.SyncJsonRequest;
 import br.gov.ceplac.cepec.cacausync.exception.RegraNegocioException;
 import br.gov.ceplac.cepec.cacausync.service.ColetaSyncService;
+import br.gov.ceplac.cepec.cacausync.service.UsbAdbSyncService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,14 +23,29 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/coletas")
-@Tag(name = "2. Sincronização de Campo", description = "Ingestão das coletas do CacauApp: CSV + fotos (navegador do celular) ou JSON (futuro botão do app)")
+@Tag(name = "2. Sincronização de Campo", description = "Ingestão das coletas do CacauApp: 1 Clique via Cabo USB, JSON direto do App (Wi-Fi/USB) ou CSV + fotos")
 @SecurityRequirement(name = "bearerAuth")
 public class ColetaController {
 
     private final ColetaSyncService coletaSyncService;
+    private final UsbAdbSyncService usbAdbSyncService;
 
-    public ColetaController(ColetaSyncService coletaSyncService) {
+    public ColetaController(ColetaSyncService coletaSyncService, UsbAdbSyncService usbAdbSyncService) {
         this.coletaSyncService = coletaSyncService;
+        this.usbAdbSyncService = usbAdbSyncService;
+    }
+
+    @PostMapping(value = "/sincronizar-usb")
+    @Operation(
+            summary = "Sincronizar automaticamente em 1 clique do celular conectado via cabo USB",
+            description = "Lê diretamente do CacauApp conectado na USB todas as coletas, caixas auditadas do YOLO e fotos, "
+                    + "sem necessidade de escolher arquivos CSV ou fotos manualmente."
+    )
+    public ResponseEntity<ResultadoImportacaoCsvResponse> sincronizarUsb(
+            @RequestParam(value = "codigoEnsaio", defaultValue = "TC-1801") String codigoEnsaio,
+            @AuthenticationPrincipal Usuario usuarioLogado
+    ) {
+        return ResponseEntity.ok(usbAdbSyncService.sincronizarViaUsb(codigoEnsaio, usuarioLogado.getEmail()));
     }
 
     @PostMapping(value = "/importar-csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
