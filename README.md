@@ -6,6 +6,7 @@
 
 [![Java](https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org)
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3.5-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![React](https://img.shields.io/badge/React_18-TypeScript_%2B_Tailwind-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org)
 [![Flyway](https://img.shields.io/badge/Flyway-Migrations-CC0200?style=for-the-badge&logo=flyway&logoColor=white)](https://flywaydb.org)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com)
@@ -44,9 +45,9 @@ Em quadras experimentais de melhoramento genético de cacau (como o ensaio compe
   * **Modo Containerizado (`default`):** Suporte total a **PostgreSQL 16** com migrations versionadas via **Flyway** (`V1` a `V5`).
 * **Segurança & RBAC (Spring Security 6 + Auth0 JWT):**
   * Autenticação *stateless* via Bearer Token JWT com controle de acesso baseado em papéis (`ROLE_COORDENADOR` e `ROLE_PESQUISADOR`).
-* **Documentação Interativa & Painel Visual:**
+* **Front-end Moderno em React 18 + TypeScript + Vite + Tailwind CSS (`frontend/`):**
+  * **Painel Web do Pesquisador (SPA)** compilado e servido nativamente pelo Spring Boot em `/` (`src/main/resources/static/`), com tela de login dividida institucional, barra de progresso global da rota, *Split-View* de conferência sequencial (`#1 → #N`), **Modo Tela Cheia Imersivo (`F` / `Esc`)** com lupa de zoom até 250%, e auditoria interativa das caixas YOLO em HTML5 Canvas.
   * **Swagger UI (SpringDoc OpenAPI 3)** configurado com botão *Authorize (JWT)*.
-  * **Painel Web do Pesquisador** integrado em `/` (`index.html`) focado na operação logística de envio de rota, sincronização em 1 clique, conferência sequencial de fotos com caixas interativas em HTML5 Canvas e exportação consolidada em CSV.
 * **Qualidade de Código (JUnit 5 + Mockito + AssertJ):**
   * **51 testes automatizados** cobrindo cálculo agronômico CEPEC (`SPEC-003`), concordância contratual com o app mobile (`MobileContractTest`), regras de autorização RBAC, parser CSV RFC 4180, sincronização JSON idempotente, validação geométrica de caixas YOLO e emissão de JWT.
 
@@ -70,12 +71,13 @@ mvn spring-boot:run
 ```
 
 ### Acessar no Navegador
-* **Painel Web do Pesquisador (Dashboard):** [http://localhost:8080](http://localhost:8080)
+* **Painel Web do Pesquisador (Dashboard React):** [http://localhost:8080](http://localhost:8080)
 * **Documentação Interativa (Swagger UI):** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
 
-**Credenciais de Demonstração:**
-| Perfil | E-mail | Senha |
+**Credenciais de Acesso:**
+| Perfil | Usuário / E-mail | Senha |
 | :--- | :--- | :--- |
+| **Pesquisador Sênior (CEPEC)** | `uilson lopes` *(ou `uilson.lopes@ceplac.gov.br`)* | `ceplac123` |
 | **Coordenador Genético** | `coordenador@cepec.gov.br` | `cepec123` |
 | **Pesquisador de Campo** | `pesquisador@cepec.gov.br` | `cepec123` |
 

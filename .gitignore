@@ -38,3 +38,9 @@ Thumbs.db
 
 ### Fotos de campo (dados reais, nao vao para o Git) ###
 storage/
+
+### Frontend React (Node) ###
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+

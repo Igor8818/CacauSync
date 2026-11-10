@@ -263,18 +263,45 @@ public class ColetaSyncService {
     }
 
     private Planta resolverOuCriarPlanta(Ensaio ensaio, LinhaColetaCsvDto item) {
+        String cloneInformado = (item.cloneCodigo() != null && !item.cloneCodigo().isBlank())
+                ? item.cloneCodigo().trim().toUpperCase()
+                : extrairClone(item.plantId()).toUpperCase();
+
         return plantaRepository.findByPlantCodeIgnoreCase(item.plantId())
                 .orElseGet(() -> {
-                    Clone clone = cloneRepository.findByCodigoIgnoreCase(item.cloneCodigo())
+                    Clone clone = cloneRepository.findByCodigoIgnoreCase(cloneInformado)
                             .orElseGet(() -> cloneRepository.save(new Clone(
-                                    item.cloneCodigo().toUpperCase(),
+                                    cloneInformado,
                                     "Clone registrado via sincronização de campo",
                                     "Programa Genético CEPEC"
                             )));
 
                     String numParcela = (item.numeroParcela() == null || item.numeroParcela().isBlank()) ? "1" : item.numeroParcela().trim();
-                    Parcela parcela = parcelaRepository.findByEnsaioAndNumeroParcela(ensaio, numParcela)
-                            .orElseGet(() -> parcelaRepository.save(new Parcela(ensaio, clone, 1, numParcela)));
+
+                    // Garante soberania do clone: uma parcela existente de OUTRO clone nunca pode sequestrar a leitura!
+                    Optional<Parcela> parcelaExistente = parcelaRepository.findByEnsaioAndNumeroParcela(ensaio, numParcela);
+                    Parcela parcela;
+
+                    if (parcelaExistente.isPresent() && parcelaExistente.get().getClone().getCodigo().equalsIgnoreCase(clone.getCodigo())) {
+                        parcela = parcelaExistente.get();
+                    } else if (parcelaExistente.isPresent() && !parcelaExistente.get().getClone().getCodigo().equalsIgnoreCase(clone.getCodigo())) {
+                        // A parcela informada pertence a outro clone no ensaio (ex: parcela 1 pertence a SCP-16005, mas o usuário coletou CCN-51).
+                        // Busca se já existe uma parcela real desse clone no ensaio (ex: CCN-51 -> Parcela 20).
+                        Optional<Parcela> parcelaDoClone = parcelaRepository.findByEnsaioCodigoIgnoreCase(ensaio.getCodigo()).stream()
+                                .filter(p -> p.getClone().getCodigo().equalsIgnoreCase(clone.getCodigo()))
+                                .findFirst();
+
+                        if (parcelaDoClone.isPresent()) {
+                            parcela = parcelaDoClone.get();
+                        } else {
+                            // Cria uma parcela específica com sufixo do clone para não violar uk_ensaio_parcela
+                            String numParcelaDedicada = numParcela + "-" + clone.getCodigo();
+                            parcela = parcelaRepository.findByEnsaioAndNumeroParcela(ensaio, numParcelaDedicada)
+                                    .orElseGet(() -> parcelaRepository.save(new Parcela(ensaio, clone, 1, numParcelaDedicada)));
+                        }
+                    } else {
+                        parcela = parcelaRepository.save(new Parcela(ensaio, clone, 1, numParcela));
+                    }
 
                     return plantaRepository.findByParcelaAndNumeroPlanta(parcela, item.numeroPlanta())
                             .orElseGet(() -> {

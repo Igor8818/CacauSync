@@ -1,11 +1,9 @@
 package br.gov.ceplac.cepec.cacausync.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 public record LoginRequest(
-    @NotBlank(message = "O e-mail institucional é obrigatório")
-    @Email(message = "Formato de e-mail inválido")
+    @NotBlank(message = "O usuário ou e-mail institucional é obrigatório")
     String email,
 
     @NotBlank(message = "A senha é obrigatória")
