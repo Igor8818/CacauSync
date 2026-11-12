@@ -104,6 +104,17 @@ public class LeituraService {
         return leituraMapper.paraResponse(salvo);
     }
 
+    @Transactional
+    public void excluir(Long id) {
+        LeituraColeta leitura = obter(id);
+        String chaveFoto = leitura.getFotoChave();
+        leituraRepository.delete(leitura);
+        leituraRepository.flush();
+        if (chaveFoto != null && !chaveFoto.isBlank()) {
+            fotoStorageService.remover(chaveFoto);
+        }
+    }
+
     @Transactional(readOnly = true)
     public FotoCarregada carregarFoto(Long id) {
         LeituraColeta leitura = obter(id);

@@ -76,4 +76,11 @@ public class LeituraController {
     ) {
         return ResponseEntity.ok(leituraService.validar(id, request, usuarioLogado.getEmail()));
     }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Excluir permanentemente uma leitura/coleta e sua foto associada")
+    public ResponseEntity<Void> excluir(@PathVariable Long id) {
+        leituraService.excluir(id);
+        return ResponseEntity.noContent().build();
+    }
 }

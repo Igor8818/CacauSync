@@ -134,6 +134,7 @@ export const App: React.FC = () => {
         <KpiBar
           relatorio={relatorio}
           totalPlantasRota={itensRota.length}
+          leituras={leituras}
         />
 
         {/* Passos 1 e 2: Logística de Rota e Recepção de Fotos */}

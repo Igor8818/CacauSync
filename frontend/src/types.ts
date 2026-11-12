@@ -96,9 +96,15 @@ export interface RelatorioProdutividade {
   totalLeiturasRegistradas: number;
   leiturasPendentesValidacao: number;
   leiturasValidadas: number;
-  totalFrutosContabilizados: number;
-  totalSadios: number;
-  totalVassoura: number;
-  totalPodridao: number;
-  totalNaoAvaliavel: number;
+  leiturasRejeitadas?: number;
+  totalFrutosAcumulados?: number;
+  totalFrutosSadios?: number;
+  totalFrutosVassoura?: number;
+  totalFrutosPodridao?: number;
+  totalFrutosNaoAvaliavel?: number;
+  totalFrutosContabilizados?: number;
+  totalSadios?: number;
+  totalVassoura?: number;
+  totalPodridao?: number;
+  totalNaoAvaliavel?: number;
 }

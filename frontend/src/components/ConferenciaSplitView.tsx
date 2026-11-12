@@ -21,7 +21,7 @@ import {
   X,
 } from 'lucide-react';
 import { DeteccaoBox, ItemRota, LeituraColeta, StatusValidacao } from '../types';
-import { carregarFotoUrlApi, validarLeituraApi } from '../api';
+import { carregarFotoUrlApi, excluirLeituraApi, validarLeituraApi } from '../api';
 
 interface ConferenciaSplitViewProps {
   leituras: LeituraColeta[];
@@ -303,9 +303,11 @@ export const ConferenciaSplitView: React.FC<ConferenciaSplitViewProps> = ({
       });
 
       const total = sadios + vassoura + podridao + naoAv;
+      const statusEfetivo: StatusValidacao =
+        status === 'VALIDADA' && total !== leituraAtual.qtdFrutos ? 'AJUSTADA' : status;
 
       await validarLeituraApi(leituraAtual.id, {
-        status,
+        status: statusEfetivo,
         qtdFrutosValidada: total,
         observacao: observacao.trim() || null,
         qtdSadios: sadios,
@@ -315,7 +317,7 @@ export const ConferenciaSplitView: React.FC<ConferenciaSplitViewProps> = ({
         deteccoes: caixas,
       });
 
-      onToast(`Planta #${leituraAtual.ordemRota || ''} ${status.toLowerCase()} com sucesso!`);
+      onToast(`Planta #${leituraAtual.ordemRota || ''} ${statusEfetivo.toLowerCase()} com sucesso!`);
       onAtualizar();
 
       if (avancarApos && indiceAtual < leiturasFiltradas.length - 1) {
@@ -323,6 +325,38 @@ export const ConferenciaSplitView: React.FC<ConferenciaSplitViewProps> = ({
       }
     } catch (err: any) {
       onToast(`Erro ao salvar: ${err.message}`, true);
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  // Excluir Coleta / Leitura inteira
+  const handleExcluirLeitura = async (leitura: LeituraColeta, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const confirmar = window.confirm(
+      `Deseja realmente excluir esta coleta da planta ${leitura.codigoClone || ''} (Parcela ${leitura.numeroParcela}, Planta ${leitura.numeroPlanta})?`
+    );
+    if (!confirmar) return;
+
+    setSalvando(true);
+    try {
+      const idx = leiturasFiltradas.findIndex((item) => item.id === leitura.id);
+      let proximoId: number | null = null;
+      if (leiturasFiltradas.length > 1) {
+        proximoId =
+          idx < leiturasFiltradas.length - 1
+            ? leiturasFiltradas[idx + 1].id
+            : leiturasFiltradas[idx - 1].id;
+      }
+
+      await excluirLeituraApi(leitura.id);
+      onToast(`Coleta excluída com sucesso!`);
+      if (selecionadoId === leitura.id) {
+        setSelecionadoId(proximoId);
+      }
+      onAtualizar();
+    } catch (err: any) {
+      onToast(`Erro ao excluir coleta: ${err.message}`, true);
     } finally {
       setSalvando(false);
     }
@@ -620,20 +654,31 @@ export const ConferenciaSplitView: React.FC<ConferenciaSplitViewProps> = ({
                         </div>
                       </div>
 
-                      {/* Contagem e Status */}
-                      <div className="text-right flex flex-col items-end gap-1">
-                        <span className="text-xs font-bold text-stone-800">
-                          {l.qtdFrutos} frutos
-                        </span>
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                            isPendente
-                              ? 'bg-amber-100 text-amber-800'
-                              : 'bg-emerald-100 text-emerald-800'
-                          }`}
+                      {/* Contagem, Status e Exclusão */}
+                      <div className="flex items-center gap-2">
+                        <div className="text-right flex flex-col items-end gap-1">
+                          <span className="text-xs font-bold text-stone-800">
+                            {l.qtdEfetiva ?? l.qtdFrutos} frutos
+                          </span>
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                              isPendente
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-emerald-100 text-emerald-800'
+                            }`}
+                          >
+                            {l.statusValidacao}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => handleExcluirLeitura(l, e)}
+                          disabled={salvando}
+                          className="p-1.5 rounded-lg text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                          title="Excluir esta coleta/foto"
                         >
-                          {l.statusValidacao}
-                        </span>
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
                   );
@@ -741,22 +786,37 @@ export const ConferenciaSplitView: React.FC<ConferenciaSplitViewProps> = ({
               <div className="p-3.5 bg-stone-950 border-t border-stone-800 space-y-3">
                 {renderControlesFitossanitarios()}
 
-                {/* Linha de Aprovação */}
-                <div className="flex items-center justify-between gap-3 pt-2 border-t border-stone-800/80">
+                {/* Linha de Aprovação e Exclusão */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-stone-800/80">
                   <div className="text-xs text-stone-400">
                     Total: <strong className="text-white">{caixas.length} frutos</strong>{' '}
-                    (🟢 {caixas.filter((c) => !c.classe.toLowerCase().includes('vassoura') && !c.classe.toLowerCase().includes('podri') && !c.classe.toLowerCase().includes('nao')).length} sadios)
+                    (🟢 {caixas.filter((c) => !c.classe.toLowerCase().includes('vassoura') && !c.classe.toLowerCase().includes('podri') && !c.classe.toLowerCase().includes('nao')).length} sadios,{' '}
+                    🟠 {caixas.filter((c) => c.classe.toLowerCase().includes('vassoura')).length} vassoura,{' '}
+                    🔴 {caixas.filter((c) => c.classe.toLowerCase().includes('podri')).length} podridão)
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => salvarValidacao('VALIDADA', true)}
-                    disabled={salvando}
-                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-extrabold text-xs flex items-center gap-2 shadow-lg shadow-emerald-950/40 transition cursor-pointer"
-                  >
-                    <Check className="w-4 h-4" />
-                    <span>{salvando ? 'Salvando...' : 'Aprovar Foto e Ir p/ Próxima (Enter)'}</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleExcluirLeitura(leituraAtual)}
+                      disabled={salvando}
+                      className="px-3.5 py-2.5 rounded-xl bg-rose-950/90 hover:bg-rose-800 text-rose-200 hover:text-white font-bold text-xs flex items-center gap-1.5 border border-rose-800/70 transition cursor-pointer"
+                      title="Excluir esta foto/coleta do sistema"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Excluir Foto</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => salvarValidacao('VALIDADA', true)}
+                      disabled={salvando}
+                      className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-extrabold text-xs flex items-center gap-2 shadow-lg shadow-emerald-950/40 transition cursor-pointer"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>{salvando ? 'Salvando...' : 'Aprovar Foto e Ir p/ Próxima (Enter)'}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </>
@@ -877,6 +937,17 @@ export const ConferenciaSplitView: React.FC<ConferenciaSplitViewProps> = ({
               </div>
 
               <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleExcluirLeitura(leituraAtual)}
+                  disabled={salvando}
+                  className="px-4 py-2.5 rounded-xl bg-rose-950/90 hover:bg-rose-800 text-rose-200 hover:text-white font-bold text-xs flex items-center gap-1.5 border border-rose-800/70 transition cursor-pointer"
+                  title="Excluir esta foto/coleta do sistema"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Excluir Foto</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={() => salvarValidacao('VALIDADA', true)}

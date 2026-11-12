@@ -1,24 +1,55 @@
 import React from 'react';
-import { CheckCircle2, Clock, Image as ImageIcon, AlertTriangle, ShieldCheck } from 'lucide-react';
-import { RelatorioProdutividade } from '../types';
+import { CheckCircle2, Clock, Image as ImageIcon, AlertTriangle } from 'lucide-react';
+import { LeituraColeta, RelatorioProdutividade } from '../types';
 
 interface KpiBarProps {
   relatorio: RelatorioProdutividade | null;
   totalPlantasRota: number;
+  leituras?: LeituraColeta[];
 }
 
-export const KpiBar: React.FC<KpiBarProps> = ({ relatorio, totalPlantasRota }) => {
+export const KpiBar: React.FC<KpiBarProps> = ({ relatorio, totalPlantasRota, leituras = [] }) => {
   const totalPlantas = totalPlantasRota || relatorio?.totalPlantasEnsaio || 0;
-  const coletadas = relatorio?.totalLeiturasRegistradas || 0;
-  const pendentes = relatorio?.leiturasPendentesValidacao || 0;
-  const validadas = relatorio?.leiturasValidadas || 0;
+  const coletadas = leituras.length > 0 ? leituras.length : (relatorio?.totalLeiturasRegistradas || 0);
+  const pendentes =
+    leituras.length > 0
+      ? leituras.filter((l) => l.statusValidacao === 'PENDENTE').length
+      : (relatorio?.leiturasPendentesValidacao || 0);
+  const validadas =
+    leituras.length > 0
+      ? leituras.filter((l) => l.statusValidacao === 'VALIDADA' || l.statusValidacao === 'AJUSTADA').length
+      : (relatorio?.leiturasValidadas || 0);
 
   const percColetadas = totalPlantas > 0 ? Math.min(100, Math.round((coletadas / totalPlantas) * 100)) : 0;
-  const percValidadas = coletadas > 0 ? Math.min(100, Math.round((validadas / coletadas) * 100)) : 0;
 
-  const sadios = relatorio?.totalSadios || 0;
-  const doentes = (relatorio?.totalVassoura || 0) + (relatorio?.totalPodridao || 0);
-  const totalFrutos = relatorio?.totalFrutosContabilizados || (sadios + doentes);
+  // Soma direta das leituras não rejeitadas (atualiza em tempo real ao validar/classificar/excluir)
+  let somaSadios = 0;
+  let somaVassoura = 0;
+  let somaPodridao = 0;
+
+  if (leituras.length > 0) {
+    leituras.forEach((l) => {
+      if (l.statusValidacao === 'REJEITADA' || l.coletavel === false) return;
+      const s = l.qtdSadios || 0;
+      const v = l.qtdVassoura || 0;
+      const p = l.qtdPodridao || 0;
+      const na = l.qtdNaoAvaliavel || 0;
+      if (s + v + p + na === 0 && (l.qtdEfetiva || l.qtdFrutos) > 0) {
+        somaSadios += l.qtdEfetiva ?? l.qtdFrutos ?? 0;
+      } else {
+        somaSadios += s;
+        somaVassoura += v;
+        somaPodridao += p;
+      }
+    });
+  } else {
+    somaSadios = relatorio?.totalFrutosSadios ?? relatorio?.totalSadios ?? 0;
+    somaVassoura = relatorio?.totalFrutosVassoura ?? relatorio?.totalVassoura ?? 0;
+    somaPodridao = relatorio?.totalFrutosPodridao ?? relatorio?.totalPodridao ?? 0;
+  }
+
+  const sadios = somaSadios;
+  const doentes = somaVassoura + somaPodridao;
 
   return (
     <div className="bg-white rounded-2xl border border-stone-200/90 p-5 shadow-sm space-y-4">
@@ -109,7 +140,9 @@ export const KpiBar: React.FC<KpiBarProps> = ({ relatorio, totalPlantasRota }) =
             <span>Frutos com Doença</span>
           </div>
           <div className="text-2xl font-black text-rose-700 mt-1">{doentes}</div>
-          <div className="text-[10px] text-rose-600/90 font-medium">Vassoura / Podridão</div>
+          <div className="text-[10px] text-rose-600/90 font-medium">
+            {somaVassoura} Vassoura • {somaPodridao} Podridão
+          </div>
         </div>
       </div>
     </div>

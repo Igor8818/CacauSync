@@ -162,6 +162,17 @@ export async function validarLeituraApi(
   return r.json();
 }
 
+export async function excluirLeituraApi(id: number): Promise<void> {
+  await apiFetch(`/api/v1/leituras/${id}`, {
+    method: 'DELETE',
+  });
+  const prev = fotoBlobCache.get(id);
+  if (prev) {
+    URL.revokeObjectURL(prev);
+    fotoBlobCache.delete(id);
+  }
+}
+
 export async function importarPlanilhaRotaApi(
   ensaio: string,
   arquivo: File,
