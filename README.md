@@ -75,12 +75,13 @@ mvn spring-boot:run
 * **Painel Web do Pesquisador (Dashboard React):** [http://localhost:8080](http://localhost:8080)
 * **Documentação Interativa (Swagger UI):** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
 
-**Credenciais de Acesso:**
-| Perfil | Usuário / E-mail | Senha |
+**Credenciais de Demonstração (Seed Local — `profile=local`):**
+| Perfil | E-mail (Ambiente Local) | Senha Local |
 | :--- | :--- | :--- |
-| **Pesquisador Sênior (CEPEC)** | `uilson lopes` *(ou `uilson.lopes@ceplac.gov.br`)* | `ceplac123` |
 | **Coordenador Genético** | `coordenador@cepec.gov.br` | `cepec123` |
 | **Pesquisador de Campo** | `pesquisador@cepec.gov.br` | `cepec123` |
+
+> *Nota: Contas fictícias pré-carregadas exclusivamente para testes locais em bancada/desenvolvimento.*
 
 ---
 
