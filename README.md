@@ -4,6 +4,7 @@
 
 # 🌱 CacauSync API — Back-end Corporativo para Ensaios Genéticos (CEPEC/CEPLAC)
 
+[![CacauSync CI](https://github.com/Igor8818/CacauSync/actions/workflows/ci.yml/badge.svg)](https://github.com/Igor8818/CacauSync/actions/workflows/ci.yml)
 [![Java](https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org)
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3.5-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![React](https://img.shields.io/badge/React_18-TypeScript_%2B_Tailwind-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
@@ -22,10 +23,10 @@ API RESTful corporativa desenvolvida em **Java 21 + Spring Boot 3.3** para orque
 
 Em quadras experimentais de melhoramento genético de cacau (como o ensaio competitivo **TC-1801**, contendo **940 plantas** e **104 clones**), os pesquisadores e técnicos agrícolas atuam em áreas rurais sem sinal de internet. O **CacauSync** resolve toda a logística entre laboratório e campo em 3 etapas diretas no Painel Web:
 
-1. **Passo 1 — Planejamento de Rota (PC $\rightarrow$ Celular em 1 Clique):**
+1. **Passo 1 — Planejamento de Rota (PC → Celular em 1 Clique):**
    * O pesquisador importa a planilha oficial de campo em **Excel (`.xlsx`) ou `.csv`** (ou carrega com 1 clique a planilha completa embutida com as **940 plantas do ensaio `TC-1801`**).
    * Com o celular conectado no cabo USB, o botão **`📲 Enviar Rota para o Celular no Cabo USB`** injeta automaticamente a planilha na aba **Modo Rota** do aplicativo Android (`files/rota_precarregada.json`), numerada na ordem exata de caminhamento (`#1` a `#940`).
-2. **Passo 2 — Coleta Offline em Campo & Recebimento em 1 Clique (Celular $\rightarrow$ PC):**
+2. **Passo 2 — Coleta Offline em Campo & Recebimento em 1 Clique (Celular → PC):**
    * O trabalhador percorre a quadra seguindo a ordem da planilha no celular (100% offline), tirando as fotos das árvores com detecção **YOLOv8** ou registrando plantas secas/mortas (`"Não Coletável"`).
    * Ao retornar ao laboratório, basta conectar o cabo USB e clicar em **`🔌 Puxar Fotos e Coletas do Celular via USB (1 Clique)`** no painel web (ou tocar em `"SINCRONIZAR COM PC (1 CLIQUE)"` no app via USB/Wi-Fi). O servidor extrai automaticamente os registros, as caixas auditadas do YOLO e as fotos em alta resolução com **idempotência estrita**.
 3. **Passo 3 — Conferência Sequencial de Fotos na Ordem da Planilha (`#1 → #N`):**
@@ -36,11 +37,11 @@ Em quadras experimentais de melhoramento genético de cacau (como o ensaio compe
 
 ## 🛠️ Stack Tecnológica & Arquitetura
 
-* **Java 21 + Spring Boot 3.3.5:** Arquitetura limpa em camadas (`Controller` $\rightarrow$ `Service` $\rightarrow$ `Repository` $\rightarrow$ `Entity`), uso de `Java Records` para DTOs imutáveis, leitura nativa de planilhas Excel (**Apache POI `.xlsx`**) e CSV (**RFC 4180**), e tratamento global de exceções no padrão **RFC 7807 (`ProblemDetail`)**.
+* **Java 21 + Spring Boot 3.3.5:** Arquitetura limpa em camadas (`Controller` → `Service` → `Repository` → `Entity`), uso de `Java Records` para DTOs imutáveis, leitura nativa de planilhas Excel (**Apache POI `.xlsx`**) e CSV (**RFC 4180**), e tratamento global de exceções no padrão **RFC 7807 (`ProblemDetail`)**.
 * **Ponte Automática USB ADB (`UsbAdbSyncService` & `RotaPlanejamentoService`):**
   * Integração direta com o Android Debug Bridge (`adb`) no servidor para envio de rotas ao aparelho (`PC -> Celular`), ativação automática de túnel reverso (`adb reverse tcp:8080 tcp:8080`) e extração em 1 clique de JSONs e fotos (`Celular -> PC`).
 * **Banco de Dados Relacional (H2 Persistente em Disco ou PostgreSQL 16 + Flyway):**
-  * Hierarquia relacional completa: `Ensaio` $\rightarrow$ `Parcela` $\leftrightarrow$ `Clone` $\rightarrow$ `Planta` (`ordemRota`) $\rightarrow$ `LeituraColeta` $\rightarrow$ `DeteccaoYolo`.
+  * Hierarquia relacional completa: `Ensaio` → `Parcela` ↔ `Clone` → `Planta` (`ordemRota`) → `LeituraColeta` → `DeteccaoYolo`.
   * **Modo Local Zero-Docker (`profile=local`):** Banco H2 em modo de compatibilidade PostgreSQL salvo em disco (`./storage/db/cacausync_local`), permitindo rodar o sistema completo no notebook do pesquisador sem precisar instalar ou abrir o Docker Desktop.
   * **Modo Containerizado (`default`):** Suporte total a **PostgreSQL 16** com migrations versionadas via **Flyway** (`V1` a `V5`).
 * **Segurança & RBAC (Spring Security 6 + Auth0 JWT):**
