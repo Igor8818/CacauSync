@@ -2,7 +2,7 @@
   <img src="logo_cacausync.jpg" alt="CacauSync API Banner" width="100%" />
 </div>
 
-# 🌱 CacauSync API — Back-end Corporativo para Ensaios Genéticos (CEPEC/CEPLAC)
+# ⚡ CacauSync API — Enterprise Back-end (Java 21 + Spring Boot 3) & Painel Web (React 18)
 
 [![CacauSync CI](https://github.com/Igor8818/CacauSync/actions/workflows/ci.yml/badge.svg)](https://github.com/Igor8818/CacauSync/actions/workflows/ci.yml)
 [![Java](https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org)
@@ -13,25 +13,54 @@
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com)
 [![JUnit 5](https://img.shields.io/badge/JUnit5-51_Tests_Passed-25A162?style=for-the-badge&logo=junit5&logoColor=white)](https://junit.org)
 
-API RESTful corporativa desenvolvida em **Java 21 + Spring Boot 3.3** para orquestração de rotas de campo, sincronização *offline-first* idempotente de coletas fenotípicas, auditoria fitossanitária com caixas YOLO e análise estatística de produtividade por clone de cacaueiro no contexto do **Centro de Pesquisas do Cacau (CEPEC/CEPLAC)**.
+Plataforma corporativa **Full-Stack** composta por uma **API RESTful em Java 21 + Spring Boot 3.3** e uma **SPA em React 18 + TypeScript**, projetada para **sincronização em lote estritamente idempotente de dispositivos móveis Offline-First**, ingestão nativa de planilhas (`.xlsx` / `.csv`), autenticação *stateless* **JWT com RBAC** e revisão interativa de inferências de Visão Computacional (YOLO) em **HTML5 Canvas**.
 
-> 📱 **Ecossistema Integrado:** Este back-end atua em conjunto com o aplicativo Android de Visão Computacional Offline ([**CacauApp**](https://github.com/Igor8818/CacauApp)), que utiliza **TensorFlow Lite (YOLOv8 / Object Detection)** em campo (sem conectividade de internet) para contagem de frutos na planta e exportação padronizada em CSV e JSON.
+> 📱 **Arquitetura Distribuída Offline-First:** Atua como servidor central de sincronização e auditoria para clientes Android de Visão Computacional On-Device ([**CacauApp**](https://github.com/Igor8818/CacauApp)), garantindo integridade transacional, deduplicação por chaves de idempotência e pareamento de imagens via hash `SHA-256` tanto por rede HTTP quanto por ponte automatizada **USB ADB**.
 
 ---
 
-## 🎯 Fluxo Operacional em 3 Passos (Pesquisador ↔ Trabalhador de Campo)
+## 🏛️ Arquitetura do Sistema
 
-Em quadras experimentais de melhoramento genético de cacau (como o ensaio competitivo **TC-1801**, contendo **940 plantas** e **104 clones**), os pesquisadores e técnicos agrícolas atuam em áreas rurais sem sinal de internet. O **CacauSync** resolve toda a logística entre laboratório e campo em 3 etapas diretas no Painel Web:
+```mermaid
+flowchart LR
+    subgraph Edge ["📱 Cliente Android Offline-First"]
+        App["CacauApp (Kotlin + YOLOv8)<br/>Persistência Local + Fotos EXIF"]
+    end
 
-1. **Passo 1 — Planejamento de Rota (PC → Celular em 1 Clique):**
-   * O pesquisador importa a planilha oficial de campo em **Excel (`.xlsx`) ou `.csv`** (ou carrega com 1 clique a planilha completa embutida com as **940 plantas do ensaio `TC-1801`**).
-   * Com o celular conectado no cabo USB, o botão **`📲 Enviar Rota para o Celular no Cabo USB`** injeta automaticamente a planilha na aba **Modo Rota** do aplicativo Android (`files/rota_precarregada.json`), numerada na ordem exata de caminhamento (`#1` a `#940`).
-2. **Passo 2 — Coleta Offline em Campo & Recebimento em 1 Clique (Celular → PC):**
-   * O trabalhador percorre a quadra seguindo a ordem da planilha no celular (100% offline), tirando as fotos das árvores com detecção **YOLOv8** ou registrando plantas secas/mortas (`"Não Coletável"`).
-   * Ao retornar ao laboratório, basta conectar o cabo USB e clicar em **`🔌 Puxar Fotos e Coletas do Celular via USB (1 Clique)`** no painel web (ou tocar em `"SINCRONIZAR COM PC (1 CLIQUE)"` no app via USB/Wi-Fi). O servidor extrai automaticamente os registros, as caixas auditadas do YOLO e as fotos em alta resolução com **idempotência estrita**.
-3. **Passo 3 — Conferência Sequencial de Fotos na Ordem da Planilha (`#1 → #N`):**
-   * O painel exibe todas as plantas **ordenadas exatamente pela sequência da planilha (`planta.ordemRota ASC`)**, destacando quais já possuem foto coletada (`📷 Com Foto Auditável`) e quais estão pendentes.
-   * No modal interativo de auditoria, o pesquisador navega foto por foto na sequência da planilha (**`⬅ Anterior da Planilha`**, **`Próxima da Planilha ➡`** e **`✅ Aprovar Foto e Ir para a Próxima ➡`**), podendo reclassificar frutos (`Sadio`, `Vassoura de Bruxa`, `Podridão Parda`, `Não Avaliável`), **redimensionar caixas (`−` Diminuir / `+` Aumentar)**, adicionar frutos manualmente ou **excluir marcações (`🗑 Excluir`)**.
+    subgraph API ["☁️ Back-end Java 21 + Spring Boot 3.3"]
+        Sec["Spring Security 6<br/>Stateless JWT + RBAC"]
+        Sync["ColetaSyncService & UsbAdbSyncService<br/>Idempotência + SHA-256"]
+        POI["Ingestão Apache POI (.xlsx)<br/>& Parser CSV RFC 4180"]
+        Sec --> Sync
+        Sec --> POI
+    end
+
+    subgraph Web ["🖥️ SPA React 18 + TypeScript"]
+        Canvas["HTML5 Canvas Bounding-Box Editor<br/>Zoom 250% + Revisão Sequencial"]
+    end
+
+    subgraph Data ["🗄️ Persistência Versionada"]
+        PG[("PostgreSQL 16 + Flyway V1–V5<br/>(ou H2 Disco Zero-Docker)")]
+    end
+
+    App <-->|"HTTP Batch JSON/Multipart<br/>ou Túnel Reverso USB ADB"| Sec
+    Web <-->|"REST API + OpenAPI 3"| Sec
+    Sync --> PG
+    POI --> PG
+```
+
+---
+
+## 🎯 Fluxo de Sincronização & Revisão em 3 Etapas
+
+1. **Passo 1 — Ingestão de Planilhas & Provisionamento (PC → Mobile em 1 Clique):**
+   * Importação nativa de roteiros operacionais em **Excel (`.xlsx` via Apache POI) ou `.csv` (RFC 4180)**.
+   * Via HTTP ou cabo USB (`adb`), o servidor provisiona automaticamente a fila ordenada de trabalho (`files/rota_precarregada.json`) diretamente no armazenamento interno do dispositivo Android.
+2. **Passo 2 — Coleta Offline & Sincronização Idempotente em Lote (Mobile → Servidor):**
+   * O cliente Android opera 100% sem conectividade executando detecção **YOLOv8** localmente.
+   * Ao reconectar via rede Wi-Fi ou ponte **USB ADB em 1 clique**, o back-end processa os lotes JSON, as coordenadas normalizadas das *bounding boxes* e as fotos em alta resolução com **idempotência estrita** (retransmissões não geram duplicatas).
+3. **Passo 3 — Auditoria Visual Assistida em HTML5 Canvas (`#1 → #N`):**
+   * O painel React 18 lista o progresso da fila sincronizada e oferece um editor **HTML5 Canvas em tela cheia** com zoom de até 250%, permitindo ajustar, reclassificar, redimensionar ou excluir marcações da IA com atalhos de teclado e persistência imediata na API.
 
 ---
 
