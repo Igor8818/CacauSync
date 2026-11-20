@@ -56,7 +56,7 @@ public class ColetaSyncService {
         this.leituraMapper = leituraMapper;
     }
 
-    /** Importacao so de CSV (sem fotos) â€” mantida por compatibilidade. */
+    /** Importacao so de CSV (sem fotos) — mantida por compatibilidade. */
     @Transactional
     public ResultadoImportacaoCsvResponse importarCsv(
             String codigoEnsaio, InputStream csvInputStream, String nomeArquivo, String pesquisadorEmail
@@ -138,8 +138,8 @@ public class ColetaSyncService {
         Ensaio ensaio = ensaioRepository.findByCodigoIgnoreCase(codigoFinal)
                 .orElseGet(() -> ensaioRepository.save(new Ensaio(
                         codigoFinal,
-                        "Ensaio GenÃ©tico " + codigoFinal + " (Importado via CacauApp)",
-                        "CEPEC/CEPLAC - IlhÃ©us/Itabuna, BA"
+                        "Ensaio Genético " + codigoFinal + " (Importado via CacauApp)",
+                        "CEPEC/CEPLAC - Ilhéus/Itabuna, BA"
                 )));
 
         FotoMatcher.Resultado casamento = fotoMatcher.casar(linhas, fotos);
@@ -195,7 +195,7 @@ public class ColetaSyncService {
                 planta.setSituacao(SituacaoPlanta.NAO_COLETAVEL);
                 plantaRepository.save(planta);
                 naoColetaveis++;
-                avisos.add("Planta " + planta.getPlantCode() + " marcada como NAO_COLETAVEL (DiagnÃ³stico: " + item.resultadoBruto() + ")");
+                avisos.add("Planta " + planta.getPlantCode() + " marcada como NAO_COLETAVEL (Diagnóstico: " + item.resultadoBruto() + ")");
             } else if (planta.getSituacao() == SituacaoPlanta.NAO_COLETAVEL && item.qtdFrutos() > 0) {
                 planta.setSituacao(SituacaoPlanta.NORMAL);
                 plantaRepository.save(planta);
@@ -238,8 +238,8 @@ public class ColetaSyncService {
         int fotosRecebidas = fotos == null ? 0 : fotos.size();
         int fotosIgnoradas = fotosRecebidas - fotosAnexadas;
         if (fotosIgnoradas > 0) {
-            avisos.add(fotosIgnoradas + " foto(s) nÃ£o anexada(s): o nome nÃ£o corresponde a nenhuma linha do CSV, "
-                    + "a leitura jÃ¡ tinha foto, ou o arquivo era invÃ¡lido.");
+            avisos.add(fotosIgnoradas + " foto(s) não anexada(s): o nome não corresponde a nenhuma linha do CSV, "
+                    + "a leitura já tinha foto, ou o arquivo era inválido.");
         }
 
         return new ResultadoImportacaoCsvResponse(
@@ -274,9 +274,28 @@ public class ColetaSyncService {
 
     @Transactional(readOnly = true)
     public Page<LeituraColetaResponse> listarLeiturasPorEnsaio(String codigoEnsaio, StatusValidacao status, Pageable pageable) {
-        Page<LeituraColeta> pagina = (status == null)
-                ? leituraColetaRepository.findByPlantaParcelaEnsaioCodigoIgnoreCase(codigoEnsaio, pageable)
-                : leituraColetaRepository.findByPlantaParcelaEnsaioCodigoIgnoreCaseAndStatusValidacao(codigoEnsaio, status, pageable);
+        return listarLeiturasPorEnsaio(codigoEnsaio, status, null, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<LeituraColetaResponse> listarLeiturasPorEnsaio(
+            String codigoEnsaio,
+            StatusValidacao status,
+            String campanha,
+            Pageable pageable
+    ) {
+        boolean temCampanha = campanha != null && !campanha.isBlank();
+        Page<LeituraColeta> pagina;
+        if (temCampanha) {
+            String camp = campanha.trim();
+            pagina = (status == null)
+                    ? leituraColetaRepository.findByPlantaParcelaEnsaioCodigoIgnoreCaseAndCampanhaIgnoreCase(codigoEnsaio, camp, pageable)
+                    : leituraColetaRepository.findByPlantaParcelaEnsaioCodigoIgnoreCaseAndStatusValidacaoAndCampanhaIgnoreCase(codigoEnsaio, status, camp, pageable);
+        } else {
+            pagina = (status == null)
+                    ? leituraColetaRepository.findByPlantaParcelaEnsaioCodigoIgnoreCase(codigoEnsaio, pageable)
+                    : leituraColetaRepository.findByPlantaParcelaEnsaioCodigoIgnoreCaseAndStatusValidacao(codigoEnsaio, status, pageable);
+        }
         return pagina.map(leituraMapper::paraResponse);
     }
 
@@ -290,8 +309,8 @@ public class ColetaSyncService {
                     Clone clone = cloneRepository.findByCodigoIgnoreCase(cloneInformado)
                             .orElseGet(() -> cloneRepository.save(new Clone(
                                     cloneInformado,
-                                    "Clone registrado via sincronizaÃ§Ã£o de campo",
-                                    "Programa GenÃ©tico CEPEC"
+                                    "Clone registrado via sincronização de campo",
+                                    "Programa Genético CEPEC"
                             )));
 
                     String numParcela = (item.numeroParcela() == null || item.numeroParcela().isBlank()) ? "1" : item.numeroParcela().trim();
@@ -303,8 +322,8 @@ public class ColetaSyncService {
                     if (parcelaExistente.isPresent() && parcelaExistente.get().getClone().getCodigo().equalsIgnoreCase(clone.getCodigo())) {
                         parcela = parcelaExistente.get();
                     } else if (parcelaExistente.isPresent() && !parcelaExistente.get().getClone().getCodigo().equalsIgnoreCase(clone.getCodigo())) {
-                        // A parcela informada pertence a outro clone no ensaio (ex: parcela 1 pertence a SCP-16005, mas o usuÃ¡rio coletou CCN-51).
-                        // Busca se jÃ¡ existe uma parcela real desse clone no ensaio (ex: CCN-51 -> Parcela 20).
+                        // A parcela informada pertence a outro clone no ensaio (ex: parcela 1 pertence a SCP-16005, mas o usuário coletou CCN-51).
+                        // Busca se já existe uma parcela real desse clone no ensaio (ex: CCN-51 -> Parcela 20).
                         Optional<Parcela> parcelaDoClone = parcelaRepository.findByEnsaioCodigoIgnoreCase(ensaio.getCodigo()).stream()
                                 .filter(p -> p.getClone().getCodigo().equalsIgnoreCase(clone.getCodigo()))
                                 .findFirst();
@@ -312,7 +331,7 @@ public class ColetaSyncService {
                         if (parcelaDoClone.isPresent()) {
                             parcela = parcelaDoClone.get();
                         } else {
-                            // Cria uma parcela especÃ­fica com sufixo do clone para nÃ£o violar uk_ensaio_parcela
+                            // Cria uma parcela específica com sufixo do clone para não violar uk_ensaio_parcela
                             String numParcelaDedicada = numParcela + "-" + clone.getCodigo();
                             parcela = parcelaRepository.findByEnsaioAndNumeroParcela(ensaio, numParcelaDedicada)
                                     .orElseGet(() -> parcelaRepository.save(new Parcela(ensaio, clone, 1, numParcelaDedicada)));

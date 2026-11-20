@@ -1,19 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { Header } from './components/Header';
-import { KpiBar } from './components/KpiBar';
-import { WorkflowSteps } from './components/WorkflowSteps';
-import { ConferenciaSplitView } from './components/ConferenciaSplitView';
-import { LoginView } from './components/LoginView';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   buscarRelatorioApi,
   getAuthToken,
   limparCacheFotos,
   listarEnsaiosApi,
-  listarLeiturasApi,
   listarRotaJsonApi,
+  listarTodasLeiturasApi,
   setAuthToken,
   setOnUnauthorized,
 } from './api';
+import { ConferenciaSplitView } from './components/ConferenciaSplitView';
+import { Header } from './components/Header';
+import { KpiBar } from './components/KpiBar';
+import { LoginView } from './components/LoginView';
+import { MapaFocosView } from './components/MapaFocosView';
+import { RankingClonesView } from './components/RankingClonesView';
+import { WorkflowSteps } from './components/WorkflowSteps';
 import {
   EnsaioResumo,
   ItemRota,
@@ -22,161 +24,214 @@ import {
   UsuarioToken,
 } from './types';
 
+function carregarUsuarioStorage(): UsuarioToken | null {
+  try {
+    const raw = localStorage.getItem('cacausync_user');
+    return raw ? (JSON.parse(raw) as UsuarioToken) : null;
+  } catch {
+    return null;
+  }
+}
+
+type AbaPrincipal = 'CONFERENCIA' | 'RANKING' | 'MAPA';
+
 export const App: React.FC = () => {
-  const [usuario, setUsuario] = useState<UsuarioToken | null>(() => {
-    const salvo = localStorage.getItem('cacausync_user');
-    return salvo ? JSON.parse(salvo) : null;
-  });
+  const [token, setToken] = useState<string>(() => getAuthToken());
+  const [usuario, setUsuario] = useState<UsuarioToken | null>(() => carregarUsuarioStorage());
 
   const [ensaios, setEnsaios] = useState<EnsaioResumo[]>([]);
-  const [ensaioAtivo, setEnsaioAtivo] = useState<string>(() => {
-    return localStorage.getItem('cacausync_ensaio') || 'TC-1801';
-  });
-
+  const [ensaioAtivo, setEnsaioAtivo] = useState<string>('TC-1801');
   const [relatorio, setRelatorio] = useState<RelatorioProdutividade | null>(null);
   const [itensRota, setItensRota] = useState<ItemRota[]>([]);
   const [leituras, setLeituras] = useState<LeituraColeta[]>([]);
-  const [carregandoDados, setCarregandoDados] = useState(false);
 
-  // Sistema de Toast
-  const [toastMsg, setToastMsg] = useState<{ texto: string; erro: boolean } | null>(null);
+  const [indiceFruto, setIndiceFruto] = useState<number>(22);
+  const [plantasPorHa, setPlantasPorHa] = useState<number>(1111);
+  const [campanha, setCampanha] = useState<string>('');
+  const [aba, setAba] = useState<AbaPrincipal>('CONFERENCIA');
+  const [leituraFocadaId, setLeituraFocadaId] = useState<number | null>(null);
 
-  const dispararToast = (texto: string, erro = false) => {
-    setToastMsg({ texto, erro });
-    setTimeout(() => {
-      setToastMsg((cur) => (cur?.texto === texto ? null : cur));
-    }, 4000);
-  };
+  const [toast, setToast] = useState<{ msg: string; tipo: 'ok' | 'erro' } | null>(null);
 
-  // Logout automático em 401
-  useEffect(() => {
-    setOnUnauthorized(() => {
-      fazerLogout();
-      dispararToast('Sua sessão expirou. Entre novamente.', true);
-    });
+  const exibirToast = useCallback((msg: string, tipo: 'ok' | 'erro' = 'ok') => {
+    setToast({ msg, tipo });
+    window.setTimeout(() => {
+      setToast((cur) => (cur?.msg === msg ? null : cur));
+    }, 4500);
   }, []);
 
-  const handleLoginSuccess = (user: UsuarioToken) => {
-    setUsuario(user);
-    setAuthToken(user.token);
-    localStorage.setItem('cacausync_user', JSON.stringify(user));
-  };
-
-  const fazerLogout = () => {
-    setUsuario(null);
+  const handleLogout = useCallback(() => {
     setAuthToken('');
-    limparCacheFotos();
     localStorage.removeItem('cacausync_user');
-  };
-
-  // Carregar lista de ensaios após login
-  useEffect(() => {
-    if (!usuario) return;
-    listarEnsaiosApi()
-      .then((lista) => {
-        setEnsaios(lista);
-        if (lista.length > 0 && !lista.some((e) => e.codigo === ensaioAtivo)) {
-          setEnsaioAtivo(lista[0].codigo);
-        }
-      })
-      .catch((err) => {
-        dispararToast(err.message, true);
-      });
-  }, [usuario]);
-
-  // Carregar dados do ensaio ativo
-  const carregarDadosDoEnsaio = async () => {
-    if (!usuario || !ensaioAtivo) return;
-    setCarregandoDados(true);
-    try {
-      const [rel, rota, leitsPage] = await Promise.all([
-        buscarRelatorioApi(ensaioAtivo).catch(() => null),
-        listarRotaJsonApi(ensaioAtivo).catch(() => []),
-        listarLeiturasApi(ensaioAtivo, 0, 500).catch(() => ({ content: [] as LeituraColeta[] })),
-      ]);
-
-      setRelatorio(rel);
-      setItensRota(rota);
-      setLeituras(leitsPage.content || []);
-    } catch (err: any) {
-      dispararToast(`Erro ao carregar dados do ensaio: ${err.message}`, true);
-    } finally {
-      setCarregandoDados(false);
-    }
-  };
+    limparCacheFotos();
+    setToken('');
+    setUsuario(null);
+  }, []);
 
   useEffect(() => {
-    if (usuario) {
-      localStorage.setItem('cacausync_ensaio', ensaioAtivo);
-      carregarDadosDoEnsaio();
-    }
-  }, [usuario, ensaioAtivo]);
+    setOnUnauthorized(() => {
+      handleLogout();
+      exibirToast('Sessão expirada. Faça login novamente.', 'erro');
+    });
+  }, [handleLogout, exibirToast]);
 
-  // Se não estiver logado, exibe a tela de login moderna com hero institucional
-  if (!usuario) {
-    return <LoginView onLoginSuccess={handleLoginSuccess} />;
+  const carregarDados = useCallback(
+    async (codigoEnsaioAlvo: string) => {
+      if (!token) return;
+      try {
+        const [listaEnsaios, rel, rota, todasLeituras] = await Promise.all([
+          listarEnsaiosApi(),
+          buscarRelatorioApi(codigoEnsaioAlvo, {
+            indiceFruto,
+            plantasPorHa,
+            campanha: campanha || undefined,
+          }).catch(() => null),
+          listarRotaJsonApi(codigoEnsaioAlvo).catch(() => []),
+          listarTodasLeiturasApi(
+            codigoEnsaioAlvo,
+            undefined,
+            campanha || undefined
+          ).catch(() => []),
+        ]);
+        setEnsaios(listaEnsaios);
+        setRelatorio(rel);
+        setItensRota(rota);
+        setLeituras(todasLeituras);
+      } catch (err: any) {
+        exibirToast(err.message || 'Erro ao carregar dados do ensaio.', 'erro');
+      }
+    },
+    [token, indiceFruto, plantasPorHa, campanha, exibirToast]
+  );
+
+  useEffect(() => {
+    if (token) {
+      carregarDados(ensaioAtivo);
+    }
+  }, [token, ensaioAtivo, carregarDados]);
+
+  if (!token) {
+    return (
+      <LoginView
+        onLoginSuccess={(u) => {
+          setUsuario(u);
+          setToken(u.token);
+        }}
+      />
+    );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-100 text-stone-900">
-      {/* Topo Institucional */}
+    <div className="min-h-screen bg-[#F5F7F5] text-gray-900">
       <Header
-        usuario={usuario}
+        usuario={
+          usuario || {
+            token,
+            tipo: 'Bearer',
+            nomePesquisador: 'Pesquisador CEPEC',
+            email: '',
+            role: 'ROLE_PESQUISADOR',
+            expiraEmSegundos: 0,
+          }
+        }
         ensaios={ensaios}
         ensaioAtivo={ensaioAtivo}
-        onTrocarEnsaio={(cod) => setEnsaioAtivo(cod)}
-        onLogout={fazerLogout}
+        onTrocarEnsaio={(novo) => {
+          limparCacheFotos();
+          setEnsaioAtivo(novo);
+        }}
+        onLogout={handleLogout}
+        onToast={exibirToast}
       />
 
-      {/* Conteúdo Principal */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Barra de Progresso e Métricas Consolidadas */}
+      {toast && (
+        <div
+          className={`fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-bold text-white transition-all ${
+            toast.tipo === 'erro' ? 'bg-red-700' : 'bg-emerald-800'
+          }`}
+        >
+          {toast.msg}
+        </div>
+      )}
+
+      <main className="max-w-7xl mx-auto px-4 py-5">
         <KpiBar
           relatorio={relatorio}
           totalPlantasRota={itensRota.length}
           leituras={leituras}
         />
 
-        {/* Passos 1 e 2: Logística de Rota e Recepção de Fotos */}
-        <WorkflowSteps
-          ensaio={ensaioAtivo}
-          totalPlantasRota={itensRota.length}
-          onAtualizacaoNecessaria={carregarDadosDoEnsaio}
-          onToast={dispararToast}
-        />
+        {/* Abas principais */}
+        <div className="flex flex-wrap gap-2 mb-4 border-b border-emerald-200 pb-3">
+          {(
+            [
+              ['CONFERENCIA', '1. Logística & Conferência'],
+              ['RANKING', '2. Ranking Clones & @/ha'],
+              ['MAPA', '3. Mapa de Focos GPS'],
+            ] as const
+          ).map(([id, titulo]) => (
+            <button
+              key={id}
+              onClick={() => setAba(id)}
+              className={`px-4 py-2 rounded-xl text-sm font-extrabold transition ${
+                aba === id
+                  ? 'bg-emerald-800 text-white shadow-sm'
+                  : 'bg-white text-emerald-950 border border-emerald-100 hover:bg-emerald-50'
+              }`}
+            >
+              {titulo}
+            </button>
+          ))}
+        </div>
 
-        {/* Passo 3: Conferência Fitossanitária com Tela Dividida */}
-        <ConferenciaSplitView
-          leituras={leituras}
-          itensRota={itensRota}
-          ensaio={ensaioAtivo}
-          onAtualizar={carregarDadosDoEnsaio}
-          onToast={dispararToast}
-        />
+        {aba === 'CONFERENCIA' && (
+          <>
+            <WorkflowSteps
+              ensaio={ensaioAtivo}
+              totalPlantasRota={itensRota.length}
+              onAtualizacaoNecessaria={() => carregarDados(ensaioAtivo)}
+              onToast={exibirToast}
+            />
+            <ConferenciaSplitView
+              leituras={leituras}
+              itensRota={itensRota}
+              ensaio={ensaioAtivo}
+              indiceFruto={indiceFruto}
+              leituraFocadaId={leituraFocadaId}
+              onAtualizar={() => carregarDados(ensaioAtivo)}
+              onToast={exibirToast}
+            />
+          </>
+        )}
+
+        {aba === 'RANKING' && (
+          <RankingClonesView
+            ensaio={ensaioAtivo}
+            relatorio={relatorio}
+            indiceFruto={indiceFruto}
+            plantasPorHa={plantasPorHa}
+            campanha={campanha}
+            onAlterarParametros={(idx, plHa, camp) => {
+              setIndiceFruto(idx);
+              setPlantasPorHa(plHa);
+              setCampanha(camp);
+            }}
+            onToast={exibirToast}
+          />
+        )}
+
+        {aba === 'MAPA' && (
+          <MapaFocosView
+            leituras={leituras}
+            onAbrirNaConferencia={(id) => {
+              setLeituraFocadaId(id);
+              setAba('CONFERENCIA');
+            }}
+          />
+        )}
       </main>
-
-      {/* Rodapé Informativo */}
-      <footer className="bg-white border-t border-stone-200 py-4 text-center text-xs text-stone-500">
-        <div>
-          CEPLAC • CEPEC — Centro de Pesquisas do Cacau • Rodovia Jorge Amado, km 22, Ilhéus/Itabuna - BA
-        </div>
-        <div className="text-[11px] text-stone-400 mt-1">
-          CacauSync &amp; CacauApp — Visão Computacional Embarcada (Edge AI / YOLOv8) &amp; Melhoramento Genético
-        </div>
-      </footer>
-
-      {/* Notificação Toast Flutuante */}
-      {toastMsg && (
-        <div
-          className={`fixed bottom-5 right-5 z-50 px-4 py-3 rounded-2xl shadow-xl text-xs font-bold transition-all transform duration-300 ${
-            toastMsg.erro
-              ? 'bg-rose-900 text-rose-100 border border-rose-700'
-              : 'bg-stone-900 text-white border border-stone-700'
-          }`}
-        >
-          {toastMsg.texto}
-        </div>
-      )}
     </div>
   );
 };
+
+export default App;

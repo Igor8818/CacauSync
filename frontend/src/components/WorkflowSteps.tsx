@@ -1,29 +1,19 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Upload,
-  Usb,
-  Smartphone,
-  Wifi,
-  Sparkles,
-  RefreshCw,
-  FolderSync,
-  ChevronDown,
-  ChevronUp,
-  FileSpreadsheet,
-} from 'lucide-react';
-import {
+  buscarStatusUsbApi,
   carregarRotaTc1801Api,
   enviarRotaUsbApi,
   importarPlanilhaRotaApi,
   sincronizarCsvManualApi,
   sincronizarViaUsbApi,
 } from '../api';
+import { UsbStatusResponse } from '../types';
 
 interface WorkflowStepsProps {
   ensaio: string;
   totalPlantasRota: number;
   onAtualizacaoNecessaria: () => void;
-  onToast: (msg: string, erro?: boolean) => void;
+  onToast: (msg: string, tipo?: 'ok' | 'erro') => void;
 }
 
 export const WorkflowSteps: React.FC<WorkflowStepsProps> = ({
@@ -33,29 +23,43 @@ export const WorkflowSteps: React.FC<WorkflowStepsProps> = ({
   onToast,
 }) => {
   const [carregandoRota, setCarregandoRota] = useState(false);
-  const [statusRotaMsg, setStatusRotaMsg] = useState<string | null>(null);
+  const [sincronizandoUsb, setSincronizandoUsb] = useState(false);
+  const [sincronizandoManual, setSincronizandoManual] = useState(false);
+  const [statusUsb, setStatusUsb] = useState<UsbStatusResponse | null>(null);
+  const [checandoUsb, setChecandoUsb] = useState(false);
 
-  const [carregandoSync, setCarregandoSync] = useState(false);
-  const [statusSyncMsg, setStatusSyncMsg] = useState<string | null>(null);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [fotosFiles, setFotosFiles] = useState<FileList | null>(null);
 
-  const [expandirManual, setExpandirManual] = useState(false);
-  const [arquivoCsvManual, setArquivoCsvManual] = useState<File | null>(null);
-  const [fotosManuais, setFotosManuais] = useState<FileList | null>(null);
+  const inputRotaRef = useRef<HTMLInputElement | null>(null);
 
-  // Passo 1: Ações
-  const handleImportarArquivo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const atualizarStatusUsb = useCallback(async () => {
+    setChecandoUsb(true);
+    try {
+      const st = await buscarStatusUsbApi();
+      setStatusUsb(st);
+    } catch {
+      setStatusUsb(null);
+    } finally {
+      setChecandoUsb(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    atualizarStatusUsb();
+  }, [atualizarStatusUsb]);
+
+  const handleImportarPlanilha = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setCarregandoRota(true);
-    setStatusRotaMsg(`Lendo "${file.name}" e enviando sequência ao celular via USB...`);
     try {
       const res = await importarPlanilhaRotaApi(ensaio, file, true);
-      setStatusRotaMsg(`✅ ${res.mensagem}`);
-      onToast(`Planilha carregada com ${res.totalPlantasRota} plantas!`);
+      onToast(res.mensagem || `Rota ${res.totalPlantasRota} plantas importada!`, 'ok');
       onAtualizacaoNecessaria();
+      atualizarStatusUsb();
     } catch (err: any) {
-      setStatusRotaMsg(`❌ ${err.message}`);
-      onToast(err.message, true);
+      onToast(err.message || 'Erro ao importar planilha.', 'erro');
     } finally {
       setCarregandoRota(false);
       e.target.value = '';
@@ -64,14 +68,12 @@ export const WorkflowSteps: React.FC<WorkflowStepsProps> = ({
 
   const handleEnviarRotaUsb = async () => {
     setCarregandoRota(true);
-    setStatusRotaMsg('Enviando rota ativa para a aba "Modo Rota" do celular via USB...');
     try {
       const res = await enviarRotaUsbApi(ensaio);
-      setStatusRotaMsg(`✅ ${res.mensagem}`);
-      onToast(`Rota (${res.totalPlantasRota} plantas) enviada para o celular!`);
+      onToast(res.mensagem || 'Rota enviada para o celular!', 'ok');
+      atualizarStatusUsb();
     } catch (err: any) {
-      setStatusRotaMsg(`❌ ${err.message}`);
-      onToast(err.message, true);
+      onToast(err.message || 'Falha ao enviar rota via USB.', 'erro');
     } finally {
       setCarregandoRota(false);
     }
@@ -79,242 +81,192 @@ export const WorkflowSteps: React.FC<WorkflowStepsProps> = ({
 
   const handleCarregarTc1801 = async () => {
     setCarregandoRota(true);
-    setStatusRotaMsg('Carregando planilha oficial do TC-1801 (940 plantas) e injetando no celular...');
     try {
       const res = await carregarRotaTc1801Api(ensaio);
-      setStatusRotaMsg(`✅ ${res.mensagem}`);
-      onToast(`Planilha do TC-1801 (${res.totalPlantasRota} plantas) carregada!`);
+      onToast(res.mensagem || 'Rota TC-1801 carregada!', 'ok');
       onAtualizacaoNecessaria();
+      atualizarStatusUsb();
     } catch (err: any) {
-      setStatusRotaMsg(`❌ ${err.message}`);
-      onToast(err.message, true);
+      onToast(err.message || 'Falha ao carregar TC-1801.', 'erro');
     } finally {
       setCarregandoRota(false);
     }
   };
 
-  // Passo 2: Ações
-  const handlePuxarUsb = async () => {
-    setCarregandoSync(true);
-    setStatusSyncMsg('Conectando ao celular via USB e extraindo coletas + fotos...');
+  const handleSincronizarUsb = async () => {
+    setSincronizandoUsb(true);
     try {
       const res = await sincronizarViaUsbApi(ensaio);
-      setStatusSyncMsg(`✅ ${res.mensagem || 'Fotos e coletas extraídas com sucesso!'}`);
-      onToast('Sincronização via USB concluída!');
+      onToast(
+        `Sincronizado! ${res.leiturasNovasInseridas ?? 0} nova(s), ${res.fotosAnexadas ?? 0} foto(s).`,
+        'ok'
+      );
       onAtualizacaoNecessaria();
+      atualizarStatusUsb();
     } catch (err: any) {
-      setStatusSyncMsg(`❌ ${err.message}`);
-      onToast(err.message, true);
+      onToast(err.message || 'Erro ao sincronizar via cabo USB.', 'erro');
     } finally {
-      setCarregandoSync(false);
+      setSincronizandoUsb(false);
     }
   };
 
-  const handleUploadManual = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!arquivoCsvManual && (!fotosManuais || fotosManuais.length === 0)) {
-      onToast('Selecione um arquivo CSV ou fotos para enviar.', true);
-      return;
-    }
-    setCarregandoSync(true);
-    setStatusSyncMsg('Processando arquivos manuais...');
+  const handleImportarManual = async () => {
+    setSincronizandoManual(true);
     try {
-      const res = await sincronizarCsvManualApi(ensaio, arquivoCsvManual, fotosManuais);
-      setStatusSyncMsg(`✅ ${res.msg}`);
-      onToast('Dados importados com sucesso!');
-      setArquivoCsvManual(null);
-      setFotosManuais(null);
+      const res = await sincronizarCsvManualApi(ensaio, csvFile, fotosFiles);
+      onToast(
+        `Importação manual concluída: ${res.leiturasNovasInseridas ?? 0} leitura(s), ${res.fotosAnexadas ?? 0} foto(s).`,
+        'ok'
+      );
+      setCsvFile(null);
+      setFotosFiles(null);
       onAtualizacaoNecessaria();
     } catch (err: any) {
-      setStatusSyncMsg(`❌ ${err.message}`);
-      onToast(err.message, true);
+      onToast(err.message || 'Erro ao importar CSV/fotos.', 'erro');
     } finally {
-      setCarregandoSync(false);
+      setSincronizandoManual(false);
     }
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-      {/* PASSO 1: PLANEJAMENTO E ENVIO DE ROTA */}
-      <div className="bg-white rounded-2xl border border-stone-200/90 p-5 shadow-sm flex flex-col justify-between">
-        <div>
-          <div className="flex items-center justify-between pb-3 border-b border-stone-100 mb-4">
-            <div className="flex items-center gap-2.5">
-              <span className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 font-extrabold text-xs flex items-center justify-center">
-                1
-              </span>
-              <div>
-                <h2 className="text-sm font-extrabold text-stone-900">
-                  Planejar e Enviar Rota para o Celular
-                </h2>
-                <p className="text-xs text-stone-500">
-                  O trabalhador seguirá a ordem da planilha planta a planta
-                </p>
-              </div>
-            </div>
-            <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-stone-100 text-stone-700 border border-stone-200">
-              {totalPlantasRota} plantas na rota
+    <div className="space-y-3 mb-5">
+      {/* Banner Live Status USB ADB */}
+      <div className="bg-white border border-emerald-100 rounded-xl px-4 py-2.5 shadow-sm flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5 text-xs">
+          <span
+            className={`inline-block w-2.5 h-2.5 rounded-full ${
+              statusUsb?.dispositivoConectado
+                ? 'bg-emerald-500 animate-pulse'
+                : statusUsb?.adbDisponivel
+                ? 'bg-amber-500'
+                : 'bg-gray-400'
+            }`}
+          />
+          <span className="font-bold text-gray-800">Cabo USB ADB:</span>
+          <span className="text-gray-600">
+            {statusUsb
+              ? statusUsb.mensagem
+              : checandoUsb
+              ? 'Verificando dispositivo...'
+              : 'Status indisponível'}
+          </span>
+          {statusUsb?.dispositivoConectado && statusUsb.appInstalado && (
+            <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 font-bold">
+              {statusUsb.registrosNoCelular} registro(s) no celular
             </span>
-          </div>
-
-          <p className="text-xs text-stone-600 mb-4 leading-relaxed">
-            Selecione uma planilha <strong>Excel (.xlsx)</strong> ou <strong>CSV</strong> com as
-            colunas de Clone, Parcela e Planta. O sistema organiza a ordem de visitação e envia ao
-            app via USB ou Wi-Fi.
-          </p>
-
-          {/* Botões de Ação do Passo 1 */}
-          <div className="space-y-2.5">
-            <div className="flex flex-wrap gap-2">
-              {/* Upload de Planilha */}
-              <label className="flex-1 min-w-[190px] inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-sm cursor-pointer transition">
-                <Upload className="w-4 h-4" />
-                <span>Importar Planilha (.xlsx / .csv)</span>
-                <input
-                  type="file"
-                  accept=".csv,.xlsx"
-                  onChange={handleImportarArquivo}
-                  disabled={carregandoRota}
-                  className="hidden"
-                />
-              </label>
-
-              {/* Enviar Atual ao USB */}
-              <button
-                type="button"
-                onClick={handleEnviarRotaUsb}
-                disabled={carregandoRota}
-                className="inline-flex items-center justify-center gap-2 py-2.5 px-3.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs border border-stone-300 transition"
-                title="Reenviar a rota ativa para o celular conectado no cabo USB"
-              >
-                <Usb className="w-4 h-4 text-stone-600" />
-                <span>Enviar p/ Celular (USB)</span>
-              </button>
-            </div>
-
-            {/* Rota Padrão TC-1801 */}
-            <button
-              type="button"
-              onClick={handleCarregarTc1801}
-              disabled={carregandoRota}
-              className="w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold text-xs border border-emerald-200 transition"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Usar Planilha Completa do Ensaio TC-1801 (940 plantas oficiais)</span>
-            </button>
-          </div>
+          )}
         </div>
-
-        {statusRotaMsg && (
-          <div className="mt-4 p-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-700 font-medium">
-            {statusRotaMsg}
-          </div>
-        )}
+        <button
+          onClick={atualizarStatusUsb}
+          disabled={checandoUsb}
+          className="px-3 py-1 text-xs font-semibold rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+        >
+          {checandoUsb ? 'Verificando...' : '↻ Atualizar USB'}
+        </button>
       </div>
 
-      {/* PASSO 2: RECEBER FOTOS E COLETAS DO TRABALHADOR */}
-      <div className="bg-white rounded-2xl border border-stone-200/90 p-5 shadow-sm flex flex-col justify-between">
-        <div>
-          <div className="flex items-center justify-between pb-3 border-b border-stone-100 mb-4">
-            <div className="flex items-center gap-2.5">
-              <span className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 font-extrabold text-xs flex items-center justify-center">
-                2
-              </span>
-              <div>
-                <h2 className="text-sm font-extrabold text-stone-900">
-                  Receber Fotos e Coletas do Celular
-                </h2>
-                <p className="text-xs text-stone-500">
-                  Fotos de alta resolução e detecções do YOLOv8
-                </p>
-              </div>
-            </div>
-            <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-              <Wifi className="w-3 h-3" />
-              USB &amp; Wi-Fi
-            </span>
+      {/* 3 Passos do Fluxo */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {/* Passo 1 */}
+        <div className="bg-white rounded-xl border border-emerald-100 p-4 shadow-sm flex flex-col justify-between gap-3">
+          <div>
+            <div className="text-xs font-bold text-emerald-700 uppercase">1. Rota & Planilha</div>
+            <h4 className="font-extrabold text-gray-900 text-sm mt-0.5">
+              Ensaio {ensaio} ({totalPlantasRota} plantas)
+            </h4>
+            <p className="text-xs text-gray-500 mt-1">
+              Importe Excel (.xlsx/.csv) e envie a sequência ao CacauApp pelo USB.
+            </p>
           </div>
-
-          <p className="text-xs text-stone-600 mb-4 leading-relaxed">
-            Ao voltar da roça, conecte o celular no USB e clique no botão abaixo. Ou, se estiver no mesmo
-            Wi-Fi, o trabalhador pode tocar em <strong>"SINCRONIZAR COM PC"</strong> direto no celular.
-          </p>
-
-          {/* Botão Principal 1 Clique USB */}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-1.5">
+            <input
+              ref={inputRotaRef}
+              type="file"
+              accept=".xlsx,.csv,.tsv"
+              onChange={handleImportarPlanilha}
+              className="hidden"
+            />
             <button
-              type="button"
-              onClick={handlePuxarUsb}
-              disabled={carregandoSync}
-              className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs shadow-md shadow-emerald-950/10 transition"
+              onClick={() => inputRotaRef.current?.click()}
+              disabled={carregandoRota}
+              className="px-2.5 py-1.5 text-xs font-bold bg-emerald-800 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
             >
-              <Usb className="w-4 h-4 text-emerald-300" />
-              <span>{carregandoSync ? 'Puxando do celular...' : 'Puxar Fotos e Coletas do Celular (1 Clique USB)'}</span>
+              Importar .xlsx/.csv
             </button>
-
             <button
-              type="button"
-              onClick={onAtualizacaoNecessaria}
-              className="p-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300 transition"
-              title="Atualizar lista de fotos"
+              onClick={handleEnviarRotaUsb}
+              disabled={carregandoRota}
+              className="px-2.5 py-1.5 text-xs font-bold border border-emerald-700 text-emerald-800 rounded-lg hover:bg-emerald-50 disabled:opacity-50"
             >
-              <RefreshCw className="w-4 h-4" />
+              Enviar Rota USB
             </button>
-          </div>
-
-          {/* Opção Alternativa Manual */}
-          <div className="mt-3">
-            <button
-              type="button"
-              onClick={() => setExpandirManual(!expandirManual)}
-              className="text-xs text-stone-500 hover:text-stone-800 font-medium inline-flex items-center gap-1 transition"
-            >
-              {expandirManual ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-              <span>Importar CSV ou pasta de fotos manualmente do PC (contingência)</span>
-            </button>
-
-            {expandirManual && (
-              <form onSubmit={handleUploadManual} className="mt-3 p-3 rounded-xl bg-stone-50 border border-stone-200 space-y-2.5">
-                <div>
-                  <label className="block text-[11px] font-bold text-stone-600 mb-1">
-                    Arquivo CSV de Coleta:
-                  </label>
-                  <input
-                    type="file"
-                    accept=".csv"
-                    onChange={(e) => setArquivoCsvManual(e.target.files?.[0] || null)}
-                    className="text-xs text-stone-600"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-stone-600 mb-1">
-                    Fotos JPEG/PNG (múltiplas):
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={(e) => setFotosManuais(e.target.files)}
-                    className="text-xs text-stone-600"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={carregandoSync}
-                  className="w-full py-1.5 px-3 rounded-lg bg-stone-800 hover:bg-stone-900 text-white font-bold text-xs transition"
-                >
-                  Processar Arquivos Manuais
-                </button>
-              </form>
+            {ensaio.toUpperCase() === 'TC-1801' && (
+              <button
+                onClick={handleCarregarTc1801}
+                disabled={carregandoRota}
+                className="px-2.5 py-1.5 text-xs font-semibold border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              >
+                Padrão TC-1801
+              </button>
             )}
           </div>
         </div>
 
-        {statusSyncMsg && (
-          <div className="mt-4 p-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-700 font-medium">
-            {statusSyncMsg}
+        {/* Passo 2 */}
+        <div className="bg-white rounded-xl border border-emerald-100 p-4 shadow-sm flex flex-col justify-between gap-3">
+          <div>
+            <div className="text-xs font-bold text-emerald-700 uppercase">2. Puxar Coletas USB</div>
+            <h4 className="font-extrabold text-gray-900 text-sm mt-0.5">
+              1 Clique do Celular p/ PC
+            </h4>
+            <p className="text-xs text-gray-500 mt-1">
+              Lê JSON, bounding boxes auditadas e fotos JPEG direto de files/fotos_sync no celular.
+            </p>
           </div>
-        )}
+          <button
+            onClick={handleSincronizarUsb}
+            disabled={sincronizandoUsb}
+            className="w-full py-2 text-xs font-extrabold bg-amber-600 text-white rounded-lg hover:bg-amber-500 disabled:opacity-50"
+          >
+            {sincronizandoUsb ? 'Sincronizando USB...' : '⚡ Puxar Coletas & Fotos via USB'}
+          </button>
+        </div>
+
+        {/* Passo 3 */}
+        <div className="bg-white rounded-xl border border-emerald-100 p-4 shadow-sm flex flex-col justify-between gap-2">
+          <div>
+            <div className="text-xs font-bold text-emerald-700 uppercase">3. Importação Manual</div>
+            <h4 className="font-extrabold text-gray-900 text-sm mt-0.5">CSV + Fotos (Offline)</h4>
+          </div>
+          <div className="space-y-1.5 text-xs">
+            <label className="block">
+              <span className="text-gray-600 font-semibold">CSV do app:</span>
+              <input
+                type="file"
+                accept=".csv"
+                onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
+                className="block w-full text-[11px] text-gray-600 mt-0.5"
+              />
+            </label>
+            <label className="block">
+              <span className="text-gray-600 font-semibold">Fotos (CEPEC_Analise):</span>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => setFotosFiles(e.target.files)}
+                className="block w-full text-[11px] text-gray-600 mt-0.5"
+              />
+            </label>
+          </div>
+          <button
+            onClick={handleImportarManual}
+            disabled={sincronizandoManual || !csvFile}
+            className="w-full py-1.5 text-xs font-bold border border-emerald-800 text-emerald-900 rounded-lg hover:bg-emerald-50 disabled:opacity-40"
+          >
+            {sincronizandoManual ? 'Enviando...' : 'Importar CSV + Fotos'}
+          </button>
+        </div>
       </div>
     </div>
   );

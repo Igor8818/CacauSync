@@ -421,7 +421,19 @@ public class RotaPlanejamentoService {
     }
 
     private List<String> fatiarLinhaCsv(String linha) {
-        char divisor = (linha.contains(";") && !linha.contains(",")) ? ';' : ',';
+        int countSemi = 0;
+        int countComma = 0;
+        boolean quoteScan = false;
+        for (int i = 0; i < linha.length(); i++) {
+            char c = linha.charAt(i);
+            if (c == '"') {
+                quoteScan = !quoteScan;
+            } else if (!quoteScan) {
+                if (c == ';') countSemi++;
+                else if (c == ',') countComma++;
+            }
+        }
+        char divisor = (countSemi > countComma) ? ';' : ',';
         List<String> cols = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         boolean emAspas = false;

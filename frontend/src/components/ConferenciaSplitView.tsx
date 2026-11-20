@@ -1,967 +1,951 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  Trash2,
-  Plus,
-  Minus,
-  Search,
-  Maximize2,
-  Minimize2,
-  ZoomIn,
-  ZoomOut,
-  RotateCcw,
-  PanelLeftClose,
-  PanelLeft,
-  Image as ImageIcon,
-  CheckCircle2,
-  Clock,
-  Sparkles,
-  X,
-} from 'lucide-react';
+  anexarFotoLeituraApi,
+  carregarFotoUrlApi,
+  excluirLeituraApi,
+  validarLeituraApi,
+} from '../api';
 import { DeteccaoBox, ItemRota, LeituraColeta, StatusValidacao } from '../types';
-import { carregarFotoUrlApi, excluirLeituraApi, validarLeituraApi } from '../api';
 
 interface ConferenciaSplitViewProps {
   leituras: LeituraColeta[];
   itensRota: ItemRota[];
   ensaio: string;
+  indiceFruto?: number;
+  leituraFocadaId?: number | null;
   onAtualizar: () => void;
-  onToast: (msg: string, erro?: boolean) => void;
+  onToast: (msg: string, tipo?: 'ok' | 'erro') => void;
 }
 
-const CORES_CLASSES: Record<string, string> = {
-  sadio: '#10b981', // emerald-500
-  vassoura: '#f59e0b', // amber-500
-  podridao: '#ef4444', // red-500
-  nao_avaliavel: '#94a3b8', // slate-400
+type ClasseCacau = 'Sadio' | 'Vassoura de Bruxa' | 'Podridão' | 'Não Avaliável';
+type ModoOverlay = 'COMPLETO' | 'SUTIL' | 'LIMPO';
+type HandleCanto = 'TL' | 'TR' | 'BL' | 'BR';
+
+const CLASSES_ORDEM: ClasseCacau[] = [
+  'Sadio',
+  'Vassoura de Bruxa',
+  'Podridão',
+  'Não Avaliável',
+];
+
+const COR_CLASSE: Record<ClasseCacau, string> = {
+  Sadio: '#2E7D32',
+  'Vassoura de Bruxa': '#8E24AA',
+  Podridão: '#D32F2F',
+  'Não Avaliável': '#EF6C00',
 };
 
-function getCorClasse(classe: string): string {
-  const c = (classe || '').toLowerCase().trim();
-  if (c.includes('vassoura')) return CORES_CLASSES.vassoura;
-  if (c.includes('podri') || c.includes('monil')) return CORES_CLASSES.podridao;
-  if (c.includes('nao') || c.includes('não')) return CORES_CLASSES.nao_avaliavel;
-  return CORES_CLASSES.sadio;
+function normalizarClasseDto(raw?: string | null): ClasseCacau {
+  const s = (raw || '').trim().toLowerCase();
+  if (s.includes('vassoura')) return 'Vassoura de Bruxa';
+  if (s.includes('podrid') || s.includes('monili')) return 'Podridão';
+  if (s.includes('avali') || s.includes('nao ') || s.includes('não ')) return 'Não Avaliável';
+  return 'Sadio';
+}
+
+function corDaClasse(raw?: string | null): string {
+  return COR_CLASSE[normalizarClasseDto(raw)];
+}
+
+function proxClasse(raw?: string | null): ClasseCacau {
+  const cur = normalizarClasseDto(raw);
+  const idx = CLASSES_ORDEM.indexOf(cur);
+  return CLASSES_ORDEM[(idx + 1) % CLASSES_ORDEM.length];
+}
+
+function clamp01(v: number): number {
+  return Math.max(0, Math.min(1, v));
 }
 
 export const ConferenciaSplitView: React.FC<ConferenciaSplitViewProps> = ({
   leituras,
   itensRota,
   ensaio,
+  indiceFruto = 22,
+  leituraFocadaId,
   onAtualizar,
   onToast,
 }) => {
-  // Filtros da lista
-  const [filtro, setFiltro] = useState<'TODAS' | 'PENDENTES' | 'COM_FOTO' | 'VALIDADAS'>('COM_FOTO');
+  const [filtro, setFiltro] = useState<'TODAS' | 'PENDENTES' | 'COM_FOTO' | 'VALIDADAS'>('TODAS');
   const [busca, setBusca] = useState('');
+  const [selecionadaId, setSelecionadaId] = useState<number | null>(null);
 
-  // Item selecionado atualmente para conferência
-  const [selecionadoId, setSelecionadoId] = useState<number | null>(null);
+  const [caixas, setCaixas] = useState<DeteccaoBox[]>([]);
+  const [caixaSelIdx, setCaixaSelIdx] = useState<number | null>(null);
+  const [undoStack, setUndoStack] = useState<Array<{ caixas: DeteccaoBox[]; selIdx: number | null }>>([]);
+  const [modoOverlay, setModoOverlay] = useState<ModoOverlay>('COMPLETO');
+  const [observacao, setObservacao] = useState('');
+  const [caixasEditadasManual, setCaixasEditadasManual] = useState(false);
 
-  // Estados de Ergonomia Visual
-  const [modoTelaCheia, setModoTelaCheia] = useState(false);
-  const [listaLateralVisivel, setListaLateralVisivel] = useState(true);
-  const [zoomNivel, setZoomNivel] = useState(1);
-
-  // Detalhes da leitura selecionada
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
   const [carregandoFoto, setCarregandoFoto] = useState(false);
-  const [caixas, setCaixas] = useState<DeteccaoBox[]>([]);
-  const [caixaAtivaIndex, setCaixaAtivaIndex] = useState<number | null>(null);
-  const [observacao, setObservacao] = useState('');
   const [salvando, setSalvando] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
+  const [confirmarExclusao, setConfirmarExclusao] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const canvasFullscreenRef = useRef<HTMLCanvasElement | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Lista ordenada por ordemRota
-  const leiturasOrdenadas = [...leituras].sort((a, b) => {
-    const oA = a.ordemRota ?? 999999;
-    const oB = b.ordemRota ?? 999999;
-    return oA - oB;
+  const dragStateRef = useRef<{
+    ativo: boolean;
+    tipo: 'MOVE' | 'HANDLE' | null;
+    handle: HandleCanto | null;
+    idx: number;
+    startNormX: number;
+    startNormY: number;
+    origBox: DeteccaoBox;
+    arrastou: boolean;
+  }>({
+    ativo: false,
+    tipo: null,
+    handle: null,
+    idx: -1,
+    startNormX: 0,
+    startNormY: 0,
+    origBox: { classe: 'Sadio', confianca: 1, x: 0, y: 0, largura: 0.1, altura: 0.1 },
+    arrastou: false,
   });
 
-  // Filtragem da lista
-  const leiturasFiltradas = leiturasOrdenadas.filter((l) => {
-    if (filtro === 'PENDENTES' && l.statusValidacao !== 'PENDENTE') return false;
-    if (filtro === 'VALIDADAS' && l.statusValidacao !== 'VALIDADA' && l.statusValidacao !== 'AJUSTADA') return false;
-    if (filtro === 'COM_FOTO' && !l.temFoto) return false;
+  const mapaOrdemRota = useMemo(() => {
+    const m = new Map<string, number>();
+    itensRota.forEach((it) => {
+      if (it.plantId) m.set(it.plantId.toLowerCase(), it.ordem);
+    });
+    return m;
+  }, [itensRota]);
 
-    if (busca.trim()) {
-      const b = busca.toLowerCase();
-      const matchClone = (l.codigoClone || '').toLowerCase().includes(b);
-      const matchPlant = (l.plantCode || '').toLowerCase().includes(b);
-      const matchParcela = (l.numeroParcela || '').toLowerCase().includes(b);
-      const matchOrdem = String(l.ordemRota || '').includes(b);
-      return matchClone || matchPlant || matchParcela || matchOrdem;
-    }
-    return true;
-  });
-
-  // Selecionar o primeiro automaticamente ao carregar
-  useEffect(() => {
-    if (selecionadoId === null && leiturasFiltradas.length > 0) {
-      const primeiro = leiturasFiltradas.find((l) => l.temFoto) || leiturasFiltradas[0];
-      if (primeiro) {
-        setSelecionadoId(primeiro.id);
+  const leiturasFiltradas = useMemo(() => {
+    const q = busca.trim().toLowerCase();
+    const lista = leituras.filter((l) => {
+      if (filtro === 'PENDENTES' && l.statusValidacao !== 'PENDENTE') return false;
+      if (filtro === 'COM_FOTO' && !l.temFoto) return false;
+      if (
+        filtro === 'VALIDADAS' &&
+        l.statusValidacao !== 'VALIDADA' &&
+        l.statusValidacao !== 'AJUSTADA'
+      ) {
+        return false;
       }
-    }
-  }, [leiturasFiltradas, selecionadoId]);
+      if (!q) return true;
+      return (
+        (l.plantCode || '').toLowerCase().includes(q) ||
+        (l.codigoClone || '').toLowerCase().includes(q) ||
+        (l.numeroParcela || '').toLowerCase().includes(q) ||
+        String(l.numeroPlanta ?? '').includes(q)
+      );
+    });
 
-  const leituraAtual = leituras.find((l) => l.id === selecionadoId) || null;
+    return [...lista].sort((a, b) => {
+      const oa = a.ordemRota ?? mapaOrdemRota.get((a.plantCode || '').toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
+      const ob = b.ordemRota ?? mapaOrdemRota.get((b.plantCode || '').toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
+      if (oa !== ob) return oa - ob;
+      return a.id - b.id;
+    });
+  }, [leituras, filtro, busca, mapaOrdemRota]);
 
-  // Carregar foto e caixas da leitura selecionada
   useEffect(() => {
+    if (leituraFocadaId && leituras.some((l) => l.id === leituraFocadaId)) {
+      setFiltro('TODAS');
+      setSelecionadaId(leituraFocadaId);
+    }
+  }, [leituraFocadaId, leituras]);
+
+  useEffect(() => {
+    if (leiturasFiltradas.length === 0) {
+      setSelecionadaId(null);
+      return;
+    }
+    if (!selecionadaId || !leiturasFiltradas.some((l) => l.id === selecionadaId)) {
+      setSelecionadaId(leiturasFiltradas[0].id);
+    }
+  }, [leiturasFiltradas, selecionadaId]);
+
+  const leituraAtual = useMemo(
+    () => leiturasFiltradas.find((l) => l.id === selecionadaId) || null,
+    [leiturasFiltradas, selecionadaId]
+  );
+
+  useEffect(() => {
+    setConfirmarExclusao(false);
+    setUndoStack([]);
+    setCaixasEditadasManual(false);
     if (!leituraAtual) {
-      setFotoUrl(null);
       setCaixas([]);
+      setCaixaSelIdx(null);
+      setObservacao('');
+      setFotoUrl(null);
       return;
     }
 
-    setCaixas(leituraAtual.deteccoes ? [...leituraAtual.deteccoes] : []);
+    const iniciais = (leituraAtual.deteccoes || []).map((d) => ({
+      ...d,
+      classe: normalizarClasseDto(d.classe),
+    }));
+    setCaixas(iniciais);
+    setCaixaSelIdx(null);
     setObservacao(leituraAtual.observacaoValidacao || '');
-    setCaixaAtivaIndex(null);
-    setZoomNivel(1);
 
+    let cancelado = false;
     if (leituraAtual.temFoto) {
       setCarregandoFoto(true);
       carregarFotoUrlApi(leituraAtual.id)
-        .then((url) => {
-          setFotoUrl(url);
-          setCarregandoFoto(false);
+        .then((u) => {
+          if (!cancelado) setFotoUrl(u);
         })
-        .catch(() => setCarregandoFoto(false));
+        .finally(() => {
+          if (!cancelado) setCarregandoFoto(false);
+        });
     } else {
       setFotoUrl(null);
-      setCarregandoFoto(false);
     }
-  }, [selecionadoId]);
+    return () => {
+      cancelado = true;
+    };
+  }, [
+    leituraAtual?.id,
+    leituraAtual?.temFoto,
+    leituraAtual?.statusValidacao,
+    leituraAtual?.validadoEm,
+    leituraAtual?.qtdEfetiva,
+  ]);
 
-  // Função para desenhar caixas no Canvas
-  const desenharNoCanvas = (canvas: HTMLCanvasElement) => {
-    if (!fotoUrl) return;
+  const pushUndo = useCallback(
+    (snapshotCaixas: DeteccaoBox[], selIdx: number | null) => {
+      setUndoStack((prev) => {
+        const next = [...prev, { caixas: snapshotCaixas.map((b) => ({ ...b })), selIdx }];
+        return next.length > 25 ? next.slice(next.length - 25) : next;
+      });
+    },
+    []
+  );
+
+  const desfazer = useCallback(() => {
+    setUndoStack((prev) => {
+      if (prev.length === 0) return prev;
+      const last = prev[prev.length - 1];
+      setCaixas(last.caixas);
+      setCaixaSelIdx(last.selIdx);
+      setCaixasEditadasManual(true);
+      return prev.slice(0, prev.length - 1);
+    });
+  }, []);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        desfazer();
+      } else if (e.key.toLowerCase() === 'h') {
+        e.preventDefault();
+        setModoOverlay((m) => (m === 'COMPLETO' ? 'SUTIL' : m === 'SUTIL' ? 'LIMPO' : 'COMPLETO'));
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [desfazer]);
+
+  const desenharCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    const img = imgRef.current;
+    if (!canvas || !img) return;
+
+    const w = img.clientWidth;
+    const h = img.clientHeight;
+    if (w <= 0 || h <= 0) return;
+
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    ctx.clearRect(0, 0, w, h);
 
-    const img = new Image();
-    img.src = fotoUrl;
-    img.onload = () => {
-      imgRef.current = img;
-      canvas.width = img.naturalWidth || 800;
-      canvas.height = img.naturalHeight || 600;
+    caixas.forEach((box, idx) => {
+      const x = box.x * w;
+      const y = box.y * h;
+      const bw = box.largura * w;
+      const bh = box.altura * h;
+      const selecionado = idx === caixaSelIdx;
+      const cor = corDaClasse(box.classe);
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      // Desenhar cada caixa YOLO
-      caixas.forEach((box, idx) => {
-        const x = box.x * canvas.width;
-        const y = box.y * canvas.height;
-        const w = box.largura * canvas.width;
-        const h = box.altura * canvas.height;
-
-        const isSelected = idx === caixaAtivaIndex;
-        const cor = getCorClasse(box.classe);
-
-        // Bounding Box
+      ctx.save();
+      if (selecionado) {
+        ctx.fillStyle = `${cor}33`;
+        ctx.fillRect(x, y, bw, bh);
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.strokeRect(x, y, bw, bh);
+        ctx.lineWidth = 2.5;
         ctx.strokeStyle = cor;
-        ctx.lineWidth = isSelected ? 4 : 2.5;
-        ctx.strokeRect(x, y, w, h);
+        ctx.strokeRect(x, y, bw, bh);
+      } else {
+        ctx.lineWidth = modoOverlay === 'COMPLETO' ? 2.5 : 1.8;
+        ctx.strokeStyle = cor;
+        ctx.strokeRect(x, y, bw, bh);
+      }
 
-        // Sombra de seleção semitransparente
-        if (isSelected) {
-          ctx.fillStyle = `${cor}30`;
-          ctx.fillRect(x, y, w, h);
-        }
-
-        // Tag superior com nome da classe
-        const label = `#${idx + 1} ${box.classe}`;
-        ctx.font = 'bold 15px Inter, sans-serif';
-        const txtWidth = ctx.measureText(label).width;
-
+      if (selecionado || modoOverlay === 'COMPLETO') {
+        const texto = `${normalizarClasseDto(box.classe)} ${Math.round((box.confianca || 0) * 100)}%`;
+        ctx.font = 'bold 11px sans-serif';
+        const tw = ctx.measureText(texto).width;
+        const by = Math.max(0, y - 18);
         ctx.fillStyle = cor;
-        ctx.fillRect(x, Math.max(0, y - 24), txtWidth + 12, 24);
+        ctx.fillRect(x, by, tw + 10, 18);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText(texto, x + 5, by + 13);
+      }
 
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(label, x + 6, Math.max(17, y - 7));
-      });
+      if (selecionado) {
+        const cantos: Array<[number, number]> = [
+          [x, y],
+          [x + bw, y],
+          [x, y + bh],
+          [x + bw, y + bh],
+        ];
+        cantos.forEach(([cx, cy]) => {
+          ctx.beginPath();
+          ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fill();
+          ctx.lineWidth = 2.5;
+          ctx.strokeStyle = cor;
+          ctx.stroke();
+        });
+      }
+      ctx.restore();
+    });
+  }, [caixas, caixaSelIdx, modoOverlay]);
+
+  useEffect(() => {
+    desenharCanvas();
+  }, [desenharCanvas, fotoUrl]);
+
+  const obterCoords = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { px: 0, py: 0, nx: 0, ny: 0, w: 1, h: 1 };
+    const rect = canvas.getBoundingClientRect();
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
+    const w = Math.max(1, rect.width);
+    const h = Math.max(1, rect.height);
+    return {
+      px,
+      py,
+      nx: clamp01(px / w),
+      ny: clamp01(py / h),
+      w,
+      h,
     };
   };
 
-  // Redesenho nos dois Canvas (normal e fullscreen)
-  useEffect(() => {
-    if (canvasRef.current) desenharNoCanvas(canvasRef.current);
-    if (canvasFullscreenRef.current) desenharNoCanvas(canvasFullscreenRef.current);
-  }, [fotoUrl, caixas, caixaAtivaIndex, modoTelaCheia]);
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const { px, py, nx, ny, w, h } = obterCoords(e);
 
-  // Manipulação de clique no Canvas
-  const processarCliqueCanvas = (e: React.MouseEvent<HTMLCanvasElement>, canvas: HTMLCanvasElement) => {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
+    if (caixaSelIdx !== null && caixaSelIdx >= 0 && caixaSelIdx < caixas.length) {
+      const sel = caixas[caixaSelIdx];
+      const l = sel.x * w;
+      const t = sel.y * h;
+      const r = (sel.x + sel.largura) * w;
+      const b = (sel.y + sel.altura) * h;
 
-    const clickX = (e.clientX - rect.left) * scaleX;
-    const clickY = (e.clientY - rect.top) * scaleY;
+      const cantos: Array<[HandleCanto, number, number]> = [
+        ['TL', l, t],
+        ['TR', r, t],
+        ['BL', l, b],
+        ['BR', r, b],
+      ];
+      const handleHit = cantos.find(([, cx, cy]) => Math.hypot(px - cx, py - cy) <= 13);
+      if (handleHit) {
+        dragStateRef.current = {
+          ativo: true,
+          tipo: 'HANDLE',
+          handle: handleHit[0],
+          idx: caixaSelIdx,
+          startNormX: nx,
+          startNormY: ny,
+          origBox: { ...sel },
+          arrastou: false,
+        };
+        return;
+      }
 
-    // Verificar se clicou em uma caixa existente
-    let encontrada: number | null = null;
-    caixas.forEach((box, idx) => {
-      const bx = box.x * canvas.width;
-      const by = box.y * canvas.height;
-      const bw = box.largura * canvas.width;
-      const bh = box.altura * canvas.height;
+      if (nx >= sel.x && nx <= sel.x + sel.largura && ny >= sel.y && ny <= sel.y + sel.altura) {
+        dragStateRef.current = {
+          ativo: true,
+          tipo: 'MOVE',
+          handle: null,
+          idx: caixaSelIdx,
+          startNormX: nx,
+          startNormY: ny,
+          origBox: { ...sel },
+          arrastou: false,
+        };
+        return;
+      }
+    }
 
-      if (clickX >= bx && clickX <= bx + bw && clickY >= by && clickY <= by + bh) {
-        encontrada = idx;
+    dragStateRef.current = {
+      ativo: false,
+      tipo: null,
+      handle: null,
+      idx: -1,
+      startNormX: nx,
+      startNormY: ny,
+      origBox: { classe: 'Sadio', confianca: 1, x: 0, y: 0, largura: 0.1, altura: 0.1 },
+      arrastou: false,
+    };
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const st = dragStateRef.current;
+    if (!st.ativo || st.idx < 0 || st.idx >= caixas.length) return;
+
+    const { nx, ny } = obterCoords(e);
+    const dx = nx - st.startNormX;
+    const dy = ny - st.startNormY;
+    if (!st.arrastou && Math.hypot(dx, dy) < 0.008) return;
+
+    if (!st.arrastou) {
+      pushUndo(caixas, caixaSelIdx);
+      st.arrastou = true;
+      setCaixasEditadasManual(true);
+    }
+
+    const orig = st.origBox;
+    const nextBox = { ...orig };
+
+    if (st.tipo === 'MOVE') {
+      nextBox.x = clamp01(Math.min(1 - orig.largura, orig.x + dx));
+      nextBox.y = clamp01(Math.min(1 - orig.altura, orig.y + dy));
+    } else if (st.tipo === 'HANDLE' && st.handle) {
+      const minW = 0.025;
+      const minH = 0.025;
+      let l = orig.x;
+      let t = orig.y;
+      let r = orig.x + orig.largura;
+      let b = orig.y + orig.altura;
+
+      if (st.handle === 'TL') {
+        l = Math.max(0, Math.min(r - minW, nx));
+        t = Math.max(0, Math.min(b - minH, ny));
+      } else if (st.handle === 'TR') {
+        r = Math.min(1, Math.max(l + minW, nx));
+        t = Math.max(0, Math.min(b - minH, ny));
+      } else if (st.handle === 'BL') {
+        l = Math.max(0, Math.min(r - minW, nx));
+        b = Math.min(1, Math.max(t + minH, ny));
+      } else if (st.handle === 'BR') {
+        r = Math.min(1, Math.max(l + minW, nx));
+        b = Math.min(1, Math.max(t + minH, ny));
+      }
+      nextBox.x = l;
+      nextBox.y = t;
+      nextBox.largura = r - l;
+      nextBox.altura = b - t;
+    }
+
+    setCaixas((prev) => prev.map((b, i) => (i === st.idx ? nextBox : b)));
+  };
+
+  const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const st = dragStateRef.current;
+    const arrastou = st.arrastou;
+    dragStateRef.current.ativo = false;
+    if (arrastou) return;
+
+    const { nx, ny } = obterCoords(e);
+    let hitIdx = -1;
+    let bestDist = Infinity;
+    caixas.forEach((b, idx) => {
+      if (nx >= b.x && nx <= b.x + b.largura && ny >= b.y && ny <= b.y + b.altura) {
+        const cx = b.x + b.largura / 2;
+        const cy = b.y + b.altura / 2;
+        const d = Math.hypot(nx - cx, ny - cy);
+        if (d < bestDist) {
+          bestDist = d;
+          hitIdx = idx;
+        }
       }
     });
 
-    if (encontrada !== null) {
-      setCaixaAtivaIndex(encontrada);
-    } else {
-      // Adicionar fruto manual na posição clicada
-      const novaLargura = 0.14;
-      const novaAltura = 0.22;
-      const novoX = Math.max(0, Math.min(1 - novaLargura, (clickX / canvas.width) - (novaLargura / 2)));
-      const novoY = Math.max(0, Math.min(1 - novaAltura, (clickY / canvas.height) - (novaAltura / 2)));
-
-      const novaBox: DeteccaoBox = {
+    if (hitIdx === -1) {
+      pushUndo(caixas, caixaSelIdx);
+      const wBox = 0.12;
+      const hBox = 0.15;
+      const x = clamp01(Math.min(1 - wBox, Math.max(0, nx - wBox / 2)));
+      const y = clamp01(Math.min(1 - hBox, Math.max(0, ny - hBox / 2)));
+      const nova: DeteccaoBox = {
         classe: 'Sadio',
         confianca: 1.0,
-        x: novoX,
-        y: novoY,
-        largura: novaLargura,
-        altura: novaAltura,
+        x,
+        y,
+        largura: wBox,
+        altura: hBox,
       };
-      setCaixas([...caixas, novaBox]);
-      setCaixaAtivaIndex(caixas.length);
-      onToast('Fruto adicionado manualmente!');
+      setCaixas((prev) => {
+        const next = [...prev, nova];
+        setCaixaSelIdx(next.length - 1);
+        return next;
+      });
+      setCaixasEditadasManual(true);
+    } else if (hitIdx !== caixaSelIdx) {
+      setCaixaSelIdx(hitIdx);
+    } else {
+      pushUndo(caixas, caixaSelIdx);
+      setCaixas((prev) =>
+        prev.map((b, i) => (i === hitIdx ? { ...b, classe: proxClasse(b.classe) } : b))
+      );
+      setCaixasEditadasManual(true);
     }
   };
 
-  // Alterar classe da caixa ativa
-  const mudarClasseAtiva = (novaClasse: string) => {
-    if (caixaAtivaIndex === null || !caixas[caixaAtivaIndex]) return;
-    const novas = [...caixas];
-    novas[caixaAtivaIndex] = { ...novas[caixaAtivaIndex], classe: novaClasse };
-    setCaixas(novas);
-  };
+  // Permite zerar falsos positivos (totalAtual = 0) quando todas as caixas são removidas
+  const usarCaixas =
+    caixas.length > 0 ||
+    caixasEditadasManual ||
+    (leituraAtual?.deteccoes?.length ?? 0) > 0;
 
-  // Redimensionar caixa ativa
-  const redimensionarAtiva = (fator: number) => {
-    if (caixaAtivaIndex === null || !caixas[caixaAtivaIndex]) return;
-    const b = caixas[caixaAtivaIndex];
-    const nw = Math.max(0.03, Math.min(0.85, b.largura * fator));
-    const nh = Math.max(0.03, Math.min(0.85, b.altura * fator));
-    const nx = Math.max(0, Math.min(1 - nw, b.x + (b.largura - nw) / 2));
-    const ny = Math.max(0, Math.min(1 - nh, b.y + (b.altura - nh) / 2));
+  const sadios = usarCaixas
+    ? caixas.filter((c) => normalizarClasseDto(c.classe) === 'Sadio').length
+    : leituraAtual?.qtdSadios ?? 0;
+  const vassoura = usarCaixas
+    ? caixas.filter((c) => normalizarClasseDto(c.classe) === 'Vassoura de Bruxa').length
+    : leituraAtual?.qtdVassoura ?? 0;
+  const podridao = usarCaixas
+    ? caixas.filter((c) => normalizarClasseDto(c.classe) === 'Podridão').length
+    : leituraAtual?.qtdPodridao ?? 0;
+  const naoAv = usarCaixas
+    ? caixas.filter((c) => normalizarClasseDto(c.classe) === 'Não Avaliável').length
+    : leituraAtual?.qtdNaoAvaliavel ?? 0;
+  const totalAtual = usarCaixas ? caixas.length : leituraAtual?.qtdEfetiva ?? leituraAtual?.qtdFrutos ?? 0;
 
-    const novas = [...caixas];
-    novas[caixaAtivaIndex] = { ...b, largura: nw, altura: nh, x: nx, y: ny };
-    setCaixas(novas);
-  };
+  const indiceSeguro = Math.max(1, indiceFruto);
+  const estimativaKg = sadios / indiceSeguro;
+  const estimativaArrobas = estimativaKg / 15;
 
-  // Excluir caixa ativa
-  const excluirAtiva = () => {
-    if (caixaAtivaIndex === null) return;
-    const novas = caixas.filter((_, idx) => idx !== caixaAtivaIndex);
-    setCaixas(novas);
-    setCaixaAtivaIndex(null);
-    onToast('Marcação removida.');
-  };
-
-  // Navegar na ordem da planilha
-  const indiceAtual = leiturasFiltradas.findIndex((l) => l.id === selecionadoId);
-
-  const irParaAnterior = () => {
-    if (indiceAtual > 0) {
-      setSelecionadoId(leiturasFiltradas[indiceAtual - 1].id);
-    }
-  };
-
-  const irParaProxima = () => {
-    if (indiceAtual < leiturasFiltradas.length - 1) {
-      setSelecionadoId(leiturasFiltradas[indiceAtual + 1].id);
-    }
-  };
-
-  // Salvar Validação
-  const salvarValidacao = async (status: StatusValidacao, avancarApos = true) => {
-    if (!leituraAtual) return;
+  const enviarValidacao = async (statusSolicitado: StatusValidacao) => {
+    if (!leituraAtual || salvando) return;
     setSalvando(true);
     try {
-      let sadios = 0, vassoura = 0, podridao = 0, naoAv = 0;
-      caixas.forEach((b) => {
-        const c = b.classe.toLowerCase();
-        if (c.includes('vassoura')) vassoura++;
-        else if (c.includes('podri') || c.includes('monil')) podridao++;
-        else if (c.includes('nao') || c.includes('não')) naoAv++;
-        else sadios++;
-      });
+      const mudouContagemOuClasse =
+        totalAtual !== leituraAtual.qtdFrutos ||
+        sadios !== (leituraAtual.qtdSadios ?? 0) ||
+        vassoura !== (leituraAtual.qtdVassoura ?? 0) ||
+        podridao !== (leituraAtual.qtdPodridao ?? 0) ||
+        naoAv !== (leituraAtual.qtdNaoAvaliavel ?? 0) ||
+        caixasEditadasManual;
 
-      const total = sadios + vassoura + podridao + naoAv;
       const statusEfetivo: StatusValidacao =
-        status === 'VALIDADA' && total !== leituraAtual.qtdFrutos ? 'AJUSTADA' : status;
+        statusSolicitado === 'VALIDADA' && mudouContagemOuClasse ? 'AJUSTADA' : statusSolicitado;
 
-      await validarLeituraApi(leituraAtual.id, {
-        status: statusEfetivo,
-        qtdFrutosValidada: total,
-        observacao: observacao.trim() || null,
-        qtdSadios: sadios,
-        qtdVassoura: vassoura,
-        qtdPodridao: podridao,
-        qtdNaoAvaliavel: naoAv,
-        deteccoes: caixas,
-      });
+      const detsPayload = caixas.map((b) => ({
+        classe: normalizarClasseDto(b.classe),
+        confianca: Number((b.confianca ?? 1).toFixed(4)),
+        x: clamp01(b.x),
+        y: clamp01(b.y),
+        largura: clamp01(Math.min(1 - clamp01(b.x), b.largura)),
+        altura: clamp01(Math.min(1 - clamp01(b.y), b.altura)),
+      }));
 
-      onToast(`Planta #${leituraAtual.ordemRota || ''} ${statusEfetivo.toLowerCase()} com sucesso!`);
+      const payload: Parameters<typeof validarLeituraApi>[1] =
+        statusEfetivo === 'VALIDADA' || statusEfetivo === 'AJUSTADA'
+          ? {
+              status: statusEfetivo,
+              qtdFrutosValidada: statusEfetivo === 'AJUSTADA' ? totalAtual : null,
+              observacao: observacao.trim() ? observacao.trim() : null,
+              qtdSadios: sadios,
+              qtdVassoura: vassoura,
+              qtdPodridao: podridao,
+              qtdNaoAvaliavel: naoAv,
+              deteccoes: detsPayload,
+            }
+          : {
+              status: statusEfetivo,
+              qtdFrutosValidada: null,
+              observacao: observacao.trim() ? observacao.trim() : null,
+            };
+
+      await validarLeituraApi(leituraAtual.id, payload);
+
+      setCaixasEditadasManual(false);
+      onToast(
+        `Leitura ${leituraAtual.plantCode} salva como ${statusEfetivo} (${totalAtual} frutos).`,
+        'ok'
+      );
       onAtualizar();
-
-      if (avancarApos && indiceAtual < leiturasFiltradas.length - 1) {
-        setSelecionadoId(leiturasFiltradas[indiceAtual + 1].id);
-      }
     } catch (err: any) {
-      onToast(`Erro ao salvar: ${err.message}`, true);
+      onToast(err.message || 'Falha ao salvar auditoria.', 'erro');
     } finally {
       setSalvando(false);
     }
   };
 
-  // Excluir Coleta / Leitura inteira
-  const handleExcluirLeitura = async (leitura: LeituraColeta, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    const confirmar = window.confirm(
-      `Deseja realmente excluir esta coleta da planta ${leitura.codigoClone || ''} (Parcela ${leitura.numeroParcela}, Planta ${leitura.numeroPlanta})?`
-    );
-    if (!confirmar) return;
+  const removerCaixaSelecionada = () => {
+    if (caixaSelIdx === null || caixaSelIdx < 0 || caixaSelIdx >= caixas.length) return;
+    pushUndo(caixas, caixaSelIdx);
+    setCaixas((prev) => prev.filter((_, idx) => idx !== caixaSelIdx));
+    setCaixaSelIdx(null);
+    setCaixasEditadasManual(true);
+  };
 
-    setSalvando(true);
+  const handleExcluirLeitura = async () => {
+    if (!leituraAtual || excluindo) return;
+    setExcluindo(true);
     try {
-      const idx = leiturasFiltradas.findIndex((item) => item.id === leitura.id);
-      let proximoId: number | null = null;
-      if (leiturasFiltradas.length > 1) {
-        proximoId =
-          idx < leiturasFiltradas.length - 1
-            ? leiturasFiltradas[idx + 1].id
-            : leiturasFiltradas[idx - 1].id;
-      }
-
-      await excluirLeituraApi(leitura.id);
-      onToast(`Coleta excluída com sucesso!`);
-      if (selecionadoId === leitura.id) {
-        setSelecionadoId(proximoId);
-      }
+      await excluirLeituraApi(leituraAtual.id);
+      setConfirmarExclusao(false);
+      onToast(`Leitura ${leituraAtual.plantCode} excluída do ensaio ${ensaio}.`, 'ok');
       onAtualizar();
     } catch (err: any) {
-      onToast(`Erro ao excluir coleta: ${err.message}`, true);
+      onToast(err.message || 'Erro ao excluir leitura.', 'erro');
     } finally {
-      setSalvando(false);
+      setExcluindo(false);
     }
   };
 
-  // Atalhos de teclado
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
+  const handleUploadFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !leituraAtual) return;
+    try {
+      await anexarFotoLeituraApi(leituraAtual.id, file);
+      const novaUrl = await carregarFotoUrlApi(leituraAtual.id, true);
+      setFotoUrl(novaUrl);
+      onToast('Foto anexada à leitura!', 'ok');
+      onAtualizar();
+    } catch (err: any) {
+      onToast(err.message || 'Erro ao anexar foto.', 'erro');
+    } finally {
+      e.target.value = '';
+    }
+  };
 
-      if (e.key === 'Escape') {
-        if (modoTelaCheia) {
-          e.preventDefault();
-          setModoTelaCheia(false);
-        }
-      } else if (e.key === 'f' || e.key === 'F') {
-        e.preventDefault();
-        setModoTelaCheia((prev) => !prev);
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        irParaAnterior();
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        irParaProxima();
-      } else if (e.key === '1') {
-        mudarClasseAtiva('Sadio');
-      } else if (e.key === '2') {
-        mudarClasseAtiva('Vassoura de Bruxa');
-      } else if (e.key === '3') {
-        mudarClasseAtiva('Podridão Parda');
-      } else if (e.key === '4') {
-        mudarClasseAtiva('Não Avaliável');
-      } else if (e.key === 'Delete' || e.key === 'Backspace') {
-        excluirAtiva();
-      } else if (e.key === '+' || e.key === '=') {
-        redimensionarAtiva(1.1);
-      } else if (e.key === '-' || e.key === '_') {
-        redimensionarAtiva(0.9);
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        salvarValidacao('VALIDADA', true);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  });
-
-  // Barra de Ferramentas Fitossanitárias Reutilizável
-  const renderControlesFitossanitarios = () => (
-    <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-[11px] font-bold text-stone-400 uppercase mr-1">
-          {caixaAtivaIndex !== null ? `Fruto #${caixaAtivaIndex + 1}:` : 'Toque no fruto:'}
-        </span>
-
-        <button
-          type="button"
-          onClick={() => mudarClasseAtiva('Sadio')}
-          disabled={caixaAtivaIndex === null}
-          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-700 hover:bg-emerald-600 text-white disabled:opacity-40 transition shadow-sm"
-          title="Atalho: tecla 1"
-        >
-          🟢 Sadio (1)
-        </button>
-        <button
-          type="button"
-          onClick={() => mudarClasseAtiva('Vassoura de Bruxa')}
-          disabled={caixaAtivaIndex === null}
-          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-500 text-white disabled:opacity-40 transition shadow-sm"
-          title="Atalho: tecla 2"
-        >
-          🟠 Vassoura (2)
-        </button>
-        <button
-          type="button"
-          onClick={() => mudarClasseAtiva('Podridão Parda')}
-          disabled={caixaAtivaIndex === null}
-          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-700 hover:bg-rose-600 text-white disabled:opacity-40 transition shadow-sm"
-          title="Atalho: tecla 3"
-        >
-          🔴 Podridão (3)
-        </button>
-        <button
-          type="button"
-          onClick={() => mudarClasseAtiva('Não Avaliável')}
-          disabled={caixaAtivaIndex === null}
-          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-stone-700 hover:bg-stone-600 text-stone-200 disabled:opacity-40 transition shadow-sm"
-          title="Atalho: tecla 4"
-        >
-          ⚪ Não Avaliável (4)
-        </button>
-
-        {/* Ajustes de Tamanho e Exclusão */}
-        <div className="flex items-center gap-1 ml-2 pl-2 border-l border-stone-700">
-          <button
-            type="button"
-            onClick={() => redimensionarAtiva(0.9)}
-            disabled={caixaAtivaIndex === null}
-            className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 disabled:opacity-40 transition"
-            title="Diminuir caixa (-)"
-          >
-            <Minus className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => redimensionarAtiva(1.1)}
-            disabled={caixaAtivaIndex === null}
-            className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 disabled:opacity-40 transition"
-            title="Aumentar caixa (+)"
-          >
-            <Plus className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={excluirAtiva}
-            disabled={caixaAtivaIndex === null}
-            className="p-1.5 rounded-lg bg-rose-900/80 hover:bg-rose-800 text-rose-200 disabled:opacity-40 transition"
-            title="Excluir marcação (Del)"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Controles de Zoom da Foto */}
-      <div className="flex items-center gap-1.5 text-stone-300">
-        <button
-          type="button"
-          onClick={() => setZoomNivel((z) => Math.max(0.7, z - 0.2))}
-          className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300"
-          title="Reduzir zoom da foto"
-        >
-          <ZoomOut className="w-3.5 h-3.5" />
-        </button>
-        <span className="text-[11px] font-bold text-stone-400 w-10 text-center">
-          {Math.round(zoomNivel * 100)}%
-        </span>
-        <button
-          type="button"
-          onClick={() => setZoomNivel((z) => Math.min(2.5, z + 0.2))}
-          className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300"
-          title="Ampliar zoom da foto"
-        >
-          <ZoomIn className="w-3.5 h-3.5" />
-        </button>
-        {zoomNivel !== 1 && (
-          <button
-            type="button"
-            onClick={() => setZoomNivel(1)}
-            className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300"
-            title="Resetar zoom para 100%"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-          </button>
-        )}
-      </div>
-    </div>
-  );
+  const idxAtualLista = leituraAtual
+    ? leiturasFiltradas.findIndex((l) => l.id === leituraAtual.id)
+    : -1;
 
   return (
-    <div className="bg-white rounded-2xl border border-stone-200/90 shadow-sm overflow-hidden flex flex-col">
-      {/* Topo da Seção de Conferência */}
-      <div className="p-4 sm:p-5 border-b border-stone-100 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <span className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 font-extrabold text-xs flex items-center justify-center">
-            3
-          </span>
-          <div>
-            <h2 className="text-sm font-extrabold text-stone-900">
-              Conferência Fitossanitária de Fotos na Ordem da Planilha
-            </h2>
-            <p className="text-xs text-stone-500">
-              Clique em "⛶ Tela Cheia" ou pressione "F" para inspeção ampla de alta definição
-            </p>
-          </div>
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="lg:col-span-4 bg-white border border-emerald-100 rounded-xl shadow-sm p-3 flex flex-col max-h-[760px]">
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {(
+            [
+              ['TODAS', 'Todas'],
+              ['PENDENTES', 'Pendentes'],
+              ['COM_FOTO', 'Com Foto'],
+              ['VALIDADAS', 'Validadas'],
+            ] as const
+          ).map(([id, lbl]) => (
+            <button
+              key={id}
+              onClick={() => setFiltro(id)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+                filtro === id
+                  ? 'bg-emerald-800 text-white'
+                  : 'bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
+              }`}
+            >
+              {lbl}
+            </button>
+          ))}
         </div>
 
-        {/* Filtros Rápidos */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex rounded-xl bg-stone-100 p-1 text-xs font-semibold text-stone-600">
-            <button
-              onClick={() => setFiltro('COM_FOTO')}
-              className={`px-3 py-1 rounded-lg transition ${
-                filtro === 'COM_FOTO' ? 'bg-white text-stone-900 shadow-sm font-bold' : 'hover:text-stone-900'
-              }`}
-            >
-              📷 Com Foto ({leituras.filter((l) => l.temFoto).length})
-            </button>
-            <button
-              onClick={() => setFiltro('PENDENTES')}
-              className={`px-3 py-1 rounded-lg transition ${
-                filtro === 'PENDENTES' ? 'bg-white text-stone-900 shadow-sm font-bold' : 'hover:text-stone-900'
-              }`}
-            >
-              ⏳ Pendentes ({leituras.filter((l) => l.statusValidacao === 'PENDENTE').length})
-            </button>
-            <button
-              onClick={() => setFiltro('VALIDADAS')}
-              className={`px-3 py-1 rounded-lg transition ${
-                filtro === 'VALIDADAS' ? 'bg-white text-stone-900 shadow-sm font-bold' : 'hover:text-stone-900'
-              }`}
-            >
-              ✅ Validadas ({leituras.filter((l) => l.statusValidacao !== 'PENDENTE').length})
-            </button>
-            <button
-              onClick={() => setFiltro('TODAS')}
-              className={`px-3 py-1 rounded-lg transition ${
-                filtro === 'TODAS' ? 'bg-white text-stone-900 shadow-sm font-bold' : 'hover:text-stone-900'
-              }`}
-            >
-              Todas ({leituras.length})
-            </button>
-          </div>
+        <input
+          type="text"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar Plant_ID, clone, parcela..."
+          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+        />
 
-          {/* Campo de Busca */}
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Buscar clone, parcela..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="pl-8 pr-3 py-1 text-xs rounded-xl border border-stone-200 bg-stone-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-emerald-600 w-44"
-            />
-          </div>
+        <div className="text-xs text-gray-500 mb-2">
+          Exibindo <strong>{leiturasFiltradas.length}</strong> de {leituras.length} leitura(s)
         </div>
-      </div>
 
-      {/* ÁREA SPLIT VIEW (TELA DIVIDIDA) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[640px]">
-        {/* LADO ESQUERDO: LISTA SEQUENCIAL DA PLANILHA */}
-        {listaLateralVisivel && (
-          <div className="lg:col-span-4 border-r border-stone-100 flex flex-col h-[680px] overflow-hidden transition-all">
-            <div className="p-3 bg-stone-50 border-b border-stone-200/60 text-xs font-bold text-stone-600 flex items-center justify-between">
-              <span>Ordem da Planilha ({leiturasFiltradas.length} plantas)</span>
+        <div className="overflow-y-auto space-y-1.5 pr-1 flex-1">
+          {leiturasFiltradas.map((l) => {
+            const sel = l.id === selecionadaId;
+            return (
               <button
-                type="button"
-                onClick={() => setListaLateralVisivel(false)}
-                className="p-1 rounded text-stone-400 hover:text-stone-700 hover:bg-stone-200 transition"
-                title="Ocultar lista e dar mais espaço para a foto"
+                key={l.id}
+                onClick={() => setSelecionadaId(l.id)}
+                className={`w-full text-left p-2.5 rounded-lg border transition flex items-center justify-between ${
+                  sel
+                    ? 'bg-emerald-50 border-emerald-700 ring-1 ring-emerald-700'
+                    : 'bg-white border-gray-200 hover:bg-gray-50'
+                }`}
               >
-                <PanelLeftClose className="w-4 h-4" />
+                <div className="min-w-0 pr-2">
+                  <div className="font-bold text-sm text-gray-900 truncate">{l.plantCode}</div>
+                  <div className="text-xs text-gray-600">
+                    {l.qtdEfetiva ?? l.qtdFrutos} frutos • {l.campanha || 'Campo'}
+                    {l.alertaGps && <span className="ml-1 text-amber-700 font-semibold">• GPS 0,0</span>}
+                  </div>
+                </div>
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                    l.statusValidacao === 'PENDENTE'
+                      ? 'bg-amber-100 text-amber-800'
+                      : l.statusValidacao === 'REJEITADA'
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-emerald-100 text-emerald-800'
+                  }`}
+                >
+                  {l.statusValidacao}
+                </span>
               </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto divide-y divide-stone-100">
-              {leiturasFiltradas.length === 0 ? (
-                <div className="p-8 text-center text-xs text-stone-400">
-                  Nenhuma leitura encontrada com os filtros selecionados.
-                </div>
-              ) : (
-                leiturasFiltradas.map((l) => {
-                  const ativo = l.id === selecionadoId;
-                  const isPendente = l.statusValidacao === 'PENDENTE';
-
-                  return (
-                    <div
-                      key={l.id}
-                      onClick={() => setSelecionadoId(l.id)}
-                      className={`p-3.5 flex items-center gap-3 cursor-pointer transition select-none ${
-                        ativo
-                          ? 'bg-emerald-50/90 border-l-4 border-emerald-600'
-                          : 'hover:bg-stone-50/80 border-l-4 border-transparent'
-                      }`}
-                    >
-                      {/* Número de Ordem */}
-                      <div
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center font-extrabold text-xs shadow-sm ${
-                          ativo
-                            ? 'bg-emerald-700 text-white'
-                            : 'bg-stone-100 text-stone-700 border border-stone-200'
-                        }`}
-                      >
-                        #{l.ordemRota || l.numeroPlanta}
-                      </div>
-
-                      {/* Dados Básicos */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-extrabold text-xs text-stone-900 truncate">
-                            {l.codigoClone || 'Desconhecido'}
-                          </span>
-                          <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold bg-stone-100 text-stone-600">
-                            P{l.numeroParcela} • Pl{l.numeroPlanta}
-                          </span>
-                        </div>
-                        <div className="text-[11px] text-stone-500 mt-0.5 flex items-center gap-2">
-                          <span>{l.dataColeta || 'Sem data'}</span>
-                          {l.alertaGps && (
-                            <span className="text-amber-600 font-bold" title="Sem sinal GPS">
-                              ⚠ GPS
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Contagem, Status e Exclusão */}
-                      <div className="flex items-center gap-2">
-                        <div className="text-right flex flex-col items-end gap-1">
-                          <span className="text-xs font-bold text-stone-800">
-                            {l.qtdEfetiva ?? l.qtdFrutos} frutos
-                          </span>
-                          <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                              isPendente
-                                ? 'bg-amber-100 text-amber-800'
-                                : 'bg-emerald-100 text-emerald-800'
-                            }`}
-                          >
-                            {l.statusValidacao}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={(e) => handleExcluirLeitura(l, e)}
-                          disabled={salvando}
-                          className="p-1.5 rounded-lg text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition"
-                          title="Excluir esta coleta/foto"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* LADO DIREITO: AUDITOR DA FOTO E CAIXAS YOLO */}
-        <div
-          className={`${
-            listaLateralVisivel ? 'lg:col-span-8' : 'lg:col-span-12'
-          } bg-stone-900 flex flex-col h-[680px] overflow-hidden text-white transition-all`}
-        >
-          {leituraAtual ? (
-            <>
-              {/* Barra Superior do Auditor */}
-              <div className="p-3 bg-stone-950/90 border-b border-stone-800 flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  {!listaLateralVisivel && (
-                    <button
-                      type="button"
-                      onClick={() => setListaLateralVisivel(true)}
-                      className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 mr-1 transition"
-                      title="Exibir lista da rota"
-                    >
-                      <PanelLeft className="w-4 h-4" />
-                    </button>
-                  )}
-                  <span className="font-black text-emerald-400 text-sm">
-                    Planta #{leituraAtual.ordemRota || leituraAtual.numeroPlanta}
-                  </span>
-                  <span className="text-stone-500">•</span>
-                  <span className="font-extrabold text-white text-sm">{leituraAtual.codigoClone}</span>
-                  <span className="text-stone-500">•</span>
-                  <span className="text-stone-300">
-                    Parcela {leituraAtual.numeroParcela}, Planta {leituraAtual.numeroPlanta}
-                  </span>
-                </div>
-
-                {/* Navegador e Botão de TELA CHEIA */}
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 bg-stone-900 px-2 py-1 rounded-xl border border-stone-800">
-                    <button
-                      onClick={irParaAnterior}
-                      disabled={indiceAtual <= 0}
-                      className="p-1 rounded-lg bg-stone-800 hover:bg-stone-700 disabled:opacity-30 transition text-stone-200"
-                      title="Planta anterior (Seta para a Esquerda)"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-                    <span className="text-[11px] text-stone-300 font-semibold px-2">
-                      {indiceAtual + 1} de {leiturasFiltradas.length}
-                    </span>
-                    <button
-                      onClick={irParaProxima}
-                      disabled={indiceAtual >= leiturasFiltradas.length - 1}
-                      className="p-1 rounded-lg bg-stone-800 hover:bg-stone-700 disabled:opacity-30 transition text-stone-200"
-                      title="Próxima planta (Seta para a Direita)"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {/* BOTÃO EXPANDIR PARA TELA CHEIA */}
-                  <button
-                    type="button"
-                    onClick={() => setModoTelaCheia(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold text-xs shadow-md shadow-emerald-950/30 transition"
-                    title="Abrir em Tela Cheia Imersiva (Atalho: tecla F)"
-                  >
-                    <Maximize2 className="w-4 h-4" />
-                    <span className="hidden sm:inline">Tela Cheia</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Área do Canvas com Scroll/Pan e Zoom */}
-              <div className="flex-1 relative flex items-center justify-center p-2 bg-stone-950/70 overflow-auto">
-                {carregandoFoto ? (
-                  <div className="text-center text-xs text-stone-400">
-                    Carregando foto em alta resolução...
-                  </div>
-                ) : fotoUrl ? (
-                  <div
-                    className="relative transition-transform duration-150"
-                    style={{ transform: `scale(${zoomNivel})`, transformOrigin: 'center center' }}
-                  >
-                    <canvas
-                      ref={canvasRef}
-                      onClick={(e) => canvasRef.current && processarCliqueCanvas(e, canvasRef.current)}
-                      className="max-h-[500px] max-w-full rounded-xl shadow-2xl cursor-crosshair border border-stone-800"
-                    />
-                  </div>
-                ) : (
-                  <div className="text-center p-8 text-stone-400 text-xs flex flex-col items-center gap-2">
-                    <ImageIcon className="w-10 h-10 text-stone-600" />
-                    <span>Esta leitura não possui foto associada.</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Barra Inferior com Classificação e Ações */}
-              <div className="p-3.5 bg-stone-950 border-t border-stone-800 space-y-3">
-                {renderControlesFitossanitarios()}
-
-                {/* Linha de Aprovação e Exclusão */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-stone-800/80">
-                  <div className="text-xs text-stone-400">
-                    Total: <strong className="text-white">{caixas.length} frutos</strong>{' '}
-                    (🟢 {caixas.filter((c) => !c.classe.toLowerCase().includes('vassoura') && !c.classe.toLowerCase().includes('podri') && !c.classe.toLowerCase().includes('nao')).length} sadios,{' '}
-                    🟠 {caixas.filter((c) => c.classe.toLowerCase().includes('vassoura')).length} vassoura,{' '}
-                    🔴 {caixas.filter((c) => c.classe.toLowerCase().includes('podri')).length} podridão)
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleExcluirLeitura(leituraAtual)}
-                      disabled={salvando}
-                      className="px-3.5 py-2.5 rounded-xl bg-rose-950/90 hover:bg-rose-800 text-rose-200 hover:text-white font-bold text-xs flex items-center gap-1.5 border border-rose-800/70 transition cursor-pointer"
-                      title="Excluir esta foto/coleta do sistema"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>Excluir Foto</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => salvarValidacao('VALIDADA', true)}
-                      disabled={salvando}
-                      className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-extrabold text-xs flex items-center gap-2 shadow-lg shadow-emerald-950/40 transition cursor-pointer"
-                    >
-                      <Check className="w-4 h-4" />
-                      <span>{salvando ? 'Salvando...' : 'Aprovar Foto e Ir p/ Próxima (Enter)'}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center text-xs text-stone-500">
-              Selecione uma planta na lista ao lado para conferir.
+            );
+          })}
+          {leiturasFiltradas.length === 0 && (
+            <div className="text-center text-sm text-gray-500 py-8">
+              Nenhuma leitura encontrada para este filtro.
             </div>
           )}
         </div>
       </div>
 
-      {/* =====================================================================
-          MODO TELA CHEIA IMERSIVO (100% DA JANELA COM MÁXIMA RESOLUÇÃO)
-          ===================================================================== */}
-      {modoTelaCheia && leituraAtual && (
-        <div className="fixed inset-0 z-50 bg-stone-950/98 backdrop-blur-md flex flex-col text-white animate-fadeIn">
-          {/* Topo Flutuante da Tela Cheia */}
-          <div className="p-4 bg-stone-950/90 border-b border-stone-800 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="w-8 h-8 rounded-xl bg-emerald-600/30 border border-emerald-500/50 text-emerald-400 font-black text-sm flex items-center justify-center">
-                #{leituraAtual.ordemRota || leituraAtual.numeroPlanta}
-              </span>
+      <div className="lg:col-span-8 bg-white border border-emerald-100 rounded-xl shadow-sm p-4 flex flex-col gap-3">
+        {!leituraAtual ? (
+          <div className="py-20 text-center text-gray-500">
+            Selecione uma planta à esquerda para auditar foto e detecções.
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-base font-black text-white">{leituraAtual.codigoClone}</h3>
-                  <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-stone-800 text-stone-300">
-                    Parcela {leituraAtual.numeroParcela} • Planta {leituraAtual.numeroPlanta}
+                  <h3 className="text-lg font-extrabold text-emerald-950">{leituraAtual.plantCode}</h3>
+                  <span className="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">
+                    {estimativaArrobas.toFixed(3)} @ ({estimativaKg.toFixed(2)} kg)
                   </span>
                 </div>
-                <p className="text-[11px] text-stone-400">
-                  Data: {leituraAtual.dataColeta || 'Sem data'} • Ensaio: {ensaio}
+                <p className="text-xs text-gray-500">
+                  Clone {leituraAtual.codigoClone} • Parcela {leituraAtual.numeroParcela} • Planta{' '}
+                  {leituraAtual.numeroPlanta} • IA orig.: {leituraAtual.qtdFrutos} fruto(s)
                 </p>
               </div>
-            </div>
 
-            {/* Navegador Central Flutuante */}
-            <div className="flex items-center gap-2 bg-stone-900/90 px-3 py-1.5 rounded-2xl border border-stone-800 shadow-lg">
-              <button
-                type="button"
-                onClick={irParaAnterior}
-                disabled={indiceAtual <= 0}
-                className="px-2.5 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 disabled:opacity-30 transition flex items-center gap-1 text-xs font-bold"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                <span className="hidden sm:inline">Anterior</span>
-              </button>
-              <span className="text-xs text-stone-300 font-bold px-3">
-                {indiceAtual + 1} de {leiturasFiltradas.length}
-              </span>
-              <button
-                type="button"
-                onClick={irParaProxima}
-                disabled={indiceAtual >= leiturasFiltradas.length - 1}
-                className="px-2.5 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 disabled:opacity-30 transition flex items-center gap-1 text-xs font-bold"
-              >
-                <span className="hidden sm:inline">Próxima</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Fechar Tela Cheia */}
-            <button
-              type="button"
-              onClick={() => setModoTelaCheia(false)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-stone-800 hover:bg-rose-900 text-stone-200 hover:text-white transition font-bold text-xs"
-              title="Sair da tela cheia (Esc ou F)"
-            >
-              <Minimize2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Fechar Tela Cheia (Esc)</span>
-            </button>
-          </div>
-
-          {/* Área Central Expandida: Foto ocupa 100% do espaço útil */}
-          <div className="flex-1 relative flex items-center justify-center p-3 overflow-auto bg-black/40">
-            {carregandoFoto ? (
-              <div className="text-center text-sm text-stone-400">
-                Carregando foto em altíssima resolução...
-              </div>
-            ) : fotoUrl ? (
-              <div
-                className="transition-transform duration-150"
-                style={{ transform: `scale(${zoomNivel})`, transformOrigin: 'center center' }}
-              >
-                <canvas
-                  ref={canvasFullscreenRef}
-                  onClick={(e) =>
-                    canvasFullscreenRef.current &&
-                    processarCliqueCanvas(e, canvasFullscreenRef.current)
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  onClick={desfazer}
+                  disabled={undoStack.length === 0}
+                  title="Desfazer (Ctrl+Z)"
+                  className="px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40"
+                >
+                  ↶ Desfazer ({undoStack.length})
+                </button>
+                <button
+                  onClick={() =>
+                    setModoOverlay((m) => (m === 'COMPLETO' ? 'SUTIL' : m === 'SUTIL' ? 'LIMPO' : 'COMPLETO'))
                   }
-                  className="max-h-[75vh] max-w-[95vw] rounded-2xl shadow-2xl cursor-crosshair border border-stone-800 object-contain"
-                />
+                  title="Alternar rótulos (H)"
+                  className="px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 bg-white hover:bg-gray-50"
+                >
+                  Visual: {modoOverlay}
+                </button>
+                <button
+                  disabled={idxAtualLista <= 0}
+                  onClick={() =>
+                    idxAtualLista > 0 && setSelecionadaId(leiturasFiltradas[idxAtualLista - 1].id)
+                  }
+                  className="px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40"
+                >
+                  ← Ant.
+                </button>
+                <button
+                  disabled={idxAtualLista < 0 || idxAtualLista >= leiturasFiltradas.length - 1}
+                  onClick={() =>
+                    idxAtualLista < leiturasFiltradas.length - 1 &&
+                    setSelecionadaId(leiturasFiltradas[idxAtualLista + 1].id)
+                  }
+                  className="px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40"
+                >
+                  Próx. →
+                </button>
+              </div>
+            </div>
+
+            <div className="relative bg-gray-950 rounded-xl overflow-hidden flex items-center justify-center min-h-[340px]">
+              {carregandoFoto ? (
+                <div className="text-emerald-200 text-sm py-20">Carregando imagem em alta resolução...</div>
+              ) : fotoUrl ? (
+                <div className="relative inline-block max-w-full">
+                  <img
+                    ref={imgRef}
+                    src={fotoUrl}
+                    alt={leituraAtual.plantCode}
+                    onLoad={desenharCanvas}
+                    className="max-h-[480px] w-auto block select-none"
+                  />
+                  <canvas
+                    ref={canvasRef}
+                    onMouseDown={handleMouseDown}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                    className="absolute inset-0 cursor-crosshair"
+                  />
+                </div>
+              ) : (
+                <div className="text-center py-16 px-4 text-gray-300 space-y-3">
+                  <p className="text-sm">Sem foto anexada para esta leitura.</p>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-4 py-2 bg-emerald-700 text-white rounded-lg text-xs font-bold hover:bg-emerald-600"
+                  >
+                    Anexar Foto Manualmente
+                  </button>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleUploadFoto}
+                className="hidden"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-center">
+                <div className="text-lg font-extrabold text-emerald-950">{totalAtual}</div>
+                <div className="text-[11px] font-semibold text-emerald-800">Total Frutos</div>
+              </div>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-2 text-center">
+                <div className="text-lg font-extrabold text-green-800">{sadios}</div>
+                <div className="text-[11px] font-semibold text-green-800">Sadios</div>
+              </div>
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-2 text-center">
+                <div className="text-lg font-extrabold text-purple-800">{vassoura}</div>
+                <div className="text-[11px] font-semibold text-purple-800">Vassoura</div>
+              </div>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-center">
+                <div className="text-lg font-extrabold text-red-700">{podridao}</div>
+                <div className="text-[11px] font-semibold text-red-800">Podridão</div>
+              </div>
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-2 text-center">
+                <div className="text-lg font-extrabold text-orange-700">{naoAv}</div>
+                <div className="text-[11px] font-semibold text-orange-800">Não Avaliável</div>
+              </div>
+            </div>
+
+            {caixaSelIdx !== null && caixas[caixaSelIdx] ? (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                  <span className="font-bold text-emerald-950 mr-1">
+                    Fruto #{caixaSelIdx + 1}:
+                  </span>
+                  {CLASSES_ORDEM.map((cls) => {
+                    const ativa = normalizarClasseDto(caixas[caixaSelIdx].classe) === cls;
+                    return (
+                      <button
+                        key={cls}
+                        onClick={() => {
+                          pushUndo(caixas, caixaSelIdx);
+                          setCaixas((prev) =>
+                            prev.map((b, i) => (i === caixaSelIdx ? { ...b, classe: cls } : b))
+                          );
+                          setCaixasEditadasManual(true);
+                        }}
+                        style={{
+                          backgroundColor: ativa ? COR_CLASSE[cls] : '#FFFFFF',
+                          color: ativa ? '#FFFFFF' : COR_CLASSE[cls],
+                          borderColor: COR_CLASSE[cls],
+                        }}
+                        className="px-2 py-0.5 text-[11px] font-bold rounded border transition"
+                      >
+                        {cls}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  onClick={removerCaixaSelecionada}
+                  className="px-2.5 py-1 text-xs font-bold bg-red-600 text-white rounded-md hover:bg-red-500"
+                >
+                  Remover Fruto
+                </button>
               </div>
             ) : (
-              <div className="text-center p-8 text-stone-400 text-sm">
-                Esta leitura não possui foto associada.
+              <div className="text-xs text-gray-500">
+                Clique em uma caixa para selecionar (arraste os cantos ou o corpo; clique novamente para trocar a doença; clique fora para adicionar fruto).
               </div>
             )}
-          </div>
 
-          {/* Barra Inferior Fixa da Tela Cheia */}
-          <div className="p-4 bg-stone-950 border-t border-stone-800 space-y-3 shadow-2xl">
-            {renderControlesFitossanitarios()}
-
-            <div className="flex items-center justify-between gap-4 pt-2 border-t border-stone-800">
-              <div className="text-xs text-stone-400">
-                Total de Frutos: <strong className="text-white">{caixas.length}</strong> (🟢{' '}
-                {
-                  caixas.filter(
-                    (c) =>
-                      !c.classe.toLowerCase().includes('vassoura') &&
-                      !c.classe.toLowerCase().includes('podri') &&
-                      !c.classe.toLowerCase().includes('nao')
-                  ).length
-                }{' '}
-                sadios, 🟠{' '}
-                {caixas.filter((c) => c.classe.toLowerCase().includes('vassoura')).length} vassoura, 🔴{' '}
-                {caixas.filter((c) => c.classe.toLowerCase().includes('podri')).length} podridão)
-              </div>
-
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => handleExcluirLeitura(leituraAtual)}
-                  disabled={salvando}
-                  className="px-4 py-2.5 rounded-xl bg-rose-950/90 hover:bg-rose-800 text-rose-200 hover:text-white font-bold text-xs flex items-center gap-1.5 border border-rose-800/70 transition cursor-pointer"
-                  title="Excluir esta foto/coleta do sistema"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  <span>Excluir Foto</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => salvarValidacao('VALIDADA', true)}
-                  disabled={salvando}
-                  className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-extrabold text-xs flex items-center gap-2 shadow-xl shadow-emerald-950/60 transition cursor-pointer"
-                >
-                  <Check className="w-4 h-4" />
-                  <span>{salvando ? 'Salvando...' : 'Aprovar Foto e Ir p/ Próxima (Enter)'}</span>
-                </button>
-              </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                value={observacao}
+                onChange={(e) => setObservacao(e.target.value)}
+                placeholder="Observação científica / Nota de campo (ex.: planta tombada, enxertia, foco)..."
+                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-600"
+              />
             </div>
-          </div>
-        </div>
-      )}
+
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => enviarValidacao('REJEITADA')}
+                  disabled={salvando}
+                  className="px-3 py-2 text-xs font-bold rounded-lg border border-red-300 text-red-700 bg-white hover:bg-red-50 disabled:opacity-50"
+                >
+                  Rejeitar Foto
+                </button>
+                {leituraAtual.statusValidacao !== 'PENDENTE' && (
+                  <button
+                    onClick={() => enviarValidacao('PENDENTE')}
+                    disabled={salvando}
+                    className="px-3 py-2 text-xs font-bold rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Voltar p/ Pendente
+                  </button>
+                )}
+                {!confirmarExclusao ? (
+                  <button
+                    onClick={() => setConfirmarExclusao(true)}
+                    className="px-3 py-2 text-xs font-bold rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
+                  >
+                    Excluir Leitura
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 rounded-lg px-2 py-1">
+                    <span className="text-xs text-red-800 font-semibold">Confirmar exclusão?</span>
+                    <button
+                      onClick={handleExcluirLeitura}
+                      disabled={excluindo}
+                      className="px-2 py-1 text-xs font-bold bg-red-600 text-white rounded"
+                    >
+                      {excluindo ? '...' : 'Sim'}
+                    </button>
+                    <button
+                      onClick={() => setConfirmarExclusao(false)}
+                      className="px-2 py-1 text-xs font-semibold text-gray-700"
+                    >
+                      Não
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => enviarValidacao('VALIDADA')}
+                disabled={salvando}
+                className="px-5 py-2.5 text-sm font-extrabold rounded-lg bg-emerald-800 text-white hover:bg-emerald-700 shadow-sm disabled:opacity-50"
+              >
+                {salvando
+                  ? 'Salvando...'
+                  : caixasEditadasManual || totalAtual !== leituraAtual.qtdFrutos
+                  ? `Salvar Ajustes (${totalAtual} frutos)`
+                  : `Confirmar Leitura (${totalAtual} frutos)`}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

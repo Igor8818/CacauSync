@@ -5,6 +5,7 @@ import br.gov.ceplac.cepec.cacausync.dto.ItemRotaDto;
 import br.gov.ceplac.cepec.cacausync.dto.LeituraSincronizadaDto;
 import br.gov.ceplac.cepec.cacausync.dto.ResultadoImportacaoCsvResponse;
 import br.gov.ceplac.cepec.cacausync.dto.SyncJsonRequest;
+import br.gov.ceplac.cepec.cacausync.dto.UsbStatusResponse;
 import br.gov.ceplac.cepec.cacausync.exception.RegraNegocioException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -62,6 +63,95 @@ public class UsbAdbSyncService {
         }, "usb-adb-init");
         t.setDaemon(true);
         t.start();
+    }
+
+    public UsbStatusResponse obterStatusUsb() {
+        try {
+            String adbPath = localizarAdbExecutavel();
+            String saida = executarComandoTexto(List.of(adbPath, "devices"), 3);
+            if (saida == null || !saida.contains("List of devices")) {
+                String ver = executarComandoTexto(List.of(adbPath, "version"), 2);
+                if (ver == null || !ver.contains("Android Debug Bridge")) {
+                    return new UsbStatusResponse(
+                            false, false, null, false, 0, false,
+                            "ADB não encontrado no computador. Use Wi-Fi ou importe o CSV/ZIP manualmente."
+                    );
+                }
+                saida = "";
+            }
+
+            String serialConectado = null;
+            boolean pendenteAutorizacao = false;
+            for (String linha : saida.split("\\r?\\n")) {
+                String l = linha.trim();
+                if (l.isEmpty() || l.startsWith("List of devices") || l.startsWith("*")) continue;
+                if (l.endsWith("\tdevice") || l.matches("^\\S+\\s+device$")) {
+                    serialConectado = l.split("\\s+")[0];
+                    break;
+                }
+                if (l.contains("unauthorized")) {
+                    pendenteAutorizacao = true;
+                }
+            }
+
+            if (pendenteAutorizacao) {
+                return new UsbStatusResponse(
+                        true, false, null, false, 0, false,
+                        "Celular conectado no USB aguardando confirmação ('Permitir Depuração USB')."
+                );
+            }
+            if (serialConectado == null) {
+                return new UsbStatusResponse(
+                        true, false, null, false, 0, false,
+                        "Nenhum celular detectado no cabo USB."
+                );
+            }
+
+            boolean appInstalado = false;
+            String pacoteEncontrado = APP_PACKAGE;
+            for (String cand : List.of(APP_PACKAGE, "br.gov.ceplac.cepec.cacauapp")) {
+                String pm = executarComandoTexto(List.of(adbPath, "-s", serialConectado, "shell", "pm", "path", cand), 3);
+                if (pm != null && pm.contains("package:")) {
+                    appInstalado = true;
+                    pacoteEncontrado = cand;
+                    break;
+                }
+            }
+
+            int registrosNoCelular = 0;
+            boolean rotaNoCelular = false;
+            if (appInstalado) {
+                byte[] regBytes = executarComandoBinario(
+                        List.of(adbPath, "-s", serialConectado, "exec-out", "run-as", pacoteEncontrado, "cat", "files/registros_cacau_local.json"),
+                        4
+                );
+                String regTexto = new String(regBytes, StandardCharsets.UTF_8).trim();
+                if (regTexto.startsWith("[")) {
+                    try {
+                        JsonNode arr = objectMapper.readTree(regTexto);
+                        if (arr != null && arr.isArray()) {
+                            registrosNoCelular = arr.size();
+                        }
+                    } catch (Exception ignored) {
+                    }
+                }
+
+                byte[] rotaBytes = executarComandoBinario(
+                        List.of(adbPath, "-s", serialConectado, "exec-out", "run-as", pacoteEncontrado, "cat", "files/rota_precarregada.json"),
+                        3
+                );
+                String rotaTexto = new String(rotaBytes, StandardCharsets.UTF_8).trim();
+                rotaNoCelular = rotaTexto.startsWith("{") || rotaTexto.startsWith("[");
+            }
+
+            String msg = !appInstalado
+                    ? "Celular conectado (" + serialConectado + "), mas o CacauApp não está instalado."
+                    : "Celular conectado (" + serialConectado + "): " + registrosNoCelular + " registro(s) no aparelho"
+                    + (rotaNoCelular ? " e rota carregada." : ".");
+            return new UsbStatusResponse(true, true, serialConectado, appInstalado, registrosNoCelular, rotaNoCelular, msg);
+        } catch (Exception e) {
+            return new UsbStatusResponse(false, false, null, false, 0, false, "Falha ao consultar status USB: " + e.getMessage());
+        }
     }
 
     public ResultadoImportacaoCsvResponse sincronizarViaUsb(String codigoEnsaioPadrao, String emailPesquisador) {
@@ -423,24 +513,51 @@ public class UsbAdbSyncService {
     }
 
     private byte[] executarComandoBinario(List<String> comando, int timeoutSegundos) {
+        Process process = null;
         try {
             ProcessBuilder pb = new ProcessBuilder(comando);
             pb.redirectErrorStream(false);
-            Process process = pb.start();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            try (InputStream is = process.getInputStream()) {
-                byte[] buffer = new byte[8192];
-                int lidos;
-                while ((lidos = is.read(buffer)) != -1) {
-                    baos.write(buffer, 0, lidos);
+            process = pb.start();
+            final Process procRef = process;
+            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+            Thread stdoutThread = new Thread(() -> {
+                try (InputStream is = procRef.getInputStream()) {
+                    byte[] buffer = new byte[8192];
+                    int lidos;
+                    while ((lidos = is.read(buffer)) != -1) {
+                        baos.write(buffer, 0, lidos);
+                    }
+                } catch (Exception ignored) {
                 }
-            }
-            process.waitFor(timeoutSegundos, TimeUnit.SECONDS);
-            if (process.isAlive()) {
+            }, "adb-stdout");
+            stdoutThread.setDaemon(true);
+
+            Thread stderrThread = new Thread(() -> {
+                try (InputStream es = procRef.getErrorStream()) {
+                    byte[] discard = new byte[2048];
+                    while (es.read(discard) != -1) {
+                        // Drena stderr para evitar deadlock de buffer no SO
+                    }
+                } catch (Exception ignored) {
+                }
+            }, "adb-stderr");
+            stderrThread.setDaemon(true);
+
+            stdoutThread.start();
+            stderrThread.start();
+
+            boolean finalizado = process.waitFor(timeoutSegundos, TimeUnit.SECONDS);
+            if (!finalizado && process.isAlive()) {
                 process.destroyForcibly();
             }
+            stdoutThread.join(500);
+            stderrThread.join(200);
             return baos.toByteArray();
         } catch (Exception e) {
+            if (process != null && process.isAlive()) {
+                process.destroyForcibly();
+            }
             return new byte[0];
         }
     }

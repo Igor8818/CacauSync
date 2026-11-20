@@ -82,14 +82,15 @@ public class EnsaioController {
     @GetMapping("/{codigo}/leituras")
     @Operation(
             summary = "Listar leituras de coleta do ensaio na ordem da planilha para auditoria",
-            description = "Ordenado pela sequência da planilha de rota (planta.ordemRota ASC). Use ?status=PENDENTE para ver só o que ainda falta conferir."
+            description = "Ordenado pela sequência da planilha de rota (planta.ordemRota ASC). Use ?status=PENDENTE ou ?campanha=... para filtrar."
     )
     public ResponseEntity<Page<LeituraColetaResponse>> listarLeituras(
             @PathVariable String codigo,
             @RequestParam(value = "status", required = false) StatusValidacao status,
+            @RequestParam(value = "campanha", required = false) String campanha,
             @PageableDefault(size = 200, sort = {"planta.ordemRota", "id"}, direction = Sort.Direction.ASC) Pageable pageable
     ) {
-        return ResponseEntity.ok(coletaSyncService.listarLeiturasPorEnsaio(codigo, status, pageable));
+        return ResponseEntity.ok(coletaSyncService.listarLeiturasPorEnsaio(codigo, status, campanha, pageable));
     }
 
     @GetMapping("/{codigo}/rota-json")

@@ -20,4 +20,8 @@ public interface LeituraColetaRepository extends JpaRepository<LeituraColeta, Lo
     Page<LeituraColeta> findByPlantaParcelaEnsaioCodigoIgnoreCase(String codigoEnsaio, Pageable pageable);
     Page<LeituraColeta> findByPlantaParcelaEnsaioCodigoIgnoreCaseAndStatusValidacao(
             String codigoEnsaio, StatusValidacao statusValidacao, Pageable pageable);
+    Page<LeituraColeta> findByPlantaParcelaEnsaioCodigoIgnoreCaseAndCampanhaIgnoreCase(
+            String codigoEnsaio, String campanha, Pageable pageable);
+    Page<LeituraColeta> findByPlantaParcelaEnsaioCodigoIgnoreCaseAndStatusValidacaoAndCampanhaIgnoreCase(
+            String codigoEnsaio, StatusValidacao statusValidacao, String campanha, Pageable pageable);
 }

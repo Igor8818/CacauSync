@@ -9,6 +9,7 @@ interface HeaderProps {
   ensaioAtivo: string;
   onTrocarEnsaio: (codigo: string) => void;
   onLogout: () => void;
+  onToast?: (msg: string, tipo?: 'ok' | 'erro') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -17,19 +18,30 @@ export const Header: React.FC<HeaderProps> = ({
   ensaioAtivo,
   onTrocarEnsaio,
   onLogout,
+  onToast,
 }) => {
-  const exportarAnalise = () => {
-    baixarArquivoCsv(
-      `/api/v1/ensaios/${encodeURIComponent(ensaioAtivo)}/exportar-csv`,
-      `analise_auditada_${ensaioAtivo.toLowerCase()}.csv`
-    );
+  const exportarAnalise = async () => {
+    try {
+      await baixarArquivoCsv(
+        `/api/v1/ensaios/${encodeURIComponent(ensaioAtivo)}/analise-csv`,
+        `analise_auditada_${ensaioAtivo.toLowerCase()}.csv`
+      );
+      onToast?.('Planilha de análise exportada!', 'ok');
+    } catch (err: any) {
+      onToast?.(err?.message || 'Erro ao exportar análise CSV.', 'erro');
+    }
   };
 
-  const exportarRota = () => {
-    baixarArquivoCsv(
-      `/api/v1/ensaios/${encodeURIComponent(ensaioAtivo)}/rota-csv`,
-      `dados_cacau_${ensaioAtivo.toLowerCase()}.csv`
-    );
+  const exportarRota = async () => {
+    try {
+      await baixarArquivoCsv(
+        `/api/v1/ensaios/${encodeURIComponent(ensaioAtivo)}/rota-csv`,
+        `dados_cacau_${ensaioAtivo.toLowerCase()}.csv`
+      );
+      onToast?.('Rota exportada!', 'ok');
+    } catch (err: any) {
+      onToast?.(err?.message || 'Erro ao exportar rota CSV.', 'erro');
+    }
   };
 
   return (

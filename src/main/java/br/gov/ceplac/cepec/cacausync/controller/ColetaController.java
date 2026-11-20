@@ -4,6 +4,7 @@ import br.gov.ceplac.cepec.cacausync.domain.entity.Usuario;
 import br.gov.ceplac.cepec.cacausync.dto.ArquivoFoto;
 import br.gov.ceplac.cepec.cacausync.dto.ResultadoImportacaoCsvResponse;
 import br.gov.ceplac.cepec.cacausync.dto.SyncJsonRequest;
+import br.gov.ceplac.cepec.cacausync.dto.UsbStatusResponse;
 import br.gov.ceplac.cepec.cacausync.exception.RegraNegocioException;
 import br.gov.ceplac.cepec.cacausync.service.ColetaSyncService;
 import br.gov.ceplac.cepec.cacausync.service.UsbAdbSyncService;
@@ -33,6 +34,15 @@ public class ColetaController {
     public ColetaController(ColetaSyncService coletaSyncService, UsbAdbSyncService usbAdbSyncService) {
         this.coletaSyncService = coletaSyncService;
         this.usbAdbSyncService = usbAdbSyncService;
+    }
+
+    @GetMapping("/usb-status")
+    @Operation(
+            summary = "Verificar status da conexão ADB USB e dos dados prontos no CacauApp",
+            description = "Informa sem lançar erro se o ADB está disponível, se há celular conectado e quantos registros existem no CacauApp."
+    )
+    public ResponseEntity<UsbStatusResponse> statusUsb() {
+        return ResponseEntity.ok(usbAdbSyncService.obterStatusUsb());
     }
 
     @PostMapping(value = "/sincronizar-usb")

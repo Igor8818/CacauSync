@@ -1,6 +1,7 @@
 package br.gov.ceplac.cepec.cacausync.dto;
 
 import br.gov.ceplac.cepec.cacausync.domain.entity.StatusValidacao;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
@@ -21,7 +22,7 @@ public record ValidarLeituraRequest(
     @PositiveOrZero Integer qtdVassoura,
     @PositiveOrZero Integer qtdPodridao,
     @PositiveOrZero Integer qtdNaoAvaliavel,
-    List<DeteccaoDto> deteccoes
+    @Valid List<@Valid DeteccaoDto> deteccoes
 ) {
     /** Construtor retrocompatível de 3 argumentos. */
     public ValidarLeituraRequest(StatusValidacao status, Integer qtdFrutosValidada, String observacao) {

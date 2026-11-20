@@ -121,8 +121,8 @@ public class CsvColetaParser {
 
         boolean coletavel = isPlantaColetavel(resultadoBruto);
         int qtdResultado = coletavel ? extrairInteiroSeguro(resultadoBruto, 0) : 0;
-        int totalCol = cols.size() > 9 ? extrairInteiroSeguro(cols.get(9), qtdResultado) : qtdResultado;
-        int qtdFrutos = coletavel ? Math.max(qtdResultado, totalCol) : 0;
+        boolean temTotalCol = cols.size() > 9 && !cols.get(9).trim().isEmpty();
+        int qtdFrutos = !coletavel ? 0 : (temTotalCol ? extrairInteiroSeguro(cols.get(9), qtdResultado) : qtdResultado);
 
         List<DeteccaoDto> deteccoes = cols.size() > 14 ? parseDeteccoesJson(cols.get(14)) : List.of();
 

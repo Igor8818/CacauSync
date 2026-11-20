@@ -4,7 +4,7 @@ export interface UsuarioToken {
   nomePesquisador: string;
   email: string;
   role: string;
-  expiracaoSegundos: number;
+  expiraEmSegundos: number;
 }
 
 export interface EnsaioResumo {
@@ -13,6 +13,8 @@ export interface EnsaioResumo {
   nome: string;
   estacaoExperimental: string;
   status: string;
+  totalPlantas: number;
+  totalLeituras: number;
 }
 
 export interface ItemRota {
@@ -23,12 +25,13 @@ export interface ItemRota {
   planta: number;
   bloco: number;
   situacao: string;
-  coletada: boolean;
-  temFoto: boolean;
+  coletado: boolean;
+  qtdFrutos: string;
+  leituraId: number | null;
+  statusValidacao: string | null;
 }
 
 export interface DeteccaoBox {
-  id?: number;
   classe: string;
   confianca: number;
   x: number;
@@ -77,34 +80,104 @@ export interface PaginaLeituras {
   totalPages: number;
   number: number;
   size: number;
+  last?: boolean;
 }
 
 export interface ResultadoRotaResponse {
   codigoEnsaio: string;
+  origem: string;
   totalPlantasRota: number;
-  novasPlantasCriadas: number;
-  plantasAtualizadas: number;
-  enviadoParaUsb: boolean;
+  plantasColetadas: number;
+  enviadoParaCelularUsb: boolean;
+  dispositivoUsb: string | null;
   mensagem: string;
+  processadoEm: string;
   itens: ItemRota[];
 }
 
+export interface ResultadoImportacaoCsvResponse {
+  codigoEnsaio: string;
+  nomeArquivo: string;
+  totalLinhasProcessadas: number;
+  leiturasNovasInseridas: number;
+  leiturasDuplicadasIgnoradas: number;
+  plantasMarcadasNaoColetaveis: number;
+  alertasGpsZerado: number;
+  totalFrutosImportadosLote: number;
+  fotosAnexadas: number;
+  fotosIgnoradas: number;
+  processadoEm: string;
+  avisos: string[];
+}
+
+export interface ParametrosAgronomicos {
+  indiceFruto: number;
+  plantasPorHa: number;
+  campanha: string | null;
+}
+
+export interface EstimativaAgronomica {
+  mediaSadiosPorPlantaAvaliada: number;
+  potencialKgHa: number;
+  produtividadeRealKgHa: number;
+  produtividadeRealArrobasHa: number;
+  perdaDoencasKgHa: number;
+  perdaDoencasArrobasHa: number;
+}
+
+export interface ProdutividadeClone {
+  codigoClone: string;
+  descricaoClone: string;
+  totalPlantasCadastradas: number;
+  plantasVivasColetaveis: number;
+  plantasNaoColetaveisOuMortas: number;
+  taxaSobrevivenciaPercentual: number;
+  totalLeiturasRealizadas: number;
+  totalFrutosContados: number;
+  totalFrutosSadios: number;
+  totalFrutosVassoura: number;
+  totalFrutosPodridao: number;
+  totalFrutosNaoAvaliavel: number;
+  taxaInfeccaoPercentual: number;
+  mediaFrutosPorPlantaViva: number;
+  plantasAvaliadas: number;
+  coberturaPercentual: number;
+  estimativa: EstimativaAgronomica;
+}
+
 export interface RelatorioProdutividade {
+  codigoEnsaio: string;
+  nomeEnsaio: string;
+  estacaoExperimental: string;
   totalPlantasEnsaio: number;
   totalPlantasVivas: number;
   totalPlantasNaoColetaveis: number;
   totalLeiturasRegistradas: number;
+  totalFrutosAcumulados: number;
+  totalFrutosSadios: number;
+  totalFrutosVassoura: number;
+  totalFrutosPodridao: number;
+  totalFrutosNaoAvaliavel: number;
+  taxaInfeccaoEnsaioPercentual: number;
+  leiturasComAlertaGps: number;
   leiturasPendentesValidacao: number;
   leiturasValidadas: number;
-  leiturasRejeitadas?: number;
-  totalFrutosAcumulados?: number;
-  totalFrutosSadios?: number;
-  totalFrutosVassoura?: number;
-  totalFrutosPodridao?: number;
-  totalFrutosNaoAvaliavel?: number;
-  totalFrutosContabilizados?: number;
-  totalSadios?: number;
-  totalVassoura?: number;
-  totalPodridao?: number;
-  totalNaoAvaliavel?: number;
+  leiturasRejeitadas: number;
+  geradoEm: string;
+  rankingClones: ProdutividadeClone[];
+  totalPlantasAvaliadas: number;
+  coberturaPercentual: number;
+  estimativa: EstimativaAgronomica;
+  parametros: ParametrosAgronomicos;
+  campanhasDisponiveis: string[];
+}
+
+export interface UsbStatusResponse {
+  adbDisponivel: boolean;
+  dispositivoConectado: boolean;
+  serialDispositivo: string | null;
+  appInstalado: boolean;
+  registrosNoCelular: number;
+  rotaNoCelular: boolean;
+  mensagem: string;
 }
